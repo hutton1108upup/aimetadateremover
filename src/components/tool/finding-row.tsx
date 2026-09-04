@@ -11,9 +11,9 @@ export function FindingRow({ finding, expanded, onToggle }: { finding: Finding; 
       </button>
       {expanded && (
         <div className="finding-detail">
-          <p><b>Suggested action</b>{finding.suggestedAction}</p>
-          <p><b>If removed</b>{finding.removalImpact}</p>
-          {finding.rawKey && <p><b>Raw field</b><code>{finding.rawKey}: {sensitive ? "Hidden — reveal intentionally" : finding.rawValue}</code></p>}
+          <p><b>What to do</b>{finding.suggestedAction}</p>
+          <p><b>If you remove it</b>{finding.removalImpact}</p>
+          {finding.rawKey && <p><b>Raw field</b><code>{finding.rawKey}: {sensitive ? "Hidden until you choose to reveal it" : finding.rawValue}</code></p>}
         </div>
       )}
     </article>

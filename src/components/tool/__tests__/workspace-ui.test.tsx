@@ -8,7 +8,7 @@ describe("UnifiedImageWorkspace", () => {
   it("provides keyboard selection and the truthful local privacy boundary", () => {
     render(<UnifiedImageWorkspace variant="embedded" defaultMode="clean" />);
     expect(screen.getByRole("button", { name: /choose images/i })).toBeVisible();
-    expect(screen.getByText(/files stay in this browser session/i)).toBeVisible();
+    expect(screen.getByText(/your files stay in this browser/i)).toBeVisible();
     expect(screen.queryByText(/ai risk score/i)).not.toBeInTheDocument();
   });
 
