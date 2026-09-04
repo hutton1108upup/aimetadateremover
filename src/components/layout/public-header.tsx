@@ -1,0 +1,4 @@
+import Link from "next/link";
+import { Check, ArrowUpRight, Menu } from "lucide-react";
+
+export function PublicHeader() { return <header className="site-header"><Link href="/" className="brand"><span><Check aria-hidden="true" /></span>ImageFinisher</Link><nav aria-label="Primary navigation"><Link href="/">Metadata Cleaner</Link><Link href="/metadata-checker">Metadata Checker</Link><Link href="/remove-ai-detection-from-image">Detection limits</Link><Link href="/guides">Guides</Link></nav><details className="mobile-menu"><summary role="button" aria-label="Open navigation"><Menu aria-hidden="true"/></summary><div><Link href="/">Metadata Cleaner</Link><Link href="/metadata-checker">Metadata Checker</Link><Link href="/remove-ai-detection-from-image">Detection limits</Link><Link href="/guides">Guides</Link></div></details><Link href="/workspace" className="header-cta">Open Workspace <ArrowUpRight aria-hidden="true" /></Link></header>; }

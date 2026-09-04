@@ -1,0 +1,18 @@
+import { describe, expect, it } from "vitest";
+import { mapWithConcurrency } from "../concurrency";
+
+describe("local batch concurrency", () => {
+  it("never runs more processors than the active device limit", async () => {
+    let active = 0;
+    let peak = 0;
+    const results = await mapWithConcurrency([1, 2, 3, 4, 5], 2, async (value) => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      active -= 1;
+      return value * 2;
+    });
+    expect(peak).toBe(2);
+    expect(results).toEqual([2, 4, 6, 8, 10]);
+  });
+});
