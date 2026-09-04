@@ -30,4 +30,14 @@ describe("UnifiedImageWorkspace", () => {
     fireEvent.keyDown(screen.getByRole("button", { name: /open file picker/i }), { key: "Enter" });
     expect(click).toHaveBeenCalledOnce();
   });
+
+  it("loads the bundled safe sample through the real local scanner", async () => {
+    render(<UnifiedImageWorkspace variant="embedded" defaultMode="inspect" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /try a safe sample/i }));
+
+    expect(await screen.findByText("AI generation parameters")).toBeVisible();
+    expect(screen.getByText("1 metadata finding")).toBeVisible();
+    expect(screen.getByText("Scan complete")).toBeVisible();
+  });
 });

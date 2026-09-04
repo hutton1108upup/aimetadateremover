@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "python scripts/browser_qa.py"
+    "test:e2e": "node scripts/browser_qa.mjs"
   },
   "dependencies": {
     "jszip": "^3.10.1",
