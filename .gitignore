@@ -42,3 +42,10 @@ next-env.d.ts
 
 # local linked worktrees
 /.worktrees/
+
+# cloudflare workers
+/.open-next/
+/.wrangler/
+.dev.vars*
+!.dev.vars.example
+cloudflare-env.d.ts
