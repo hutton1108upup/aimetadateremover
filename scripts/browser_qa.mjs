@@ -4,8 +4,8 @@ import { inflateSync } from "node:zlib";
 
 const base = process.env.BASE_URL ?? "http://localhost:3000";
 const routes = new Map([
-  ["/", "Inspect and Clean AI Metadata Before You Publish"],
-  ["/metadata-checker", "Check What Metadata Is Hidden in Your Image"],
+  ["/", "AI Metadata Cleaner for Images"],
+  ["/metadata-checker", "Image Metadata Checker for EXIF, XMP and AI Data"],
   ["/remove-ai-detection-from-image", "Understand and Clean File-Level AI Signals"],
   ["/remove-metadata-from-png", "Remove Metadata From PNG Images"],
   ["/guides", "Practical Image Metadata Guides"],
@@ -61,6 +61,19 @@ try {
     const response = await page.goto(base + path, { waitUntil: "networkidle" });
     requireCondition(response?.status() === 200, `${path} did not return HTTP 200`);
     requireCondition(await page.getByRole("heading", { name: heading, exact: true }).first().isVisible(), `${path} is missing its expected H1`);
+    requireCondition(await page.locator("h1").count() === 1, `${path} needs exactly one H1`);
+    if (path !== "/workspace") {
+      const expected = `https://aimetadateremover.pro${path}`;
+      requireCondition(new URL(await page.locator('link[rel="canonical"]').getAttribute("href")).href === expected, `${path} has the wrong canonical`);
+      requireCondition(new URL(await page.locator('meta[property="og:url"]').getAttribute("content")).href === expected, `${path} has the wrong OG URL`);
+      requireCondition(await page.locator('meta[name="twitter:card"]').getAttribute("content") === "summary_large_image", `${path} needs a share card`);
+      const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
+      for (const schema of schemas) { JSON.parse(schema); requireCondition(!schema.includes("localhost"), `${path} schema contains localhost`); }
+    }
+    if (path === "/remove-metadata-from-png") {
+      requireCondition((await page.locator('meta[name="robots"]').getAttribute("content")).includes("noindex"), "PNG compatibility gate must remain noindex");
+    }
+
   }
 
   await page.goto(base + "/workspace", { waitUntil: "networkidle" });
@@ -69,6 +82,13 @@ try {
   const sitemap = await desktop.request.get(base + "/sitemap.xml");
   requireCondition(sitemap.status() === 200, "sitemap did not return HTTP 200");
   const sitemapText = await sitemap.text();
+  requireCondition(!sitemapText.includes("localhost"), "sitemap contains localhost");
+  const locations = [...sitemapText.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
+  requireCondition(locations.length === 8 && locations.every((url) => new URL(url).origin === "https://aimetadateremover.pro"), "sitemap origins or route count are wrong");
+  const robotsResponse = await desktop.request.get(base + "/robots.txt");
+  requireCondition((await robotsResponse.text()).includes("Sitemap: https://aimetadateremover.pro/sitemap.xml"), "robots sitemap origin is wrong");
+  const shareImage = await desktop.request.get(base + "/images/metadata-cleaner-preview.png");
+  requireCondition(shareImage.status() === 200 && shareImage.headers()["content-type"].includes("image/png"), "share preview is missing");
   requireCondition(!sitemapText.includes("/workspace") && !sitemapText.includes("/pricing") && !sitemapText.includes("/ai-image-humanizer"), "sitemap exposed private or later-phase routes");
 
   await page.goto(base + "/metadata-checker", { waitUntil: "networkidle" });
@@ -81,6 +101,8 @@ try {
   requireCondition(await page.getByRole("button", { name: "Add images" }).isVisible(), "a failed file blocked the next selection");
 
   await page.goto(base + "/", { waitUntil: "networkidle" });
+  requireCondition(await page.locator('script[type="application/ld+json"]').count() === 2, "homepage needs application and website schemas");
+  requireCondition(await page.locator(".metadata-preview img").evaluate((img) => img.complete && img.naturalWidth === 1200), "sample screenshot failed to load");
   const embeddedAlignment = await page.evaluate(() => {
     const shell = document.querySelector(".workspace-embedded")?.getBoundingClientRect();
     const stage = document.querySelector(".workspace-embedded .tool-stage")?.getBoundingClientRect();

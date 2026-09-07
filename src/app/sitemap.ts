@@ -1,2 +1,2 @@
 import type { MetadataRoute } from "next"; import { sitemapRoutes } from "@/lib/publishing"; import { siteUrl } from "@/lib/site";
-export default function sitemap():MetadataRoute.Sitemap{return sitemapRoutes.map((path)=>({url:new URL(path,siteUrl).toString(),lastModified:new Date("2026-09-04"),changeFrequency:path==="/"?"weekly":"monthly"}))}
+export default function sitemap():MetadataRoute.Sitemap{return sitemapRoutes.map((path)=>({url:new URL(path,siteUrl).toString(),lastModified:new Date(["/", "/metadata-checker", "/remove-ai-detection-from-image", "/guides/image-metadata-before-publishing"].includes(path)?"2026-09-07":"2026-09-04"),changeFrequency:path==="/"?"weekly":"monthly"}))}

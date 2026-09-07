@@ -108,3 +108,19 @@ html{scroll-padding-top:72px}
   .island td:first-child{padding-bottom:.6rem;border-bottom:1px solid var(--paper-row);color:var(--ink);font-weight:700}
 }
 .mode-card.gated{opacity:.55}.mode-card.gated input{cursor:not-allowed}
+
+/* Capability comparison and verified sample on the cleaner landing page. */
+.metadata-table-wrap{overflow-x:auto;margin:1.5rem 0;border:1px solid var(--border-strong);border-radius:12px}
+.metadata-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:.9rem;text-align:left}
+.metadata-table th:first-child{width:34%}
+.section-lede a{text-decoration:underline;text-underline-offset:3px}
+.metadata-table caption{text-align:left;padding:1rem;font-weight:600}
+.metadata-table th,.metadata-table td{padding:1rem;border-top:1px solid var(--border-strong);vertical-align:top}
+.metadata-table thead th{color:var(--text-primary);font-weight:600}
+.metadata-preview{margin:2rem 0}
+.metadata-preview img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--border-strong)}
+.metadata-preview figcaption{margin-top:.75rem;font-size:.85rem;color:var(--text-secondary)}
+@media(max-width:600px){.metadata-table{font-size:.72rem}.metadata-table th,.metadata-table td{padding:.65rem .4rem;overflow-wrap:normal}.metadata-table caption{padding:.75rem}}
+
+.home-page .boundary-grid,.home-page .faq-layout{grid-template-columns:1fr;gap:2rem}
+.home-page .boundary-grid>div:first-child,.home-page .faq-layout>div:first-child{max-width:760px}
