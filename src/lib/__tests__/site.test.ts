@@ -21,6 +21,6 @@ describe("public SEO origins", () => {
       expect(metadata.openGraph?.url).toBe(entry.url);
     }
     expect(robots().sitemap).toBe(`${productionOrigin}/sitemap.xml`);
-    expect(metadataFor("/remove-metadata-from-png").robots).toEqual({ index: false, follow: true });
+    expect(metadataFor("/remove-metadata-from-png").robots).toBeUndefined();
   });
 });

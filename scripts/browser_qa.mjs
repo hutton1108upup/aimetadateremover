@@ -71,7 +71,7 @@ try {
       for (const schema of schemas) { JSON.parse(schema); requireCondition(!schema.includes("localhost"), `${path} schema contains localhost`); }
     }
     if (path === "/remove-metadata-from-png") {
-      requireCondition((await page.locator('meta[name="robots"]').getAttribute("content")).includes("noindex"), "PNG compatibility gate must remain noindex");
+      requireCondition(await page.locator('meta[name="robots"][content*="noindex"]').count() === 0, "tested PNG cleaner should be indexable");
     }
 
   }
@@ -84,7 +84,7 @@ try {
   const sitemapText = await sitemap.text();
   requireCondition(!sitemapText.includes("localhost"), "sitemap contains localhost");
   const locations = [...sitemapText.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
-  requireCondition(locations.length === 8 && locations.every((url) => new URL(url).origin === "https://aimetadateremover.pro"), "sitemap origins or route count are wrong");
+  requireCondition(locations.length === 9 && locations.every((url) => new URL(url).origin === "https://aimetadateremover.pro"), "sitemap origins or route count are wrong");
   const robotsResponse = await desktop.request.get(base + "/robots.txt");
   requireCondition((await robotsResponse.text()).includes("Sitemap: https://aimetadateremover.pro/sitemap.xml"), "robots sitemap origin is wrong");
   const shareImage = await desktop.request.get(base + "/images/metadata-cleaner-preview.png");
