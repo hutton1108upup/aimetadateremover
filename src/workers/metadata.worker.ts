@@ -21,7 +21,7 @@ worker.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     const before = await scanImage(request.buffer);
     const clean = await cleanImage(request.buffer, request.policy);
     if (!clean.ok || !clean.output) throw Object.assign(new Error(clean.safeMessage), { code: clean.errorCode });
-    const verification = await verifyClean(before, clean.output, request.policy);
+    const verification = await verifyClean(before, clean.output, request.policy, request.buffer);
     if (!canceled.has(request.requestId)) {
       worker.postMessage({ type: "clean_result", requestId: request.requestId, result: clean, verification } satisfies WorkerResponse, [clean.output]);
     }

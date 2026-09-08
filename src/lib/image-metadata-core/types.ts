@@ -87,6 +87,8 @@ export interface VerificationResult {
   dimensionsChanged?: boolean;
   iccPreserved?: boolean;
   transparencyPreserved?: boolean;
+  encodedPayloadPreserved?: boolean;
+  orientationPreserved?: boolean;
 }
 
 export type WorkerRequest =

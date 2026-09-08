@@ -7,6 +7,7 @@ describe("Phase 1 publishing manifest", () => {
       "/",
       "/metadata-checker",
       "/remove-ai-detection-from-image",
+      "/remove-metadata-from-png",
       "/guides",
       "/guides/image-metadata-before-publishing",
       "/about",
@@ -14,7 +15,7 @@ describe("Phase 1 publishing manifest", () => {
       "/terms",
     ]);
     expect(publicRoutes.map((route) => route.path)).not.toEqual(expect.arrayContaining(["/workspace", "/pricing", "/ai-image-humanizer", "/remove-ai-look"]));
-    expect(publicRoutes.find((route) => route.path === "/remove-metadata-from-png")?.indexable).toBe(false);
+    expect(publicRoutes.find((route) => route.path === "/remove-metadata-from-png")?.indexable).toBe(true);
   });
 
   it("gives every public route independent page metadata", () => {

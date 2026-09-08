@@ -2,7 +2,7 @@
 
 ImageFinisher is a local-first image metadata workbench built with Next.js. It helps users inspect supported JPEG, PNG, and WebP metadata, remove supported AI workflow fields from a new copy, rescan the output, and download an evidence-backed result without uploading the image.
 
-`ImageFinisher` is a working product name. The final brand and production domain have not been selected.
+`ImageFinisher` is a working product name. The configured production origin is `https://aimetadateremover.pro`; the PRD does not lock a final brand name.
 
 ## Current scope
 
@@ -17,10 +17,10 @@ Available in this Phase 1 review build:
 
 Evidence-gated features:
 
-- Privacy Clean and Full Clean remain disabled until the extended EXIF, thumbnail, and MakerNote fixture matrix passes;
+- Privacy Clean supports EXIF GPS, capture dates, device IDs, MakerNote payloads and JPEG thumbnails (both TIFF byte orders); it preserves orientation and copyright. Nested SubIFDs, strip/tiled thumbnails, overlapping or malformed EXIF are rejected. It does not certify removal of all private data. Full Clean remains disabled;
 - WebP cleaning is scan-only;
 - JPEG and WebP Content Credentials removal is scan-only;
-- the PNG remover review page is `noindex, follow` and excluded from navigation and the sitemap until its complete compatibility gate passes;
+- the PNG remover is public and indexable after the supported PNG/EXIF compatibility and browser download gates passed;
 - AI visual repair, authentication, billing, credits, storage, and pricing are not implemented.
 
 The product does not claim detector bypass, guaranteed platform acceptance, or an AI probability score.
@@ -29,7 +29,7 @@ The product does not claim detector bypass, guaranteed platform acceptance, or a
 
 - Node.js 20.9 or newer
 - npm
-- Python with Playwright and a Chromium browser for `npm run test:e2e`
+- Node Playwright and a Chromium browser for `npm run test:e2e`
 
 ## Local development
 
@@ -73,7 +73,7 @@ npm.cmd run test:e2e
 - `/`
 - `/metadata-checker`
 - `/remove-ai-detection-from-image`
-- `/remove-metadata-from-png` — review-only, noindex
+- `/remove-metadata-from-png` — public supported PNG cleaner
 - `/workspace` — noindex, nofollow
 - `/guides`
 - `/guides/image-metadata-before-publishing`
@@ -84,3 +84,15 @@ npm.cmd run test:e2e
 ## Privacy boundary
 
 Phase 1 does not implement an image upload API. File bytes, file names, previews, prompts, GPS values, and raw metadata remain inside the browser session. The original file is never overwritten.
+
+## Phase 1 reliability review
+
+See [the local acceptance record](docs/phase1-review.md) for scope, reproducible checks, supported privacy-cleaning boundaries, and the separate GSC / remote analytics blockers.
+
+```powershell
+$env:BASE_URL = "http://127.0.0.1:3173"
+node scripts/workspace_qa.mjs
+node scripts/seo_qa.mjs
+```
+
+The workspace QA includes 195 MB desktop / 95 MB mobile-emulation batches. Generated fixtures, screenshots and JSON evidence are written to ignored `artifacts/phase1-review/`.

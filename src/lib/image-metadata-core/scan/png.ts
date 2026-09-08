@@ -13,6 +13,8 @@ export function parsePngChunks(bytes: Uint8Array) {
     assertRange(bytes, offset, 12);
     const dataLength = readU32BE(bytes, offset);
     const typeName = text(bytes, offset + 4, 4);
+    if(!/^[A-Za-z]{4}$/.test(typeName) || (typeName[0] === typeName[0].toUpperCase() && !["IHDR","PLTE","IDAT","IEND"].includes(typeName))) throw new MetadataError("malformed_container", "The PNG has an invalid or unsupported critical chunk.");
+    if((chunks.length===0 && typeName!=="IHDR") || (typeName==="IHDR" && (chunks.length>0 || dataLength!==13))) throw new MetadataError("malformed_container", "The PNG must start with one valid IHDR chunk.");
     if (["tEXt", "zTXt", "iTXt", "eXIf", "caBX", "iCCP"].includes(typeName) && dataLength > 16 * 1024 * 1024) throw new MetadataError("metadata_too_large", "An embedded metadata block is too large to inspect safely.");
     const end = offset + 12 + dataLength;
     assertRange(bytes, offset, end - offset);
@@ -24,6 +26,7 @@ export function parsePngChunks(bytes: Uint8Array) {
     if (typeName === "IEND") { sawIend = true; break; }
   }
   if (!sawIend) throw new MetadataError("malformed_container", "The PNG is missing its end marker.");
+  if(offset!==bytes.length || chunks.at(-1)?.dataLength!==0 || !chunks.some(c=>c.type==="IDAT")) throw new MetadataError("malformed_container", "The PNG is missing image data or contains trailing bytes.");
   return chunks;
 }
 

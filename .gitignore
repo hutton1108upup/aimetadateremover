@@ -43,6 +43,9 @@ next-env.d.ts
 # local linked worktrees
 /.worktrees/
 
+# Local QA screenshots, generated fixtures and preview logs
+/artifacts/
+
 # cloudflare workers
 /.open-next/
 /.wrangler/
