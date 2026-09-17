@@ -46,7 +46,7 @@ try {
     context.on("request",request=>{
       if(!processing || request.url().startsWith("blob:"))return;
       const url=new URL(request.url());const body=request.postDataBuffer();
-      if(url.origin!==new URL(base).origin || request.method()!=="GET" || !url.pathname.startsWith("/_next/static/") || request.url().includes(marker) || body?.length) report.network.push({url:request.url(),method:request.method()});
+      if(url.origin!==new URL(base).origin || request.method()!=="GET" || (!url.pathname.startsWith("/_next/static/") && !["/api/auth/status","/api/auth/get-session"].includes(url.pathname)) || request.url().includes(marker) || body?.length) report.network.push({url:request.url(),method:request.method()});
     });
     page.on("websocket",socket=>socket.on("framesent",frame=>report.network.push({websocket:true,length:frame.payload.length})));
     await page.goto(base+"/workspace?review=1",{waitUntil:"networkidle"});processing=true;
