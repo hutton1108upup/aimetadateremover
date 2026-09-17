@@ -21,7 +21,7 @@ Evidence-gated features:
 - WebP cleaning is scan-only;
 - JPEG and WebP Content Credentials removal is scan-only;
 - the PNG remover is public and indexable after the supported PNG/EXIF compatibility and browser download gates passed;
-- AI visual repair, authentication, billing, credits, storage, and pricing are not implemented.
+- Optional Google authentication uses Better Auth and Cloudflare D1. Local development uses isolated D1 storage; production uses a separate database and Worker secrets. AI visual repair, billing, credits, cloud image storage, and pricing are not implemented.
 
 The product does not claim detector bypass, guaranteed platform acceptance, or an AI probability score.
 
@@ -96,3 +96,9 @@ node scripts/seo_qa.mjs
 ```
 
 The workspace QA includes 195 MB desktop / 95 MB mobile-emulation batches. Generated fixtures, screenshots and JSON evidence are written to ignored `artifacts/phase1-review/`.
+
+## Optional Google login (local D1 demo)
+
+See [Google login setup and acceptance boundaries](docs/google-login-setup.md). Configure `.dev.vars` locally using `.dev.vars.example`, then run the local D1 migration. Google Client Secret and AUTH_SECRET must never be committed.
+
+The current Google-login work is isolated in `codex/google-login`. Payment is a separate, later phase. `npm run test:auth-d1` validates the actual local workerd/D1 adapter; `npm run test:auth-browser` explicitly distinguishes UI fixtures from real Google authorization.

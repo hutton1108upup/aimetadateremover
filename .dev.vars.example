@@ -1,0 +1,7 @@
+# Local Google OAuth. Never put these values in NEXT_PUBLIC_* variables.
+AUTH_BASE_URL=http://localhost:3180
+AUTH_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+# Google Authorized redirect URI:
+# http://localhost:3180/api/auth/callback/google
