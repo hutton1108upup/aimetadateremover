@@ -55,7 +55,7 @@ try {
   const unexpectedRequests = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(error.message));
-  page.on("request", (request) => { if (request.method() !== "GET" || request.url().includes("/api/")) unexpectedRequests.push(request.url()); });
+  page.on("request", (request) => { const url = new URL(request.url()); const sessionRead = ["/api/auth/status", "/api/auth/get-session"].includes(url.pathname); if (request.method() !== "GET" || (url.pathname.includes("/api/") && !sessionRead)) unexpectedRequests.push(request.url()); });
 
   for (const [path, heading] of routes) {
     const response = await page.goto(base + path, { waitUntil: "networkidle" });

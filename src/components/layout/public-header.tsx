@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, Check, Menu } from "lucide-react";
+import { AuthControls } from "@/components/auth/auth-controls";
 
 const navigation = [
   { href: "/", label: "Metadata Cleaner" },
@@ -42,9 +43,10 @@ export function PublicHeader() {
           })}
         </div>
       </details>
-      <Link href={workspace ? "/" : "/workspace"} className={`header-cta ${workspace ? "header-cta-secondary" : ""}`}>
-        {workspace ? <><ArrowLeft aria-hidden="true" /> Back to cleaner</> : <>Open Workspace <ArrowUpRight aria-hidden="true" /></>}
-      </Link>
+      <div className="header-account-actions"><AuthControls />
+      <Link aria-label={workspace ? "Back to cleaner" : "Open Workspace"} title={workspace ? "Back to cleaner" : "Open Workspace"} href={workspace ? "/" : "/workspace"} className={`header-cta ${workspace ? "header-cta-secondary" : ""}`}>
+        {workspace ? <><ArrowLeft aria-hidden="true" /> <span className="header-cta-label">Back to cleaner</span></> : <><span className="header-cta-label">Open Workspace</span> <ArrowUpRight aria-hidden="true" /></>}
+      </Link></div>
     </header>
   );
 }

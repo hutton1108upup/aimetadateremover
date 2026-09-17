@@ -21,7 +21,7 @@ export const unresolvedCount = (v: VerificationResult) => v.items.filter(i=>!["r
 export function downloadLocal(buffer: BlobPart, name: string, type: string) {
   const url=URL.createObjectURL(new Blob([buffer],{type}));
   const anchor=document.createElement("a");anchor.href=url;anchor.download=name;
-  try { document.body.append(anchor);anchor.click(); } finally { anchor.remove();setTimeout(()=>revoke(url),1000); }
+  try { document.body.appendChild(anchor);anchor.click(); } finally { anchor.remove();setTimeout(()=>revoke(url),1000); }
 }
 function errorMessage(error: unknown) {
   const code=(error as {code?:string})?.code;

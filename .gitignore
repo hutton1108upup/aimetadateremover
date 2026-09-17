@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+client_secret*.json
 
 # vercel
 .vercel
@@ -45,3 +46,10 @@ next-env.d.ts
 
 # Local QA screenshots, generated fixtures and preview logs
 /artifacts/
+
+# cloudflare workers
+/.open-next/
+/.wrangler/
+.dev.vars*
+!.dev.vars.example
+cloudflare-env.d.ts
