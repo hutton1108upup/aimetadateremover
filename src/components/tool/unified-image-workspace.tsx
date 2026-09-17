@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element -- local blob previews cannot use the Next image optimizer */
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Check, ChevronDown, Download, FileImage, FolderOpen, LockKeyhole, Plus, ScanSearch, ShieldCheck, Sparkles, Trash2, UploadCloud, ZoomIn, ZoomOut } from "lucide-react";
 import type { CleanMode } from "@/lib/image-metadata-core/types";
 import { downloadLocal as download, useLocalWorkspace, type LocalImage, unresolvedCount } from "./use-local-workspace";
@@ -82,6 +83,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
   return (
     <section className={`workspace-shell ${variant === "full" ? "workspace-full" : "workspace-embedded"}`} aria-label="Local image metadata workspace">
       <div className="local-notice"><span><ShieldCheck aria-hidden="true" /> Your files stay in this browser</span><span>Nothing gets uploaded</span></div>
+      <p className="workspace-legal">Before choosing files, read our <Link href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and <Link href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service<span className="sr-only"> (opens in a new tab)</span></Link>.</p>
       {notice && <p className="batch-notice" role="status">{notice}</p>}
       {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {files.filter(f=>f.status === "ready").length} ready to download</span><button className="button secondary" onClick={clearFiles}>Clear queue</button></div>}
       <div className="workspace-grid">

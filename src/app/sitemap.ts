@@ -1,2 +1,15 @@
-import type { MetadataRoute } from "next"; import { sitemapRoutes } from "@/lib/publishing"; import { siteUrl } from "@/lib/site";
-export default function sitemap():MetadataRoute.Sitemap{return sitemapRoutes.map((path)=>({url:new URL(path,siteUrl).toString(),lastModified:new Date(["/", "/metadata-checker", "/remove-metadata-from-png", "/privacy", "/guides/image-metadata-before-publishing"].includes(path)?"2026-09-08":["/", "/metadata-checker", "/remove-ai-detection-from-image", "/guides/image-metadata-before-publishing"].includes(path)?"2026-09-07":"2026-09-04"),changeFrequency:path==="/"?"weekly":"monthly"}))}
+import type { MetadataRoute } from "next";
+import { siteUrl } from "@/lib/site";
+import { sitemapRoutes } from "@/lib/publishing";
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  return sitemapRoutes.map((path) => ({
+    url: new URL(path, siteUrl).toString(),
+    lastModified: new Date(
+      ["/privacy", "/terms"].includes(path) ? "2026-09-17" :
+      ["/", "/metadata-checker", "/remove-metadata-from-png", "/guides/image-metadata-before-publishing"].includes(path) ? "2026-09-08" :
+      ["/remove-ai-detection-from-image"].includes(path) ? "2026-09-07" : "2026-09-04"
+    ),
+    changeFrequency: path === "/" ? "weekly" : "monthly",
+  }));
+}
