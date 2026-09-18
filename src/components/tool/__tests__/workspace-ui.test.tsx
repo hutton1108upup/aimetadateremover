@@ -53,8 +53,7 @@ describe("UnifiedImageWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: /try a safe sample/i }));
     await screen.findByRole("button", { name: "Download clean copy" });
     const firstOutput = sequence;
-    fireEvent.click(screen.getByText("Cleaning settings"));
-    fireEvent.click(screen.getByRole("checkbox", { name: /keep location/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /keep capture details/i }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Download clean copy" })).toBeEnabled());
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(`blob:test-${firstOutput}`);
     fireEvent.click(screen.getByRole("button", { name: /remove imagefinisher/i }));
