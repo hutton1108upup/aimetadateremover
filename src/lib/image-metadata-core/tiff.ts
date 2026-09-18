@@ -89,12 +89,12 @@ export function scanTiff(bytes: Uint8Array) {
     if (CAMERA_TAGS.has(entry.tag)) categories.add("camera");
     if (entry.tag === 0x9286 && /prompt|workflow|seed|stable diffusion|comfyui/i.test(asciiValue(bytes, entry))) categories.add("ai");
   }
-  if (categories.has("gps")) findings.push(finding("exif-gps", "GPS location", "location", "action", "EXIF GPS IFD", "hidden", "Coordinates can reveal where an image was created.", "Remove in Privacy Clean.", "The embedded location will be erased from this copy."));
-  if (categories.has("private")) findings.push(finding("exif-private", "Capture date or device identity", "location", "action", "EXIF privacy fields", "hidden", "Dates, owner names or serial numbers can identify a person or device.", "Remove in Privacy Clean.", "The supported private values will be erased."));
-  if (categories.has("ai")) findings.push(finding("exif-ai", "AI workflow in EXIF", "ai_workflow", "action", "EXIF UserComment", "hidden", "A supported EXIF comment contains generation workflow data.", "Remove in AI Workflow Clean.", "The workflow comment will be erased."));
+  if (categories.has("gps")) findings.push(finding("exif-gps", "GPS location", "location", "action", "EXIF GPS IFD", "hidden", "Coordinates can reveal where an image was created.", "Removed by default cleaning; use Cleaning settings to keep private fields.", "The embedded location will be erased from this copy."));
+  if (categories.has("private")) findings.push(finding("exif-private", "Capture date or device identity", "location", "action", "EXIF privacy fields", "hidden", "Dates, owner names or serial numbers can identify a person or device.", "Removed by default cleaning; use Cleaning settings to keep private fields.", "The supported private values will be erased."));
+  if (categories.has("ai")) findings.push(finding("exif-ai", "AI workflow in EXIF", "ai_workflow", "action", "EXIF UserComment", "hidden", "A supported EXIF comment contains generation workflow data.", "Removed by automatic cleaning.", "The workflow comment will be erased."));
   if (categories.has("creator")) findings.push(finding("exif-creator", "Creator or copyright", "creator", "review", "EXIF attribution", "present", "Attribution may be useful for licensing.", "Preserve unless you intentionally need a private copy.", "Attribution will be erased."));
   if (categories.has("software")) findings.push(finding("exif-software", "Editing software", "software", "review", "EXIF Software", "present", "Software history does not prove AI generation.", "Review before removal.", "The editing-software record will be erased."));
-  if (categories.has("camera")) findings.push(finding("exif-camera", "Camera and exposure data", "camera", "informational", "EXIF camera fields", "present", "Camera and exposure settings can support a photography workflow.", "Preserve in AI Workflow Clean.", "Camera context will be erased."));
+  if (categories.has("camera")) findings.push(finding("exif-camera", "Camera and exposure data", "camera", "informational", "EXIF camera fields", "present", "Camera and exposure settings can support a photography workflow.", "Preserved by default cleaning.", "Camera context will be erased."));
   return { findings, orientation };
 }
 
@@ -102,11 +102,11 @@ export function cleanTiff(input: Uint8Array, mode: CleanMode) {
   const bytes = input.slice();
   const { endian, entries, directories, ranges } = parseTiff(bytes);
   const mutations: MutationRecord[] = [];
-  if (mode === "privacy" || mode === "full") {
-    if (entries.some(e=>[0x014a,0xa005].includes(e.tag))) throw new MetadataError("unsupported_exif", "This EXIF uses nested directories that Privacy Clean cannot safely scrub yet.");
+  if (mode === "privacy" || mode === "publish" || mode === "full") {
+    if (entries.some(e=>[0x014a,0xa005].includes(e.tag))) throw new MetadataError("unsupported_exif", "This EXIF uses nested directories that automatic cleaning cannot safely scrub yet.");
     for (const directory of directories.filter(d=>d.kind === "thumbnail")) {
       const fields=entries.filter(e=>e.offset > directory.start && e.offset < directory.end);
-      if(fields.some(e=>[0x0111,0x0117,0x0144,0x0145].includes(e.tag))) throw new MetadataError("unsupported_thumbnail", "Strip or tiled EXIF thumbnails are not supported by Privacy Clean yet.");
+      if(fields.some(e=>[0x0111,0x0117,0x0144,0x0145].includes(e.tag))) throw new MetadataError("unsupported_thumbnail", "Strip or tiled EXIF thumbnails are not supported by automatic cleaning yet.");
       const start=fields.find(e=>e.tag === 0x0201), length=fields.find(e=>e.tag === 0x0202);
       if(Boolean(start)!==Boolean(length)) throw new MetadataError("malformed_exif", "The EXIF thumbnail range is incomplete.");
       if(start && length) {
@@ -119,21 +119,25 @@ export function cleanTiff(input: Uint8Array, mode: CleanMode) {
     for(const directory of directories) bytes.fill(0,directory.nextOffset,directory.nextOffset+4);
   }
   let removedGps = false;
+  let removedPrivacy = false;
+  let removedAi = false;
   for (const entry of entries) {
     const isOrientation = entry.kind === "main" && entry.tag === 0x0112;
     const isGpsPointer = entry.tag === 0x8825;
     const isGpsValue = entry.kind === "gps";
     const isAi = entry.tag === 0x9286 && /prompt|workflow|seed|stable diffusion|comfyui/i.test(asciiValue(bytes, entry));
     const isPrivacy = isGpsPointer || isGpsValue || PRIVACY_TAGS.has(entry.tag) || entry.kind === "thumbnail";
-    const remove = !isOrientation && (mode === "full" ? true : mode === "privacy" ? isPrivacy : isAi);
+    const remove = !isOrientation && (mode === "full" ? true : mode === "publish" ? (isAi || (isPrivacy && !CREATOR_TAGS.has(entry.tag))) : mode === "privacy" ? isPrivacy : isAi);
     if (!remove) continue;
     bytes.fill(0, entry.valueOffset, entry.valueOffset + entry.valueLength);
     write16(bytes, entry.offset, 0xc7fe, endian);
     if (isGpsPointer || isGpsValue) removedGps = true;
+    if (isPrivacy) removedPrivacy = true;
+    if (isAi) removedAi = true;
   }
   if (removedGps) mutations.push({ kind: "removed", category: "location", label: "GPS location" });
-  if (mode === "privacy" || mode === "full") mutations.push({ kind: "removed", category: "location", label: "Supported private EXIF fields" });
+  if (removedPrivacy) mutations.push({ kind: "removed", category: "location", label: "Supported private EXIF fields" });
   if (mode === "full") mutations.push({ kind: "removed", category: "creator", label: "Supported EXIF attribution and camera fields" });
-  if (mode === "ai_workflow") mutations.push({ kind: "removed", category: "ai_workflow", label: "Supported EXIF workflow fields" });
+  if (removedAi) mutations.push({ kind: "removed", category: "ai_workflow", label: "Supported EXIF workflow fields" });
   return { bytes, mutations };
 }

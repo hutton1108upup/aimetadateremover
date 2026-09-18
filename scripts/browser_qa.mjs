@@ -84,12 +84,12 @@ try {
   const sitemapText = await sitemap.text();
   requireCondition(!sitemapText.includes("localhost"), "sitemap contains localhost");
   const locations = [...sitemapText.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
-  requireCondition(locations.length === 9 && locations.every((url) => new URL(url).origin === "https://aimetadateremover.pro"), "sitemap origins or route count are wrong");
+  requireCondition(locations.length === 10 && locations.every((url) => new URL(url).origin === "https://aimetadateremover.pro"), "sitemap origins or route count are wrong");
   const robotsResponse = await desktop.request.get(base + "/robots.txt");
   requireCondition((await robotsResponse.text()).includes("Sitemap: https://aimetadateremover.pro/sitemap.xml"), "robots sitemap origin is wrong");
   const shareImage = await desktop.request.get(base + "/images/metadata-cleaner-preview.png");
   requireCondition(shareImage.status() === 200 && shareImage.headers()["content-type"].includes("image/png"), "share preview is missing");
-  requireCondition(!sitemapText.includes("/workspace") && !sitemapText.includes("/pricing") && !sitemapText.includes("/ai-image-humanizer"), "sitemap exposed private or later-phase routes");
+  requireCondition(!sitemapText.includes("/workspace") && !sitemapText.includes("/ai-image-humanizer"), "sitemap exposed private or later-phase routes");
 
   await page.goto(base + "/metadata-checker", { waitUntil: "networkidle" });
   const invalidRequestCount = unexpectedRequests.length;
@@ -102,7 +102,8 @@ try {
 
   await page.goto(base + "/", { waitUntil: "networkidle" });
   requireCondition(await page.locator('script[type="application/ld+json"]').count() === 2, "homepage needs application and website schemas");
-  requireCondition(await page.locator(".metadata-preview img").evaluate((img) => img.complete && img.naturalWidth === 1200), "sample screenshot failed to load");
+  await page.locator(".metadata-preview img").scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => { const img=document.querySelector(".metadata-preview img"); return img?.complete && img.naturalWidth === 1200; });
   const embeddedAlignment = await page.evaluate(() => {
     const shell = document.querySelector(".workspace-embedded")?.getBoundingClientRect();
     const stage = document.querySelector(".workspace-embedded .tool-stage")?.getBoundingClientRect();
@@ -122,8 +123,6 @@ try {
   await page.goto(base + "/remove-metadata-from-png", { waitUntil: "networkidle" });
   const cleanRequestCount = unexpectedRequests.length;
   await page.getByRole("button", { name: "Try a safe sample" }).click();
-  await page.getByRole("button", { name: "Create clean copy" }).waitFor();
-  await page.getByRole("button", { name: "Create clean copy" }).click();
   await page.getByRole("button", { name: "Download clean copy" }).waitFor();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download clean copy" }).click();
@@ -149,7 +148,7 @@ try {
 
   await mobilePage.goto(base + "/workspace", { waitUntil: "networkidle" });
   await mobilePage.getByRole("button", { name: "Try a safe sample" }).click();
-  await mobilePage.getByText("AI generation parameters").waitFor();
+  await mobilePage.getByRole("button", { name: "Download clean copy" }).waitFor();
   const controls = mobilePage.locator(".preview-tools button, .tool-tabs button");
   for (let index = 0; index < await controls.count(); index += 1) {
     const control = controls.nth(index);

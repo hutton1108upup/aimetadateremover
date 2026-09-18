@@ -9,7 +9,7 @@ export function getFunnelEvents() { return events.map(e=>({...e})); }
 
 export function trackFunnel(event:FunnelEventName, input:Record<string,unknown>={}) {
   const result:Record<string,string> & {event:FunnelEventName}={event};
-  for(const [key,values] of Object.entries({format:["jpeg","png","webp"],source:["file","sample"],mode:["ai_workflow","privacy"],result:["verified","review_needed"],delivery:["single","zip"],device:["desktop","mobile"]})) {
+  for(const [key,values] of Object.entries({format:["jpeg","png","webp"],source:["file","sample"],mode:["ai_workflow","privacy","publish"],result:["verified","review_needed"],delivery:["single","zip"],device:["desktop","mobile"]})) {
     if(typeof input[key]==="string" && values.includes(input[key] as string)) result[key]=input[key] as string;
   }
   const count=Number(input.count), size=Number(input.size), duration=Number(input.duration);

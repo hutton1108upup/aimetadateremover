@@ -8,6 +8,7 @@ function shouldRemove(category: ScanResult["findings"][number]["category"], poli
   if (category === "color") return policy.removeColorProfile;
   if (policy.mode === "ai_workflow") return category === "ai_workflow";
   if (policy.mode === "privacy") return category === "location";
+  if (policy.mode === "publish") return category === "ai_workflow" || category === "location";
   return !["structure", "camera", "color"].includes(category);
 }
 
@@ -33,7 +34,7 @@ export async function verifyClean(before: ScanResult, output: ArrayBuffer, polic
     return {
       label: finding.label,
       before: "found" as const,
-      after: (finding.id.startsWith("unsupported-") || (policy.mode === "privacy" && /xmp/i.test(finding.rawKey ?? "")) ? "unsupported" : shouldRemove(finding.category, policy) ? (stillPresent ? "still_present" : "removed") : (stillPresent ? "preserved" : "review_needed")) as "removed" | "preserved" | "still_present" | "review_needed" | "unsupported",
+      after: (finding.id.startsWith("unsupported-") || (["privacy", "publish"].includes(policy.mode) && stillPresent && /xmp/i.test(finding.rawKey ?? "")) ? "unsupported" : shouldRemove(finding.category, policy) ? (stillPresent ? "still_present" : "removed") : (stillPresent ? "preserved" : "review_needed")) as "removed" | "preserved" | "still_present" | "review_needed" | "unsupported",
     };
   });
   return {

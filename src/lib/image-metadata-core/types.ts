@@ -1,6 +1,6 @@
 export type ImageFormat = "jpeg" | "png" | "webp";
 export type FindingStatus = "action" | "review" | "informational";
-export type CleanMode = "ai_workflow" | "privacy" | "full";
+export type CleanMode = "ai_workflow" | "privacy" | "publish" | "full";
 export type FileStage =
   | "queued"
   | "validating"
