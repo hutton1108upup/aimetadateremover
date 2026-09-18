@@ -23,6 +23,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
   const [activeId, setActiveId] = useState<string>();
   const [keepPrivacy, setKeepPrivacy] = useState(false);
   const [keepCredentials, setKeepCredentials] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState("");
   const [expanded, setExpanded] = useState<string>();
   const [previewView, setPreviewView] = useState<"original" | "cleaned">("cleaned");
   const [zoom, setZoom] = useState(100);
@@ -68,14 +69,39 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
   }
 
   async function updateSettings(nextPrivacy: boolean, nextCredentials: boolean) {
+    if (busy) return;
     setKeepPrivacy(nextPrivacy); setKeepCredentials(nextCredentials);
     const ids = filesRef.current.filter(file => defaultMode === "clean" || file.verification).map(file => file.id);
-    if (ids.length) await cleanFiles(ids, { mode: nextPrivacy ? "ai_workflow" : "publish", removeC2pa: !nextCredentials, removeColorProfile: false });
+    if (ids.length) {
+      setSettingsMessage("Reprocessing with your new settings…");
+      try {
+        await cleanFiles(ids, { mode: nextPrivacy ? "ai_workflow" : "publish", removeC2pa: !nextCredentials, removeColorProfile: false });
+        setSettingsMessage("Settings applied. Review each image’s result below.");
+      } catch {
+        setSettingsMessage("Reprocessing did not finish. Check the results before downloading.");
+      }
+    } else setSettingsMessage("Settings saved for the next images you clean.");
   }
 
   return (
     <section className={`workspace-shell ${variant === "full" ? "workspace-full" : "workspace-embedded"}`} aria-label="Local image metadata workspace">
       <div className="local-notice"><span><ShieldCheck aria-hidden="true" /> Your files stay in this browser</span><span>Nothing gets uploaded</span></div>
+      <fieldset className="clean-settings" disabled={busy}>
+        <legend>Cleaning settings</legend>
+        <div className="clean-settings-heading"><span>Applies to all images</span><span>Original files stay unchanged</span></div>
+        <div className="clean-settings-options">
+          <label className={`clean-setting-option${keepPrivacy ? " is-selected" : ""}`}>
+            <input type="checkbox" checked={keepPrivacy} onChange={event => void updateSettings(event.target.checked, keepCredentials)} />
+            <span><strong>Keep capture details</strong><small>Location, dates &amp; device</small></span>
+          </label>
+          <label className={`clean-setting-option${keepCredentials ? " is-selected" : ""}`}>
+            <input type="checkbox" checked={keepCredentials} onChange={event => void updateSettings(keepPrivacy, event.target.checked)} />
+            <span><strong>Keep Content Credentials</strong><small>Source &amp; edit history</small></span>
+          </label>
+        </div>
+        <p>{defaultMode === "inspect" ? "These settings apply when you choose to clean a copy. Inspection never changes your file." : "Unchecked fields are removed where supported. Changes rebuild existing copies from your originals."} Only embedded PNG credentials can be removed; JPEG credentials and other unsupported fields may remain.</p>
+        <p className="settings-status" role="status">{settingsMessage}</p>
+      </fieldset>
       {notice && <p className="batch-notice" role="status">{notice}</p>}
       {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {completed.length} ready to download · {partial.length} partial · {failed.length} failed{scanOnly.length > 0 ? ` · ${scanOnly.length} inspection only` : ""}</span><button className="button secondary" onClick={clearFiles}>Clear queue</button></div>}
       {files.length > 1 && completed.length > 0 && <div className="batch-download"><button className="button primary" disabled={busy} onClick={() => void downloadZip()}><Download aria-hidden="true" />Download completed images (ZIP)</button><p>{completed.length} of {files.length} files included · {partial.length} need review. Failed and inspection-only files are excluded.</p></div>}
@@ -93,7 +119,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
               <span className="upload-icon"><UploadCloud aria-hidden="true" /></span>
               <h2>Drop, paste, or choose your images</h2>
               <p>{pngOnly ? "PNG images" : "JPG and PNG · WebP inspection only"} · No account needed</p>
-              <p className="drop-policy">{defaultMode === "inspect" ? "Read-only check. Your file stays unchanged." : "Automatically removes supported AI/private data and PNG Content Credentials."}</p>
+              <p className="drop-policy">{defaultMode === "inspect" ? "Read-only check. Your file stays unchanged." : "Automatically cleans images using the settings above."}</p>
               <div className="drop-actions"><button className="button primary" onClick={() => inputRef.current?.click()} disabled={busy}><FolderOpen aria-hidden="true" /> Choose images</button><button className="button secondary" onClick={() => void addFiles([createSafeSampleFile()], "sample")} disabled={busy}><ScanSearch aria-hidden="true" /> Try a safe sample</button></div>
               <div className="trust-row"><span><Check aria-hidden="true" /> Free to use</span><span><LockKeyhole aria-hidden="true" /> Runs locally</span><span><Check aria-hidden="true" /> Original file preserved</span><span><Check aria-hidden="true" /> No subscription required</span></div>
             </div>
@@ -147,13 +173,8 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
 
       <p className="workspace-legal">Before choosing files, read our <Link href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and <Link href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service<span className="sr-only"> (opens in a new tab)</span></Link>. <Link href="/pricing" target="_blank" rel="noopener noreferrer">View upcoming plans<span className="sr-only"> (opens in a new tab)</span></Link>.</p>
       <div className="automatic-policy">
-        <p>{defaultMode === "inspect" ? "Check what is inside your image. Nothing is changed unless you choose to clean a copy." : "Choose images to clean automatically. We remove supported AI and private metadata, plus embedded PNG Content Credentials. Image data and copyright stay intact."}</p>
-        <details className="clean-settings"><summary>Cleaning settings</summary><div>
-          <p>Optional preferences. Changes rebuild existing cleaned copies from your original; new images use these settings.</p>
-          <label className="check-row"><input type="checkbox" checked={keepPrivacy} disabled={busy} onChange={event => void updateSettings(event.target.checked, keepCredentials)} /><span>Keep location, capture dates and device details</span></label>
-          <label className="check-row"><input type="checkbox" checked={keepCredentials} disabled={busy} onChange={event => void updateSettings(keepPrivacy, event.target.checked)} /><span>Keep Content Credentials (source and edit history)</span></label>
-          <p>Only embedded PNG credentials can be removed. JPEG credentials and other unsupported fields may remain. Your original is never overwritten.</p>
-        </div></details>
+        <p>{defaultMode === "inspect" ? "Check what is inside your image. Nothing is changed unless you choose to clean a copy." : "Choose images to clean automatically. We remove supported AI metadata and apply your choices above for private details and PNG Content Credentials. Image data and copyright stay intact."}</p>
+
       </div>
       <input ref={inputRef} className="visually-hidden" type="file" multiple accept={pngOnly ? "image/png" : "image/jpeg,image/png,image/webp"} aria-label={pngOnly ? "Choose PNG images" : "Choose JPG, PNG, or WebP images"} onChange={(event) => { const list = Array.from(event.target.files ?? []); event.target.value = ""; void addFiles(list); }} />
       <FunnelReview />
