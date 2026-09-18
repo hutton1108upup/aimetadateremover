@@ -10,6 +10,7 @@ const navigation = [
   { href: "/metadata-checker", label: "Metadata Checker" },
   { href: "/remove-metadata-from-png", label: "PNG Remover" },
   { href: "/guides", label: "Guides" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 function isCurrentPath(pathname: string, href: string) {

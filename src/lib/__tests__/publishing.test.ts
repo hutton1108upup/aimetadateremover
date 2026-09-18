@@ -10,11 +10,12 @@ describe("Phase 1 publishing manifest", () => {
       "/remove-metadata-from-png",
       "/guides",
       "/guides/image-metadata-before-publishing",
+      "/pricing",
       "/about",
       "/privacy",
       "/terms",
     ]);
-    expect(publicRoutes.map((route) => route.path)).not.toEqual(expect.arrayContaining(["/workspace", "/pricing", "/ai-image-humanizer", "/remove-ai-look"]));
+    expect(publicRoutes.map((route) => route.path)).not.toEqual(expect.arrayContaining(["/workspace", "/ai-image-humanizer", "/remove-ai-look"]));
     expect(publicRoutes.find((route) => route.path === "/remove-metadata-from-png")?.indexable).toBe(true);
   });
 
