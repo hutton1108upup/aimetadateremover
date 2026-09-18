@@ -9,7 +9,6 @@ const navigation = [
   { href: "/", label: "Metadata Cleaner" },
   { href: "/metadata-checker", label: "Metadata Checker" },
   { href: "/remove-metadata-from-png", label: "PNG Remover" },
-  { href: "/guides", label: "Guides" },
   { href: "/pricing", label: "Pricing" },
 ];
 

@@ -14,6 +14,10 @@ try {
    const response=await page.goto(base+route);await page.waitForLoadState('networkidle');
    check(response.status()===200,route+' status');
    check(await page.locator('h1').count()===1,route+' h1');
+   const policyText=await page.locator('.legal-document').innerText();
+   check(policyText.includes('胡晓成') && policyText.includes('Shenzhen, Guangdong, China'),route+' operator');
+   check(!/draft|awaiting confirmation|must be confirmed|once effective/i.test(policyText),route+' final policy wording');
+   check((await page.locator('.legal-version').innerText()).includes('Effective date:'),route+' effective date');
    check(await page.locator('#contact').count()===1,route+' support region');
    if(route==='/privacy')check((await page.locator('#rights').innerText()).includes('30 calendar days'),'request response deadline');
    if(route==='/terms'){check((await page.locator('#fees').innerText()).includes('USD $4.99 every 30 days'),'subscription billing explanation');check((await page.locator('#breach').innerText()).includes('suspend or terminate'),'breach consequences');}
