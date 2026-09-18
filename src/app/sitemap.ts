@@ -6,8 +6,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return sitemapRoutes.map((path) => ({
     url: new URL(path, siteUrl).toString(),
     lastModified: new Date(
-      ["/privacy", "/terms", "/pricing"].includes(path) ? "2026-09-18" :
-      ["/", "/metadata-checker", "/remove-metadata-from-png", "/guides/image-metadata-before-publishing"].includes(path) ? "2026-09-08" :
+      ["/privacy", "/terms", "/pricing", "/guides", "/guides/image-metadata-before-publishing"].includes(path) ? "2026-09-18" :
+      ["/", "/metadata-checker", "/remove-metadata-from-png"].includes(path) ? "2026-09-08" :
       ["/remove-ai-detection-from-image"].includes(path) ? "2026-09-07" : "2026-09-04"
     ),
     changeFrequency: path === "/" ? "weekly" : "monthly",
