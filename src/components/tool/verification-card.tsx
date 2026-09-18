@@ -3,24 +3,24 @@ import type { VerificationResult } from "@/lib/image-metadata-core/types";
 
 export function VerificationCard({ verification }: { verification: VerificationResult }) {
   const groups = [
-    {label:"Removed",items:verification.items.filter(i=>i.after === "removed")},
-    {label:"Preserved",items:verification.items.filter(i=>i.after === "preserved")},
-    {label:"Unresolved",items:verification.items.filter(i=>!["removed","preserved"].includes(i.after))},
+    { label: "Removed", items: verification.items.filter(item => item.after === "removed") },
+    { label: "Preserved", items: verification.items.filter(item => item.after === "preserved") },
+    { label: "Unresolved", items: verification.items.filter(item => !["removed", "preserved"].includes(item.after)) },
   ];
-  return (
-    <section className="verification-card" aria-label="Verification after cleaning">
-      <h3><CheckCircle2 aria-hidden="true" /> Checked again after cleaning</h3>
-      <div className="verification-summary">{groups.map(group=><div key={group.label}><b>{group.items.length}</b><span>{group.label}</span></div>)}</div>
-      {groups[2].items.length > 0 && <p className="verification-warning">Some metadata still needs review. This copy is not metadata-free.</p>}
-      {groups.map(group=>group.items.length>0 && <div key={group.label} className="verification-group" aria-label={group.label}>{group.items.map((item,index)=><div className="verification-row" key={`${item.label}-${index}`}><span>{item.label}</span><strong>{item.after.replaceAll("_"," ")}</strong></div>)}</div>)}
-      {!verification.items.length && <p>No supported metadata was found. Other metadata may still exist.</p>}
-      <div className="verification-facts">
-        <span>Encoded image data: <b>{verification.encodedPayloadPreserved === true ? "Identical" : "Not verified"}</b></span>
-        {verification.orientationPreserved !== undefined && <span>Orientation kept: <b>{verification.orientationPreserved ? "Yes" : "No"}</b></span>}
-        {verification.dimensionsChanged !== undefined && <span>Image size changed: <b>{verification.dimensionsChanged ? "Yes" : "No"}</b></span>}
-        {verification.iccPreserved !== undefined && <span>ICC profile kept: <b>{verification.iccPreserved ? "Yes" : "No"}</b></span>}
-        {verification.transparencyPreserved !== undefined && <span>Transparency kept: <b>{verification.transparencyPreserved ? "Yes" : "No"}</b></span>}
-      </div>
-    </section>
-  );
+  const preservedImage = [
+    verification.encodedPayloadPreserved === true && "Encoded image data",
+    verification.dimensionsChanged === false && "dimensions",
+    verification.transparencyPreserved === true && "transparency",
+    verification.iccPreserved === true && "color profile",
+    verification.orientationPreserved === true && "orientation",
+  ].filter(Boolean).join(", ");
+  return <section className="verification-card" aria-label="Verification after cleaning">
+    <h3><CheckCircle2 aria-hidden="true" /> Checked again after processing</h3>
+    <dl className="result-summary">
+      {groups.map(group => <div key={group.label}><dt>{group.label}</dt><dd>{group.items.length ? [...new Set(group.items.map(item => item.label))].join(", ") : group.label === "Removed" ? "None — no supported fields were removed" : group.label === "Preserved" ? "No metadata fields retained by the selected policy" : "No unresolved findings in this scan"}</dd></div>)}
+      {preservedImage && <div><dt>Verified</dt><dd>{preservedImage} unchanged. The copy opens successfully.</dd></div>}
+    </dl>
+    {groups[2].items.length > 0 && <p className="verification-warning">Some data remains or could not be verified. Open the details below to review it.</p>}
+    {!verification.items.length && <p>No supported metadata was detected. This does not prove that all metadata is absent.</p>}
+  </section>;
 }

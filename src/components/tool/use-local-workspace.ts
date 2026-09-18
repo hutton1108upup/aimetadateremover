@@ -17,6 +17,7 @@ export interface LocalImage {
 const mime = (scan?: ScanResult) => scan?.format === "jpeg" ? "image/jpeg" : scan?.format === "webp" ? "image/webp" : "image/png";
 const revoke = (url?: string) => { if(url) URL.revokeObjectURL?.(url); };
 const release = (file: LocalImage) => { revoke(file.preview);revoke(file.cleanPreview);releaseBuffer(file.cleaned); };
+export const unchangedResult = (file: LocalImage) => Boolean(file.verification && !file.verification.items.some(item => item.after === "removed") && !unresolvedCount(file.verification));
 export const unresolvedCount = (v: VerificationResult) => v.items.filter(i=>!["removed","preserved"].includes(i.after)).length;
 export function downloadLocal(buffer: BlobPart, name: string, type: string) {
   const url=URL.createObjectURL(new Blob([buffer],{type}));
@@ -30,7 +31,7 @@ function errorMessage(error: unknown) {
   if(code === "verification_failed") return "The output did not pass integrity checks. No download was created.";
   if(code === "decode_failed") return "The cleaned copy could not be decoded. Your original is unchanged.";
   if(code === "processing_timeout") return "Local processing timed out. Try a smaller file.";
-  if(code === "unsupported_exif" || code === "unsupported_thumbnail") return "This EXIF or thumbnail structure is not supported by Privacy Clean. No copy was created.";
+  if(code === "unsupported_exif" || code === "unsupported_thumbnail") return "This EXIF or thumbnail structure cannot be cleaned safely yet. No copy was created.";
   return "This image could not be processed safely. Your original is unchanged.";
 }
 
@@ -54,7 +55,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
     return ()=> { mounted.current=false;tasks.forEach(c=>c.abort());tasks.clear();filesRef.current.forEach(release);filesRef.current=[]; };
   },[]);
 
-  async function addFiles(list:File[],source:"file"|"sample"="file") {
+  async function addFiles(list:File[],source:"file"|"sample"="file",autoPolicy?:CleanPolicy) {
     if(!list.length || !begin()) return;
     const cap=limits();
     let bytes=filesRef.current.reduce((n,f)=>n+f.file.size,0);
@@ -88,6 +89,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
           const preview=scan.properties.width && typeof URL.createObjectURL === "function" ? URL.createObjectURL(item.file) : undefined;
           patch(item.id,{scan,preview,status:"ready_for_action"});
           trackFunnel("scan_success",{source,format:scan.format,size:item.file.size,duration:performance.now()-start});
+          if(autoPolicy && scan.cleanSupport !== "scan_only") await processFile({...item,scan},autoPolicy,controller);
         } catch(error) {
           if(controller.signal.aborted || !present(item.id))return;
           patch(item.id,{status:"unsupported",error:errorMessage(error)});
@@ -95,6 +97,32 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
         } finally {controllers.current.delete(item.id);}
       });
     } finally {finish();}
+  }
+
+  async function processFile(item:LocalImage,policy:CleanPolicy,controller:AbortController) {
+    revoke(item.cleanPreview);releaseBuffer(item.cleaned);delivered.current.delete(item.id);
+    patch(item.id,{cleaned:undefined,cleanPreview:undefined,verification:undefined,error:undefined,status:"cleaning"});
+    const start=performance.now();
+    try {
+      const input=await item.file.arrayBuffer();controller.signal.throwIfAborted();
+      const {clean,verification}=await cleanLocally(input,policy,controller.signal);
+      controller.signal.throwIfAborted();
+      if(!clean.output || verification.encodedPayloadPreserved!==true || verification.orientationPreserved===false || verification.dimensionsChanged===true || (!policy.removeColorProfile && verification.iccPreserved===false) || verification.transparencyPreserved===false) throw Object.assign(new Error(),{code:"verification_failed"});
+      patch(item.id,{status:"verifying"});
+      try { await validateBrowserImage(clean.output,mime(item.scan)); }catch{throw Object.assign(new Error(),{code:"decode_failed"});}
+      controller.signal.throwIfAborted();if(!present(item.id))return;
+      const cleanPreview=typeof URL.createObjectURL==="function" ? URL.createObjectURL(new Blob([clean.output],{type:mime(item.scan)})):undefined;
+      patch(item.id,{cleaned:clean.output,verification,cleanPreview,status:"ready"});
+      const fields={source:item.source,format:item.scan!.format,mode:policy.mode,duration:performance.now()-start};
+      trackFunnel("clean_success",fields);
+      trackFunnel(unresolvedCount(verification)?"verify_review":"verify_success",fields);
+      return true;
+    }catch(error){
+      if(controller.signal.aborted || !present(item.id))return;
+      patch(item.id,{status:"failed",error:errorMessage(error)});
+      trackFunnel("clean_failed",{source:item.source,format:item.scan?.format,mode:policy.mode,error:(error as {code?:string}).code??"processing_failed"});
+    }
+    return false;
   }
 
   async function cleanFiles(ids:string[],policy:CleanPolicy) {
@@ -105,27 +133,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
       await mapWithConcurrency(selected,limits().concurrency,async item=>{
         if(!present(item.id))return;
         const controller=new AbortController();controllers.current.set(item.id,controller);
-        revoke(item.cleanPreview);releaseBuffer(item.cleaned);delivered.current.delete(item.id);
-        patch(item.id,{cleaned:undefined,cleanPreview:undefined,verification:undefined,error:undefined,status:"cleaning"});
-        const start=performance.now();
-        try {
-          const input=await item.file.arrayBuffer();controller.signal.throwIfAborted();
-          const {clean,verification}=await cleanLocally(input,{...policy,removeC2pa:policy.removeC2pa && item.scan?.format==="png"},controller.signal);
-          controller.signal.throwIfAborted();
-          if(!clean.output || verification.encodedPayloadPreserved!==true || verification.orientationPreserved===false || verification.dimensionsChanged===true || (!policy.removeColorProfile && verification.iccPreserved===false) || verification.transparencyPreserved===false) throw Object.assign(new Error(),{code:"verification_failed"});
-          patch(item.id,{status:"verifying"});
-          try { await validateBrowserImage(clean.output,mime(item.scan)); }catch{throw Object.assign(new Error(),{code:"decode_failed"});}
-          controller.signal.throwIfAborted();if(!present(item.id))return;
-          const cleanPreview=typeof URL.createObjectURL==="function" ? URL.createObjectURL(new Blob([clean.output],{type:mime(item.scan)})):undefined;
-          patch(item.id,{cleaned:clean.output,verification,cleanPreview,status:"ready"});completed++;
-          const fields={source:item.source,format:item.scan!.format,mode:policy.mode,duration:performance.now()-start};
-          trackFunnel("clean_success",fields);
-          trackFunnel(unresolvedCount(verification)?"verify_review":"verify_success",fields);
-        }catch(error){
-          if(controller.signal.aborted || !present(item.id))return;
-          patch(item.id,{status:"failed",error:errorMessage(error)});
-          trackFunnel("clean_failed",{source:item.source,format:item.scan?.format,mode:policy.mode,error:(error as {code?:string}).code??"processing_failed"});
-        }finally{controllers.current.delete(item.id);}
+        try { if(await processFile(item,policy,controller)) completed++; }finally{controllers.current.delete(item.id);}
       });
       if(mounted.current) setNotice(`${completed} of ${selected.length} supported file(s) ready to download. ${ids.length-selected.length} scan-only or unreadable file(s) skipped.`);
       return completed>0;
@@ -148,7 +156,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
     try {
       const zip=new JSZip();
       // Index prefixes prevent duplicate filenames from overwriting ZIP entries.
-      selected.forEach((f,i)=>zip.file(`${String(i+1).padStart(2,"0")}-clean-${f.file.name.replace(/[\\/]/g,"_")}`,f.cleaned!));
+      selected.forEach((f,i)=>zip.file(`${String(i+1).padStart(2,"0")}-${unchangedResult(f) ? "original" : "clean"}-${f.file.name.replace(/[\\/]/g,"_")}`,unchangedResult(f) ? f.file.arrayBuffer() : f.cleaned!));
       const blob=await zip.generateAsync({type:"blob",compression:"STORE",streamFiles:true});
       if(!mounted.current || selected.some(f=>!present(f.id)))return;
       downloadLocal(blob,"clean-images.zip","application/zip");selected.forEach(f=>recordDownload(f,"zip"));

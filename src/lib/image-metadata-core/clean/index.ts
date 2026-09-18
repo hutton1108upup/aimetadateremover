@@ -12,6 +12,7 @@ function selected(finding: Finding, policy: CleanPolicy) {
   if (finding.category === "structure" || finding.category === "camera") return false;
   if (policy.mode === "ai_workflow") return finding.category === "ai_workflow";
   if (policy.mode === "privacy") return finding.category === "location";
+  if (policy.mode === "publish") return finding.category === "ai_workflow" || finding.category === "location";
   return true;
 }
 

@@ -4,7 +4,7 @@ import { deflateSync } from "node:zlib";
 import JSZip from "jszip";
 
 const base=process.env.BASE_URL ?? "http://127.0.0.1:3173";
-const dir="artifacts/phase1-review";await mkdir(dir,{recursive:true});
+const dir="artifacts/automatic-workflow-review";await mkdir(dir,{recursive:true});
 const enc=s=>Buffer.from(s);
 const table=Uint32Array.from({length:256},(_,i)=>{for(let b=0;b<8;b++)i=(i>>>1)^((i&1)?0xedb88320:0);return i>>>0;});
 function crc(bytes){let c=0xffffffff;for(const b of bytes)c=table[(c^b)&255]^(c>>>8);return (c^0xffffffff)>>>0;}
@@ -58,12 +58,10 @@ try {
       await input.setInputFiles(Array.from({length:count},()=>({name:`${marker}.png`,mimeType:"image/png",buffer:sample})));
       await expect(page.locator('.batch-toolbar')).toContainText(`${count} files`);
       await expect.poll(()=>page.evaluate(()=>window.__qa.workers.size)).toBe(0);
-      await page.getByRole("tab",{name:"clean",exact:true}).click();
-      await page.getByRole("button",{name:"Clean all supported files"}).click();
       await expect(page.locator('.batch-toolbar')).toContainText(`${count} ready to download`,{timeout:120_000});
       await expect(page.getByRole("button",{name:"Download clean copy"})).toBeVisible();
       if(cycle===0) {
-        const downloading=page.waitForEvent("download");await page.getByRole("button",{name:"Download clean ZIP"}).click();
+        const downloading=page.waitForEvent("download");await page.getByRole("button",{name:"Download completed images (ZIP)"}).click();
         const download=await downloading;const zip=await JSZip.loadAsync(await readFile(await download.path()));
         expect(Object.keys(zip.files)).toHaveLength(count);
         for(const file of Object.values(zip.files)){const data=await file.async("nodebuffer");expect(data.includes(enc(marker))).toBe(false);expect(parts(data).find(c=>c.type==="IDAT").bytes.equals(parts(sample).find(c=>c.type==="IDAT").bytes)).toBe(true);}
@@ -73,7 +71,9 @@ try {
         // Reprocessing must replace an output URL, not accumulate previews.
         await expect.poll(()=>page.evaluate(()=>window.__qa.urls.size)).toBe(count*2);
         for(let repeat=0;repeat<3;repeat++){
-          await page.getByRole("tab",{name:"clean",exact:true}).click();await page.getByRole("button",{name:"Create clean copy",exact:true}).click();await expect(page.getByRole("button",{name:"Download clean copy"})).toBeVisible();
+          await page.locator('.clean-settings').evaluate(el => {el.open=true;});
+          await page.getByRole("checkbox",{name:/Keep Content Credentials/}).setChecked(repeat % 2 === 0);
+          await expect(page.getByRole("button",{name:"Download clean copy"})).toBeEnabled();
           expect(await page.evaluate(()=>window.__qa.urls.size)).toBe(count*2);
         }
       }
@@ -100,8 +100,6 @@ try {
     for(const big of [false,true]) {
       const original=png([chunk("eXIf",exif(big))]);
       await input.setInputFiles({name:"privacy.png",mimeType:"image/png",buffer:original});
-      await page.getByRole("tab",{name:"clean",exact:true}).click();await page.getByRole("radio",{name:/Privacy Clean/}).check();
-      await page.getByRole("button",{name:"Create clean copy",exact:true}).click();
       const downloading=page.waitForEvent("download");await page.getByRole("button",{name:"Download clean copy"}).click();
       const data=await readFile(await (await downloading).path());for(const secret of ["SECRET-ID","MAKER-SECRET","THUMB-SECRET"])expect(data.includes(enc(secret))).toBe(false);
       expect(data.includes(enc("COPYRIGHT"))).toBe(true);
@@ -114,7 +112,6 @@ try {
     const app1=Buffer.concat([enc("Exif\0\0"),exif()]);const segment=Buffer.alloc(4);segment[0]=255;segment[1]=225;segment.writeUInt16BE(app1.length+2,2);
     const privateJpeg=Buffer.concat([jpeg.subarray(0,2),segment,app1,jpeg.subarray(2)]);
     await input.setInputFiles({name:"portrait.jpg",mimeType:"image/jpeg",buffer:privateJpeg});
-    await page.getByRole("tab",{name:"clean",exact:true}).click();await page.getByRole("radio",{name:/Privacy Clean/}).check();await page.getByRole("button",{name:"Create clean copy",exact:true}).click();
     const jpgDownload=page.waitForEvent("download");await page.getByRole("button",{name:"Download clean copy"}).click();
     const jpgOut=await readFile(await (await jpgDownload).path());for(const s of ["SECRET-ID","MAKER-SECRET","THUMB-SECRET"])expect(jpgOut.includes(enc(s))).toBe(false);
     expect(jpgOut.subarray(2+segment.length+app1.length).equals(jpeg.subarray(2))).toBe(true);
@@ -123,9 +120,8 @@ try {
 
     const webp=Buffer.from(await page.evaluate(()=>{const c=document.createElement("canvas");c.width=32;c.height=32;return c.toDataURL("image/webp").split(",")[1];}),"base64");
     await input.setInputFiles([{name:"allowed.png",mimeType:"image/png",buffer:sample},{name:"scan.webp",mimeType:"image/webp",buffer:webp}]);
-    await page.getByRole("tab",{name:"clean",exact:true}).click();await page.getByRole("button",{name:"Clean all supported files"}).click();
     await expect(page.locator('.batch-toolbar')).toContainText("1 ready to download");
-    await expect(page.locator('.batch-notice').first()).toContainText("1 scan-only or unreadable");
+    await expect(page.locator('.batch-toolbar')).toContainText("1 inspection only");
     await page.getByRole("button",{name:"Clear queue"}).click();
     check(`${mobile?"mobile":"desktop"} mixed WebP batch skips unsupported cleaning`);
 
@@ -141,10 +137,6 @@ try {
     const padding=chunk("vpAg",Buffer.alloc(Math.floor((mobile?9.5:6.5)*1024*1024),17));
     const large=png([workflow,padding]);const largePath=`${dir}/${mobile?"mobile":"desktop"}-large.png`;await writeFile(largePath,large);
     await input.setInputFiles(Array(count).fill(largePath));
-    await page.getByRole("tab",{name:"clean",exact:true}).click();
-    await expect(page.getByRole("button",{name:"Clean all supported files"})).toBeEnabled({timeout:120_000});
-    await page.getByRole("radio",{name:/AI Workflow Clean/}).check();
-    await page.getByRole("button",{name:"Clean all supported files"}).click();
     await expect(page.locator('.batch-toolbar')).toContainText(`${count} ready to download`,{timeout:240_000});
     await memory("large-batch-ready");
     await page.getByRole("button",{name:"Clear queue"}).click();
