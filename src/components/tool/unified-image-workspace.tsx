@@ -9,6 +9,7 @@ import { downloadLocal as download, useLocalWorkspace, type LocalImage, unresolv
 import { FindingRow } from "./finding-row";
 import { VerificationCard } from "./verification-card";
 import { FunnelReview } from "./funnel-review";
+import { FeedbackButton } from "@/components/feedback/feedback-button";
 
 
 const safeSampleBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAApdEVYdHBhcmFtZXRlcnMAc3RlcHM9MzAgc2VlZD00MiBzYW1wbGVyPWV1bGVyj/t2VgAAAABJRU5ErkJggg==";
@@ -140,12 +141,12 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
               <div className="action-panel">
                 <div aria-live="polite" className="sr-status">{active.error ?? fileStatus(active)}</div>
                 {activeProcessing && <div className="processing-result" role="status"><ScanSearch aria-hidden="true" /><h3>{active.status === "cleaning" ? "Cleaning your copy…" : active.status === "verifying" ? "Verifying your copy…" : "Checking your image…"}</h3><p>{defaultMode === "clean" ? "Check → Clean → Verify. Your download will appear automatically." : "Reading supported metadata locally. Your file stays unchanged."}</p></div>}
-                {active.error && <div className="error-banner" role="alert"><b>Could not process this image</b><p>{active.error}</p></div>}
+                {active.error && <div className="error-banner" role="alert"><b>Could not process this image</b><p>{active.error}</p><FeedbackButton /></div>}
                 {!activeProcessing && active.scan && !active.error && <div className="panel-stack">
                   {active.verification ? <>
                     <div className="result-heading"><ShieldCheck aria-hidden="true" /><h3>{unresolvedCount(active.verification) ? "Partially cleaned — review remaining data" : unchanged ? "No supported data needed cleaning" : "Cleaning complete"}</h3></div>
                     {unchanged && <p className="panel-intro">No supported fields were removed. Download your unchanged original, or inspect another image.</p>}
-                    <button className="button primary wide download-result" disabled={busy} onClick={() => unchanged ? download(active.file, active.file.name, active.file.type) : downloadOne(active)}><Download aria-hidden="true" />{unchanged ? "Download original" : "Download clean copy"}</button>
+                    <button className="button primary wide download-result" disabled={busy} onClick={() => downloadOne(active)}><Download aria-hidden="true" />{unchanged ? "Download original" : "Download clean copy"}</button>
                     <VerificationCard verification={active.verification} />
                   </> : <>
                     <div className="result-strip"><span>{active.scan.findings.length} metadata finding{active.scan.findings.length === 1 ? "" : "s"}</span><b>{active.scan.cleanSupport === "scan_only" ? "Inspection only" : "Scan complete"}</b></div>
