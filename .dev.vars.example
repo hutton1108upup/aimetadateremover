@@ -5,3 +5,12 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 # Google Authorized redirect URI:
 # http://localhost:3180/api/auth/callback/google
+
+# Optional feedback notification delivery. The form saves to D1 even when these are blank.
+# Both the website Worker and wrangler.feedback.jsonc Worker need the same mail settings.
+# FEEDBACK_TO defaults to support@aimetadateremover.pro when omitted.
+RESEND_API_KEY=
+FEEDBACK_FROM=
+FEEDBACK_TO=support@aimetadateremover.pro
+# Random server-only anti-abuse secret; falls back to AUTH_SECRET if already configured.
+FEEDBACK_RATE_SECRET=

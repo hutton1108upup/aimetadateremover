@@ -7,6 +7,7 @@ import { mapWithConcurrency } from "@/lib/concurrency";
 import { cleanLocally, scanLocally, validateBrowserImage } from "@/lib/local-processor";
 import { trackFunnel } from "@/lib/funnel";
 import { releaseBuffer } from "@/lib/release-buffer";
+import { setFeedbackProcessing } from "@/lib/feedback/client";
 import type { CleanPolicy, FileStage, ScanResult, VerificationResult } from "@/lib/image-metadata-core/types";
 
 export interface LocalImage {
@@ -43,16 +44,18 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
   const mounted=useRef(true), locked=useRef(false);
   const controllers=useRef(new Map<string,AbortController>());
   const delivered=useRef(new Set<string>());
+  const processingId=useRef(Symbol("workspace"));
   const limits=()=>getBatchLimits(typeof window==="undefined"?1440:window.innerWidth);
   function commit(next:LocalImage[]) { if(!mounted.current)return;filesRef.current=next;setFiles(next); }
   function patch(id:string,change:Partial<LocalImage>) { commit(filesRef.current.map(f=>f.id===id?{...f,...change}:f)); }
   function present(id:string) { return mounted.current && filesRef.current.some(f=>f.id===id); }
-  function begin() { if(locked.current)return false;locked.current=true;setBusy(true);setNotice("");return true; }
-  function finish() { locked.current=false;if(mounted.current)setBusy(false); }
+  function begin() { if(locked.current)return false;locked.current=true;setFeedbackProcessing(processingId.current,true);setBusy(true);setNotice("");return true; }
+  function finish() { locked.current=false;setFeedbackProcessing(processingId.current,false);if(mounted.current)setBusy(false); }
   useEffect(()=>{
     mounted.current=true;
     const tasks=controllers.current;
-    return ()=> { mounted.current=false;tasks.forEach(c=>c.abort());tasks.clear();filesRef.current.forEach(release);filesRef.current=[]; };
+    const feedbackId=processingId.current;
+    return ()=> { mounted.current=false;setFeedbackProcessing(feedbackId,false);tasks.forEach(c=>c.abort());tasks.clear();filesRef.current.forEach(release);filesRef.current=[]; };
   },[]);
 
   async function addFiles(list:File[],source:"file"|"sample"="file",autoPolicy?:CleanPolicy) {
@@ -149,7 +152,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
     if(delivered.current.has(item.id))return;delivered.current.add(item.id);
     trackFunnel("download",{source:item.source,format:item.scan?.format,result:item.verification && !unresolvedCount(item.verification)?"verified":"review_needed",delivery});
   }
-  function downloadOne(item:LocalImage) {if(!item.cleaned || busy)return;downloadLocal(item.cleaned,`clean-${item.file.name}`,mime(item.scan));recordDownload(item,"single");}
+  function downloadOne(item:LocalImage) {if(!item.cleaned || busy)return;const unchanged=unchangedResult(item);downloadLocal(unchanged?item.file:item.cleaned,unchanged?item.file.name:`clean-${item.file.name}`,mime(item.scan));recordDownload(item,"single");}
   async function downloadZip() {
     if(!begin())return;
     const selected=filesRef.current.filter(f=>f.cleaned && f.verification);
