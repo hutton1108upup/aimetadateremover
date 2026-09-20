@@ -6,7 +6,7 @@
 - 原工作台没有刷新，示例图片和清理结果仍保留。
 - 当前主干为 `ee36205`，本分支以它为基线；68 项测试、lint、类型检查、新的 Next/OpenNext 构建和 Wrangler dry-run 已通过。构建产物 1301 个文件中未发现本地 AUTH_SECRET 或 Google Client Secret。
 - 用户已授权将登录功能部署上线，支付继续排除。生产 D1 `aimetadateremover-auth` 已创建，四张认证表迁移成功，三项 Worker secrets 已配置；**新代码尚未部署**。
-- 已完成：用户明确确认正式域名 `https://aimetadateremover.pro` 及 Google 生产回调 `https://aimetadateremover.pro/api/auth/callback/google` 后，已保存到现有客户端，Google 显示“OAuth 客户端已保存”。本地来源更正为 `http://localhost:3180`，本地回调保留。
+- 生产域名迁移目标为 `https://aimetadataremover.pro`，对应 Google 生产回调为 `https://aimetadataremover.pro/api/auth/callback/google`。切换前须先把新来源与精确回调加入现有客户端，并暂时保留旧域名回调作为回滚通道。本地来源仍为 `http://localhost:3180`，本地回调不变。
 - 账号已核实：线上账号 ID 为 `7fd7ed1128ca3d125feaa279f4d4c547`，Worker 为 `aimetadateremover`。项目内 `.wrangler/prod-config` 的 Wrangler OAuth 已获用户授权，全局其他项目的登录保持不变。
 
 下方早期“无凭据”“不部署”等描述是各次验收时的历史记录，以本节当前状态为准。
@@ -36,7 +36,7 @@
 
 ## 生产配置
 
-`wrangler.jsonc` 的 AUTH_BASE_URL 为 `https://aimetadateremover.pro`；本地 `.dev.vars` 用 `http://localhost:3180` 覆盖它。生产 AUTH_SECRET 与本地密钥不同，Google Client ID / Secret 和生产 AUTH_SECRET 均通过 Worker secrets 注入，不能使用 `NEXT_PUBLIC_*`。本地恢复副本 `.dev.vars.production` 被 Git 及 WSL 构建排除，不要提交。
+`wrangler.jsonc` 的 AUTH_BASE_URL 为 `https://aimetadataremover.pro`；本地 `.dev.vars` 用 `http://localhost:3180` 覆盖它。生产 AUTH_SECRET 与本地密钥不同，Google Client ID / Secret 和生产 AUTH_SECRET 均通过 Worker secrets 注入，不能使用 `NEXT_PUBLIC_*`。本地恢复副本 `.dev.vars.production` 被 Git 及 WSL 构建排除，不要提交。
 
 生产迁移只针对明确授权的账号执行：`wrangler d1 migrations apply AUTH_DB --remote`。本地继续使用 `npm run db:migrate:local`。项目专用 CLI 授权需在当前终端设置 `$env:XDG_CONFIG_HOME=Join-Path $PWD '.wrangler/prod-config'`。
 

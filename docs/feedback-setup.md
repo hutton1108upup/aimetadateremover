@@ -13,7 +13,7 @@
 
 ## 收件邮箱与发信服务
 
-`support@aimetadateremover.pro` 可以继续收问卷邮件。发信服务是“替网站自动寄信”的渠道，不需要更换收件邮箱。Cloudflare Email Routing 的收信转发不能替代网站发信。
+`support@aimetadataremover.pro` 是新站公开客服邮箱；迁移期间继续保留 `support@aimetadateremover.pro` 转发，以接住旧页面、旧外链和历史邮件。发信服务是“替网站自动寄信”的渠道，Cloudflare Email Routing 的收信转发不能替代网站发信。
 
 代码使用 Resend HTTPS 接口，不新增 SDK。当前密钥未配置时，反馈仍保存到本地 D1，等待配置后投递；绝不会伪造邮件成功。生产发布必须先配好下述两个 Worker 的邮件设置并验证收件。
 
@@ -44,7 +44,7 @@ npm.cmd run dev -- --hostname 127.0.0.1 --port 3186
 ```dotenv
 RESEND_API_KEY=填写你的真实发信密钥
 FEEDBACK_FROM=填写已通过Resend验证的发信地址
-FEEDBACK_TO=support@aimetadateremover.pro
+FEEDBACK_TO=support@aimetadataremover.pro
 FEEDBACK_RATE_SECRET=填写随机服务器端密钥
 ```
 
