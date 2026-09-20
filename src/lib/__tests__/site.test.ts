@@ -7,7 +7,7 @@ describe("public SEO origins", () => {
   it("defaults to the public origin and rejects misconfigured production origins", () => {
     expect(resolveSiteUrl("", true)).toBe(productionOrigin);
     expect(resolveSiteUrl(`${productionOrigin}/`, true)).toBe(productionOrigin);
-    for (const value of ["http://localhost:3000", "https://preview.example.com", `${productionOrigin}/path`, `${productionOrigin}?q=1`, "https://user:pass@aimetadateremover.pro"]) {
+    for (const value of ["http://localhost:3000", "https://preview.example.com", "https://aimetadateremover.pro", `${productionOrigin}/path`, `${productionOrigin}?q=1`, "https://user:pass@aimetadataremover.pro"]) {
       expect(() => resolveSiteUrl(value, true)).toThrow();
     }
     expect(resolveSiteUrl("http://localhost:3217", false)).toBe("http://localhost:3217");

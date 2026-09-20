@@ -2,7 +2,7 @@
 
 ImageFinisher is a local-first image metadata workbench built with Next.js. It helps users inspect supported JPEG, PNG, and WebP metadata, remove supported AI workflow fields from a new copy, rescan the output, and download an evidence-backed result without uploading the image.
 
-`ImageFinisher` is a working product name. The configured production origin is `https://aimetadateremover.pro`; the PRD does not lock a final brand name.
+`ImageFinisher` is a working product name. The configured production origin is `https://aimetadataremover.pro`; the PRD does not lock a final brand name.
 
 ## Current scope
 
