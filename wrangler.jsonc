@@ -2,7 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "aimetadateremover",
   "account_id": "7fd7ed1128ca3d125feaa279f4d4c547",
-  "main": ".open-next/worker.js",
+  "main": "worker.mjs",
   "compatibility_date": "2026-09-06",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
@@ -25,5 +25,6 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "triggers": { "crons": ["*/5 * * * *"] }
 }

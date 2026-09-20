@@ -3,6 +3,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FeedbackForm } from "../feedback-form";
 afterEach(() => vi.unstubAllGlobals());
 describe("optional feedback form", () => {
+  it("keeps all answers and displays a support reference on server failure", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, json: async () => ({ error: "We could not save your feedback right now.", reference: "184c4afa-e688-4c86-a97a-24ebb50afa5c" }) })));
+    render(<FeedbackForm trigger="manual" path="/feedback" />);
+    fireEvent.change(screen.getByLabelText(/What are you hoping/), { target: { value: "My actual task" } });
+    fireEvent.change(screen.getByLabelText("Age range"), { target: { value: "18–24" } });
+    fireEvent.change(screen.getByLabelText("Occupation or main role"), { target: { value: "designer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Submit feedback" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("184c4afa-e688-4c86-a97a-24ebb50afa5c");
+    expect(screen.getByLabelText(/What are you hoping/)).toHaveValue("My actual task");
+    expect(screen.getByLabelText("Age range")).toHaveValue("18–24");
+  });
   it("rejects an empty form without sending, but accepts occupation alone", async () => {
     const fetcher = vi.fn(async (_url: string, init: RequestInit) => ({ ok: true, json: async () => ({ received: true, id: JSON.parse(String(init.body)).id }) }));
     vi.stubGlobal("fetch", fetcher);

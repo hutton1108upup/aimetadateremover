@@ -1,5 +1,6 @@
 import { occupations, outcomes, parseSubmission, validEmail, type FeedbackSubmission } from "./model";
 import { supportEmail } from "../contact";
+import { classifyStorageFailure, feedbackFailure } from "./diagnostics";
 
 export interface FeedbackEnvironment {
   AUTH_DB: D1Database;
@@ -60,7 +61,7 @@ export async function submitFeedback(request: Request, env: FeedbackEnvironment)
   }
   const local = loopback.has(url.hostname);
   const secret = env.FEEDBACK_RATE_SECRET || env.AUTH_SECRET || (local ? "local-feedback-only" : "");
-  if (!env.AUTH_DB || !secret) return response({ error: "Feedback is temporarily unavailable. Your answers have not been submitted. Please try again later." }, 503);
+  if (!env.AUTH_DB || !secret) return feedbackFailure("FEEDBACK_RUNTIME_UNAVAILABLE", request);
   try {
     const db = env.AUTH_DB.withSession("first-primary");
     const now = Date.now(), payload = JSON.stringify(submission), hash = await digest(payload);
@@ -80,9 +81,8 @@ export async function submitFeedback(request: Request, env: FeedbackEnvironment)
       return response({ error: "We have received several responses recently. Please try again in an hour." }, 429);
     }
     return response({ id: submission.id, received: true }, 201);
-  } catch {
-    console.error("feedback_storage_unavailable");
-    return response({ error: "We could not save your feedback. Your answers are still here. Please try again." }, 503);
+  } catch (error) {
+    return feedbackFailure(classifyStorageFailure(error), request);
   }
 }
 
@@ -103,8 +103,11 @@ export function feedbackEmail(submission: FeedbackSubmission, createdAt: number)
 }
 
 // Also called by a scheduled Worker: retries do not depend on the visitor staying online.
+export function feedbackMailConfigured(env: FeedbackEnvironment): boolean {
+  return Boolean(env.RESEND_API_KEY?.trim() && env.FEEDBACK_FROM && validEmail(env.FEEDBACK_FROM) && validEmail(env.FEEDBACK_TO || supportEmail));
+}
 export async function deliverFeedback(env: FeedbackEnvironment, max = 1, send: typeof fetch = fetch) {
-  if (!env.RESEND_API_KEY || !env.FEEDBACK_FROM || !validEmail(env.FEEDBACK_TO || supportEmail)) return { sent: 0, configured: false };
+  if (!feedbackMailConfigured(env)) return { sent: 0, configured: false };
   let sent = 0;
   for (let i = 0; i < max; i++) {
     const now = Date.now();
