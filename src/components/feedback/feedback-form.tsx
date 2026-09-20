@@ -35,8 +35,11 @@ export function FeedbackForm({ trigger, path, onSaved }: { trigger: FeedbackTrig
     locked.current = true; setSending(true); setError("");
     try {
       const result = await fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, id: id.current }), signal: AbortSignal.timeout(15000) });
-      const data = await result.json() as { error?: string; received?: boolean; id?: string };
-      if (!result.ok || !data.received || data.id !== id.current) throw new Error(data.error || "We could not save your feedback. Please try again.");
+      const data = await result.json() as { error?: string; received?: boolean; id?: string; reference?: string };
+      if (!result.ok || !data.received || data.id !== id.current) {
+        const reference = typeof data.reference === "string" && /^[0-9a-f-]{36}$/i.test(data.reference) ? ` Reference: ${data.reference}` : "";
+        throw new Error((data.error || "We could not save your feedback. Please try again.") + reference);
+      }
       markFeedbackSubmitted(); setReceipt(data.id); onSaved?.();
     } catch (cause) {
       setError(cause instanceof Error && !["TimeoutError", "AbortError", "TypeError"].includes(cause.name) ? cause.message : "We could not confirm your submission. Your answers are still here. Please try again.");

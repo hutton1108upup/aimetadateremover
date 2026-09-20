@@ -14,6 +14,12 @@ const payload = extra => ({ id: randomUUID(), version: "needs-v1", trigger: "man
 const submit = (data, headers = {}, path = "/submit") => call(path, { method: "POST", headers: { origin: base, "content-type": "application/json", "cf-connecting-ip": "192.0.2.1", ...headers }, body: JSON.stringify(data) });
 try {
   const db = await mf.getD1Database("AUTH_DB");
+  const notMigrated = await submit(payload({ need: "Schema failure regression" }));
+  const failure = await notMigrated.json();
+  assert.equal(notMigrated.status, 503);
+  assert.equal(failure.code, "FEEDBACK_SCHEMA_MISSING");
+  assert.match(failure.reference, /^[0-9a-f-]{36}$/);
+  pass("unmigrated real D1 returns a safe diagnostic reference and distinct schema code");
   const sql = await readFile("migrations/0002_feedback.sql", "utf8");
   await db.batch(sql.split(";").map(s => s.trim()).filter(Boolean).map(s => db.prepare(s)));
   const data = payload({ occupation: "designer" });
