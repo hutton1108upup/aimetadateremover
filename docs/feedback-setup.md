@@ -4,15 +4,15 @@
 
 2026-09-20 已在 Cloudflare 控制台补齐线上 `feedback_submission` 表和索引。用户原先失败的线上表单已提交成功，反馈编号为 `184c4afa-e688-4c86-a97a-24ebb50afa5c`，邮件状态为 `pending`。这证明保存成功，不代表邮件送达。
 
-当前 Cloudflare 控制台要求 Workers Paid 才能开启 Email Sending。为避免购买套餐，继续使用已接入的 Resend，收件地址保持 `support@aimetadateremover.pro`。不改已有 Cloudflare Email Routing。免费额度以 [Resend 官网](https://resend.com/pricing) 为准。
+当前 Cloudflare 控制台要求 Workers Paid 才能开启 Email Sending。为避免购买套餐，继续使用已接入的 Resend，收件地址保持 `support@aimetadataremover.pro`。不改已有 Cloudflare Email Routing。免费额度以 [Resend 官网](https://resend.com/pricing) 为准。
 
 重试和清理现已合并到网站 Worker：`worker.mjs` 保留 OpenNext 页面/API，并每 5 分钟执行反馈维护。无需再单独部署 `aimetadateremover-feedback-delivery`。原独立配置已移除；如其他人曾部署旧 Worker，需要先核实再停用，避免两套维护任务长期共存。
 
 ## 一次性开通邮件
 
 1. 打开 [Resend](https://resend.com/)，登录或注册运营者自己的账号。网站访问者不需要 Google 登录。
-2. 进入 **Domains → Add Domain**，填写 `notify.aimetadateremover.pro`。这是发信子域名，不需要购买新域名。
-3. Resend 给出 DNS 记录后，打开 Cloudflare → `aimetadateremover.pro` → **DNS → Records → Add record**，按它实际显示的类型、Name、Content/Value 添加。值从自己的 Resend 页面复制；保留根域名现有 MX 和 Email Routing。
+2. 进入 **Domains → Add Domain**，填写 `notify.aimetadataremover.pro`。这是发信子域名，不需要购买新域名。
+3. Resend 给出 DNS 记录后，打开 Cloudflare → `aimetadataremover.pro` → **DNS → Records → Add record**，按它实际显示的类型、Name、Content/Value 添加。值从自己的 Resend 页面复制；保留根域名现有 MX 和 Email Routing。
 4. 回 Resend 验证，看到域名 **Verified** 才算完成。仅使用发送能力，不开启接收邮件或打开/点击追踪。
 5. 进入 **API Keys → Create API key**，创建仅发送、限于该域名的密钥。不要发在聊天中或提交 GitHub。
 6. Cloudflare → **Compute → Workers & Pages → aimetadateremover → Settings → Variables and Secrets**，把下面三项添加为 **Secret** 并保存部署：
@@ -20,8 +20,8 @@
 | 名称 | 值 |
 | --- | --- |
 | `RESEND_API_KEY` | 刚创建的 Resend 密钥 |
-| `FEEDBACK_FROM` | `feedback@notify.aimetadateremover.pro` |
-| `FEEDBACK_TO` | `support@aimetadateremover.pro` |
+| `FEEDBACK_FROM` | `feedback@notify.aimetadataremover.pro` |
+| `FEEDBACK_TO` | `support@aimetadataremover.pro` |
 
 保留 `AUTH_SECRET`、Google 登录设置和数据库绑定。防刷摘要可复用既有 `AUTH_SECRET`，不要求用户登录。若独立设置 `FEEDBACK_RATE_SECRET`，使用随机服务器端密钥。
 
@@ -70,7 +70,7 @@ npm.cmd run feedback:check -- --remote
 
 ## 发布后验收
 
-1. 打开 **线上** `https://aimetadateremover.pro/feedback`，未登录状态提交测试反馈。
+1. 打开 **线上** `https://aimetadataremover.pro/feedback`，未登录状态提交测试反馈。
 2. 页面显示收到反馈及 Reference 后，在 D1 控制台核对记录：
 
 ```sql
@@ -93,3 +93,7 @@ WHERE id='替换为页面显示的反馈编号';
 - 定时任务清理数据库中超过 90 天的反馈；邮箱副本由运营者单独管理。
 
 参考：[Resend 域名验证](https://resend.com/docs/dashboard/domains/introduction)、[OpenNext 自定义 Worker](https://opennext.js.org/cloudflare/howtos/custom-worker)。
+
+## 域名迁移兼容
+
+新站公开客服邮箱是 support@aimetadataremover.pro。迁移期间保留 support@aimetadateremover.pro 的转发。若 Resend 已验证的是旧发信子域名，FEEDBACK_FROM 可暂时继续使用该已验证地址；不要只为更正网站域名而修改尚未验证的新发件地址。实际发送和收件地址以线上 Secret 配置及收件验证为准。

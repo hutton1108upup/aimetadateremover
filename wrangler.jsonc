@@ -6,7 +6,7 @@
   "compatibility_date": "2026-09-06",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "AUTH_BASE_URL": "https://aimetadateremover.pro"
+    "AUTH_BASE_URL": "https://aimetadataremover.pro"
   },
   "d1_databases": [
     {

@@ -8,10 +8,10 @@ GOOGLE_CLIENT_SECRET=
 
 # Optional feedback notification delivery. The form saves to D1 even when these are blank.
 # Website requests and the scheduled mail worker share the same deployment/settings.
-# FEEDBACK_TO defaults to support@aimetadateremover.pro when omitted.
+# FEEDBACK_TO defaults to support@aimetadataremover.pro when omitted.
 RESEND_API_KEY=
-# After verifying notify.aimetadateremover.pro in Resend:
-FEEDBACK_FROM=feedback@notify.aimetadateremover.pro
-FEEDBACK_TO=support@aimetadateremover.pro
+# After verifying notify.aimetadataremover.pro in Resend:
+FEEDBACK_FROM=feedback@notify.aimetadataremover.pro
+FEEDBACK_TO=support@aimetadataremover.pro
 # Random server-only anti-abuse secret; falls back to AUTH_SECRET if already configured.
 FEEDBACK_RATE_SECRET=

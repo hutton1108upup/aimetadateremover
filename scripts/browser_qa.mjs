@@ -63,7 +63,7 @@ try {
     requireCondition(await page.getByRole("heading", { name: heading, exact: true }).first().isVisible(), `${path} is missing its expected H1`);
     requireCondition(await page.locator("h1").count() === 1, `${path} needs exactly one H1`);
     if (path !== "/workspace") {
-      const expected = `https://aimetadateremover.pro${path}`;
+      const expected = `https://aimetadataremover.pro${path}`;
       requireCondition(new URL(await page.locator('link[rel="canonical"]').getAttribute("href")).href === expected, `${path} has the wrong canonical`);
       requireCondition(new URL(await page.locator('meta[property="og:url"]').getAttribute("content")).href === expected, `${path} has the wrong OG URL`);
       requireCondition(await page.locator('meta[name="twitter:card"]').getAttribute("content") === "summary_large_image", `${path} needs a share card`);
@@ -84,9 +84,9 @@ try {
   const sitemapText = await sitemap.text();
   requireCondition(!sitemapText.includes("localhost"), "sitemap contains localhost");
   const locations = [...sitemapText.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
-  requireCondition(locations.length === 10 && locations.every((url) => new URL(url).origin === "https://aimetadateremover.pro"), "sitemap origins or route count are wrong");
+  requireCondition(locations.length === 10 && locations.every((url) => new URL(url).origin === "https://aimetadataremover.pro"), "sitemap origins or route count are wrong");
   const robotsResponse = await desktop.request.get(base + "/robots.txt");
-  requireCondition((await robotsResponse.text()).includes("Sitemap: https://aimetadateremover.pro/sitemap.xml"), "robots sitemap origin is wrong");
+  requireCondition((await robotsResponse.text()).includes("Sitemap: https://aimetadataremover.pro/sitemap.xml"), "robots sitemap origin is wrong");
   const shareImage = await desktop.request.get(base + "/images/metadata-cleaner-preview.png");
   requireCondition(shareImage.status() === 200 && shareImage.headers()["content-type"].includes("image/png"), "share preview is missing");
   requireCondition(!sitemapText.includes("/workspace") && !sitemapText.includes("/ai-image-humanizer"), "sitemap exposed private or later-phase routes");

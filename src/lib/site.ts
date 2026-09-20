@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { routeData } from "./publishing";
 
-export const productionOrigin = "https://aimetadateremover.pro";
+export const productionOrigin = "https://aimetadataremover.pro";
 
 export function resolveSiteUrl(configured = process.env.NEXT_PUBLIC_APP_URL, production = process.env.NODE_ENV === "production") {
   const url = new URL(configured?.trim() || productionOrigin);
