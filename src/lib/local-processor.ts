@@ -2,6 +2,7 @@ import { cleanImage } from "./image-metadata-core/clean";
 import { scanImage } from "./image-metadata-core/scan";
 import { verifyClean } from "./image-metadata-core/verify";
 import type { CleanPolicy, CleanResult, ScanResult, VerificationResult, WorkerRequest, WorkerResponse } from "./image-metadata-core/types";
+import { hasC2paMarker, verifyC2paLocal } from "./c2pa/verify";
 
 function requestId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
@@ -28,11 +29,17 @@ async function throughWorker(request: WorkerRequest, signal?: AbortSignal): Prom
 
 export async function scanLocally(buffer: ArrayBuffer, signal?: AbortSignal): Promise<ScanResult> {
   signal?.throwIfAborted();
-  if (typeof Worker === "undefined") return scanImage(buffer);
-  const response = await throughWorker({ type: "scan", requestId: requestId(), fileId: "local", buffer },signal);
-  if (response.type === "scan_result") return response.result;
-  if (response.type === "error") throw Object.assign(new Error(response.safeMessage), { code: response.code });
-  throw new Error("Unexpected worker response.");
+  const c2paBuffer = hasC2paMarker(buffer) ? buffer.slice(0) : new ArrayBuffer(0);
+  let result: ScanResult;
+  if (typeof Worker === "undefined") result = await scanImage(buffer);
+  else {
+    const response = await throughWorker({ type: "scan", requestId: requestId(), fileId: "local", buffer },signal);
+    if (response.type === "scan_result") result = response.result;
+    else if (response.type === "error") throw Object.assign(new Error(response.safeMessage), { code: response.code });
+    else throw new Error("Unexpected worker response.");
+  }
+  result = { ...result, c2pa: await verifyC2paLocal(c2paBuffer, result.format) };
+  return result;
 }
 
 export async function cleanLocally(buffer: ArrayBuffer, policy: CleanPolicy, signal?: AbortSignal): Promise<{ clean: CleanResult; verification: VerificationResult }> {
