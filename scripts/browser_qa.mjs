@@ -9,6 +9,11 @@ const routes = new Map([
   ["/remove-ai-detection-from-image", "Understand and Clean File-Level AI Signals"],
   ["/remove-metadata-from-png", "Remove Metadata From PNG Images"],
   ["/guides", "Practical Image Metadata Guides"],
+  ["/guides/chatgpt-dalle-image-metadata", "What metadata can ChatGPT and DALL·E images carry?"],
+  ["/guides/stable-diffusion-comfyui-metadata", "What Stable Diffusion and ComfyUI metadata should you remove?"],
+  ["/guides/c2pa-content-credentials-explained", "C2PA Content Credentials: what does a valid signature mean?"],
+  ["/guides/exif-gps-privacy-before-sharing", "How do you check EXIF and GPS privacy before sharing?"],
+  ["/guides/jpeg-png-webp-metadata-support", "Which JPEG, PNG and WebP metadata can you clean?"],
   ["/guides/image-metadata-before-publishing", "What Image Metadata Should You Review Before Publishing?"],
   ["/about", "How ImageFinisher Handles Your Files"],
   ["/privacy", "Your Image Stays in This Browser Session"],
@@ -84,7 +89,7 @@ try {
   const sitemapText = await sitemap.text();
   requireCondition(!sitemapText.includes("localhost"), "sitemap contains localhost");
   const locations = [...sitemapText.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
-  requireCondition(locations.length === 10 && locations.every((url) => new URL(url).origin === "https://aimetadataremover.pro"), "sitemap origins or route count are wrong");
+  requireCondition(locations.length === 15 && locations.every((url) => new URL(url).origin === "https://aimetadataremover.pro"), "sitemap origins or route count are wrong");
   const robotsResponse = await desktop.request.get(base + "/robots.txt");
   requireCondition((await robotsResponse.text()).includes("Sitemap: https://aimetadataremover.pro/sitemap.xml"), "robots sitemap origin is wrong");
   const shareImage = await desktop.request.get(base + "/images/metadata-cleaner-preview.png");
@@ -101,6 +106,8 @@ try {
   requireCondition(await page.getByRole("button", { name: "Add images" }).isVisible(), "a failed file blocked the next selection");
 
   await page.goto(base + "/", { waitUntil: "networkidle" });
+  requireCondition(await page.locator(".tool-directory-card").count() === 3, "homepage tool matrix must contain exactly three real tools");
+  requireCondition(await page.locator(".latest-guides-grid > a").count() === 6, "homepage latest guides must contain six guide links");
   requireCondition(await page.locator('script[type="application/ld+json"]').count() === 2, "homepage needs application and website schemas");
   await page.locator(".metadata-preview img").scrollIntoViewIfNeeded();
   await page.waitForFunction(() => { const img=document.querySelector(".metadata-preview img"); return img?.complete && img.naturalWidth === 1200; });
@@ -113,12 +120,15 @@ try {
   requireCondition(embeddedAlignment !== null && embeddedAlignment <= 1, `embedded tool content is offset from center by ${embeddedAlignment === null ? "missing" : Math.round(embeddedAlignment)}px`);
 
   await page.goto(base + "/metadata-checker", { waitUntil: "networkidle" });
+  const sampleRequestCount = unexpectedRequests.length;
   const primaryNav = page.getByRole("navigation", { name: "Primary navigation" });
   requireCondition(await primaryNav.getByRole("link", { name: "PNG Remover" }).count() === 1, "primary navigation is missing PNG Remover");
   requireCondition(await primaryNav.getByRole("link", { name: "Metadata Checker" }).getAttribute("aria-current") === "page", "current primary navigation link is not announced");
   await page.getByRole("button", { name: "Try a safe sample" }).click();
-  await page.getByText("AI generation parameters").waitFor();
+  await page.locator(".finding-row strong").filter({ hasText: /^AI generation parameters$/ }).waitFor();
   requireCondition(await page.getByText("Scan complete").isVisible(), "sample scan did not reach the complete state");
+  requireCondition(await page.getByRole("region", { name: "Suggested next steps" }).isVisible(), "sample scan did not show suggested next steps");
+  requireCondition(unexpectedRequests.length === sampleRequestCount, `safe sample scan made an unexpected write/API request: ${unexpectedRequests.slice(sampleRequestCount).join(", ")}`);
 
   await page.goto(base + "/remove-metadata-from-png", { waitUntil: "networkidle" });
   const cleanRequestCount = unexpectedRequests.length;
@@ -160,6 +170,15 @@ try {
   await mobilePage.goto(base + "/guides/image-metadata-before-publishing", { waitUntil: "networkidle" });
   const unlabeledCells = await mobilePage.locator(".island tbody td:not([data-label])").count();
   requireCondition(unlabeledCells === 0, `${unlabeledCells} mobile guide cells are missing stacked labels`);
+  requireCondition(await mobilePage.locator(".island tbody tr").count() === 5, "legacy publishing guide field table is incomplete");
+
+  for (const path of ["/guides/chatgpt-dalle-image-metadata", "/guides/stable-diffusion-comfyui-metadata", "/guides/c2pa-content-credentials-explained", "/guides/exif-gps-privacy-before-sharing", "/guides/jpeg-png-webp-metadata-support", "/guides/image-metadata-before-publishing"]) {
+    await page.goto(base + path, { waitUntil: "networkidle" });
+    const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
+    const flattened = schemas.flatMap((schema) => { const value = JSON.parse(schema); return Array.isArray(value) ? value : [value]; });
+    requireCondition(flattened.some((schema) => schema["@type"] === "Article"), `${path} is missing Article JSON-LD`);
+    requireCondition(flattened.some((schema) => schema["@type"] === "BreadcrumbList"), `${path} is missing BreadcrumbList JSON-LD`);
+  }
 
   const responsivePage = await desktop.newPage();
   for (const viewport of [
@@ -170,7 +189,7 @@ try {
     { width: 1440, height: 900, label: "1440" },
   ]) {
     await responsivePage.setViewportSize(viewport);
-    for (const path of ["/", "/workspace", "/guides/image-metadata-before-publishing"]) {
+    for (const path of ["/", "/workspace", "/guides/chatgpt-dalle-image-metadata"]) {
       await responsivePage.goto(base + path, { waitUntil: "networkidle" });
       const overflow = await responsivePage.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       requireCondition(overflow <= 1, `${path} overflows by ${overflow}px at ${viewport.label}`);

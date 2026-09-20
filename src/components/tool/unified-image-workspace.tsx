@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Check, Download, FileImage, FolderOpen, LockKeyhole, Plus, ScanSearch, ShieldCheck, Trash2, UploadCloud, ZoomIn, ZoomOut } from "lucide-react";
 import type { CleanPolicy } from "@/lib/image-metadata-core/types";
 import { downloadLocal as download, useLocalWorkspace, type LocalImage, unresolvedCount } from "./use-local-workspace";
-import { FindingRow } from "./finding-row";
+import { FindingNextActions, FindingRow } from "./finding-row";
 import { VerificationCard } from "./verification-card";
 import { FunnelReview } from "./funnel-review";
 import { FeedbackButton } from "@/components/feedback/feedback-button";
@@ -100,7 +100,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
             <span><strong>Keep Content Credentials</strong><small>Source &amp; edit history</small></span>
           </label>
         </div>
-        <p>{defaultMode === "inspect" ? "These settings apply when you choose to clean a copy. Inspection never changes your file." : "Unchecked fields are removed where supported. Changes rebuild existing copies from your originals."} Only embedded PNG credentials can be removed; JPEG credentials and other unsupported fields may remain.</p>
+        <p>{defaultMode === "inspect" ? "These settings apply when you choose to clean a copy. Inspection never changes your file." : "Unchecked fields are removed where supported. Changes rebuild existing copies from your originals."} <span className="desktop-boundary-copy">Only embedded PNG credentials can be removed; JPEG credentials and other unsupported fields may remain.</span><span className="mobile-boundary-copy">Unsupported fields may remain.</span></p>
         <p className="settings-status" role="status">{settingsMessage}</p>
       </fieldset>
       {notice && <p className="batch-notice" role="status">{notice}</p>}
@@ -153,6 +153,8 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
                     {active.scan.cleanSupport === "scan_only" ? <p className="batch-notice">This format can only be inspected. No cleaned copy was created.</p> : <>
                       <h3>{active.scan.findings.length ? "Here is what your image contains" : "No supported metadata detected"}</h3>
                       <p className="panel-intro">Your original is unchanged. {active.scan.findings.length ? "You can clean a copy here without selecting the image again." : "Other data may still exist outside this scanner’s coverage."}</p>
+                      <FindingNextActions findings={active.scan.findings} />
+                      {active.scan.c2pa && <div className="c2pa-status" role="status"><strong>Content Credentials</strong><span>{active.scan.c2pa.status.replaceAll("_", " ")}</span><p>{active.scan.c2pa.summary}</p>{active.scan.c2pa.issuer && <small>Issuer: {active.scan.c2pa.issuer}{active.scan.c2pa.time ? ` · ${active.scan.c2pa.time}` : ""}</small>}</div>}
                       {active.scan.findings.some(finding => ["ai_workflow", "location", "provenance"].includes(finding.category)) && <button className="button primary wide" disabled={busy} onClick={() => void cleanFiles([active.id], policy)}>Clean and create a copy</button>}
                     </>}
                     {active.scan.findings.map((finding, index) => <FindingRow key={`${finding.id}-${index}`} finding={finding} expanded={expanded === `${finding.id}-${index}`} onToggle={() => setExpanded(expanded === `${finding.id}-${index}` ? undefined : `${finding.id}-${index}`)} />)}

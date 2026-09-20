@@ -1,6 +1,23 @@
 import type { Finding } from "@/lib/image-metadata-core/types";
 import { TagPill } from "./tag-pill";
 
+export type NextActionGroup = "clean" | "keep" | "review" | "unsupported";
+export function nextActionGroup(finding: Finding): NextActionGroup {
+  if (finding.id.startsWith("unsupported-")) return "unsupported";
+  if (finding.status === "action" || finding.category === "ai_workflow" || finding.category === "location") return "clean";
+  if (finding.status === "review" || finding.category === "provenance" || finding.category === "software") return "review";
+  return "keep";
+}
+export function FindingNextActions({ findings }: { findings: Finding[] }) {
+  const groups: Array<{ key: NextActionGroup; label: string; body: string }> = [
+    { key: "clean", label: "Can be handled in a clean copy", body: "Supported workflow or privacy fields can be removed after you review the impact." },
+    { key: "keep", label: "Usually preserve", body: "These fields help with display, attribution or technical consistency." },
+    { key: "review", label: "Review manually", body: "Read the context before deciding; provenance and mixed metadata are not verdicts." },
+    { key: "unsupported", label: "Currently unsupported", body: "The scanner found a bounded or unsupported structure and will leave it untouched." },
+  ];
+  return <section className="next-actions" aria-label="Suggested next steps"><h3>Suggested next steps</h3>{findings.length ? groups.map((group) => { const items = findings.filter((finding) => nextActionGroup(finding) === group.key); return items.length ? <div key={group.key}><strong>{group.label}</strong><p>{group.body}</p><small>Found fields: {[...new Set(items.map((item) => item.label))].join(", ")}</small></div> : null; }) : <div><strong>No supported fields found</strong><p>Keep the original and remember that this is not proof that every possible metadata field is absent.</p></div>}</section>;
+}
+
 export function FindingRow({ finding, expanded, onToggle }: { finding: Finding; expanded: boolean; onToggle: () => void }) {
   const sensitive = finding.category === "location" || finding.category === "ai_workflow";
   return (

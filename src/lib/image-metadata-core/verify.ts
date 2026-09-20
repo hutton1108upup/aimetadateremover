@@ -48,5 +48,7 @@ export async function verifyClean(before: ScanResult, output: ArrayBuffer, polic
       : undefined,
     iccPreserved: before.properties.hasIcc === true ? outputScan.properties.hasIcc === true && (!original || equalParts(protectedParts(original,before.format,true),protectedParts(output,outputScan.format,true))) : undefined,
     transparencyPreserved: before.properties.hasTransparency === true ? outputScan.properties.hasTransparency === true : undefined,
+    inputBytes: original?.byteLength,
+    outputBytes: output.byteLength,
   };
 }

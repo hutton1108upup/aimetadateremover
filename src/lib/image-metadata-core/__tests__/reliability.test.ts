@@ -81,6 +81,8 @@ describe("output integrity and PNG compatibility gate", () => {
     expect(verified.encodedPayloadPreserved).toBe(true);
     expect(verified.iccPreserved).toBe(true);
     expect(verified.transparencyPreserved).toBe(true);
+    expect(verified.inputBytes).toBe(input.byteLength);
+    expect(verified.outputBytes).toBe(clean.output!.byteLength);
     for(const chunk of extra.slice(0,3)) expect(Buffer.from(clean.output!).includes(Buffer.from(chunk))).toBe(true);
   });
 });

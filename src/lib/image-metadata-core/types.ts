@@ -49,6 +49,7 @@ export interface ScanResult {
   properties: ImageProperties;
   warnings: string[];
   cleanSupport: "supported" | "scan_only" | "limited";
+  c2pa?: import("@/lib/c2pa/verify").C2paVerification;
 }
 
 export interface CleanPolicy {
@@ -89,6 +90,8 @@ export interface VerificationResult {
   transparencyPreserved?: boolean;
   encodedPayloadPreserved?: boolean;
   orientationPreserved?: boolean;
+  inputBytes?: number;
+  outputBytes?: number;
 }
 
 export type WorkerRequest =
