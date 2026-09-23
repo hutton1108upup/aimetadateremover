@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCallback,useEffect,useState } from "react";
+import { useCallback,useEffect,useRef,useState } from "react";
 import { consentVersion } from "@/lib/billing/config";
 import { SupportContact } from "@/components/layout/support-contact";
 type Subscription={order_id:string;status:string;period_end:number;will_renew:number;paid:number};
@@ -9,11 +9,13 @@ const date=(value:number)=>new Date(value).toLocaleString(undefined,{dateStyle:"
 export function BillingPanel({compact=false}:{compact?:boolean}) {
   const [status,setStatus]=useState<Status|null>(null),[error,setError]=useState("");
   const [busy,setBusy]=useState(false),[consent,setConsent]=useState(false),[cancelId,setCancelId]=useState<string|null>(null);
+  const refreshVersion=useRef<symbol|null>(null);
   const refresh=useCallback(async()=>{
-    try {const response=await fetch("/api/billing/status",{cache:"no-store"});if(!response.ok)throw new Error("Billing is temporarily unavailable. Please retry.");setStatus(await response.json());setError("");}
-    catch(error){setError(error instanceof Error?error.message:"Billing is unavailable.");}
+    const version=Symbol("billing-refresh");refreshVersion.current=version;
+    try {const response=await fetch("/api/billing/status",{cache:"no-store"});if(!response.ok)throw new Error("Billing is temporarily unavailable. Please retry.");const data=await response.json() as Status;if(version!==refreshVersion.current)return;setStatus(data);setError("");}
+    catch(error){if(version===refreshVersion.current)setError(error instanceof Error?error.message:"Billing is unavailable.");}
   },[]);
-  useEffect(()=>{queueMicrotask(()=>void refresh());const listener=()=>void refresh();window.addEventListener("focus",listener);window.addEventListener("imagefinisher:usage-changed",listener);const timer=setInterval(listener,30000);return()=>{clearInterval(timer);window.removeEventListener("focus",listener);window.removeEventListener("imagefinisher:usage-changed",listener);};},[refresh]);
+  useEffect(()=>{queueMicrotask(()=>void refresh());const listener=()=>void refresh();window.addEventListener("focus",listener);window.addEventListener("imagefinisher:usage-changed",listener);const timer=setInterval(listener,30000);return()=>{refreshVersion.current=null;clearInterval(timer);window.removeEventListener("focus",listener);window.removeEventListener("imagefinisher:usage-changed",listener);};},[refresh]);
   async function checkout(){
     if(!consent || busy)return;setBusy(true);setError("");
     try {const response=await fetch("/api/billing/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({consent:consentVersion})});const result=await response.json() as {error?:string;url:string};if(!response.ok)throw new Error(result.error);window.location.assign(result.url);}
@@ -34,10 +36,10 @@ export function BillingPanel({compact=false}:{compact?:boolean}) {
       {!compact && <><h2>{status.plan}</h2><p>{status.singleRemaining} / {status.singleLimit} free single-image cleans remaining today{status.batchLimit?` · ${status.batchRemaining} / ${status.batchLimit} batch tasks remaining`:""}.</p><p>Daily reset: {date(status.resetsAt!)} (00:00 UTC). The bundled safe sample is free to try.</p></>}
       {status.refreshPending && <p role="status">Payment verification is still in progress. We will check again automatically. Do not make another purchase.</p>}
       {current ? <><p>{current.will_renew?"Renews":"Access ends"} {date(current.period_end)}. {current.will_renew?"USD $4.99 per calendar month, plus applicable tax.":"Future renewal is canceled."}</p>{compact?<Link className="button secondary" href="/account/billing">Manage subscription</Link>:<>{current.will_renew>0 && <button className="button secondary" disabled={busy} onClick={()=>setCancelId(current.order_id)}>Cancel auto-renewal</button>}</>}</> : <>
-        {!status.signedIn?<a className="button secondary" href="/auth/start" target="_blank" rel="noopener noreferrer">Sign in with Google to subscribe</a>:status.checkoutEnabled?<>
+        {!status.checkoutEnabled?<p>New subscriptions are not open yet.</p>:!status.signedIn?<a className="button secondary" href="/auth/start" target="_blank" rel="noopener noreferrer">Sign in with Google to subscribe</a>:<>
           <label className="billing-consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)} disabled={busy}/><span>I agree to the <Link href="/terms#fees">billing and refund terms</Link> and authorize USD $4.99 per calendar month, plus applicable tax shown at checkout, until I cancel.</span></label>
           <button className="button primary" disabled={!consent || busy || status.refreshPending} onClick={()=>void checkout()}>{busy?"Opening checkout…":"Subscribe to Batch Pro"}</button>
-        </>:<p>New subscriptions are not open yet.</p>}
+        </>}
       </>}
       {!compact && status.subscriptions?.map(s=><div key={s.order_id}><p>Order {s.order_id}: {s.status}{s.period_end>0?` · period ends ${date(s.period_end)}`:""}</p>{s.will_renew>0 && current?.order_id!==s.order_id && !["canceled","expired","closed"].includes(s.status) && <button className="button secondary" disabled={busy} onClick={()=>setCancelId(s.order_id)}>Cancel auto-renewal</button>}</div>)}
     </>}
