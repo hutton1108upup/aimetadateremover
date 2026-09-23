@@ -167,6 +167,41 @@ Thank you.
 
 上述邮件仅准备了草稿，没有代用户发送。
 
+### 2026-09-23 客服回复后的核查与下一封回复
+
+用户已发送上面的邮件，并提供 Pancake Syrup 的回信。回信建议从 General / Business Details 重新验证域名、通过验证码绑定新客服邮箱；它没有确认旧域名已被解绑。
+
+代理随后实际重新打开本店铺 General：仍显示“所有激活步骤已完成”和“店铺已开启生产，网站已锁定”，网站仍为 `https://aimetadateremover.pro/`。新手引导中的 KYB 项已完成，没有重新打开 Step 8 的按钮；General 也没有撤销旧域名或验证新域名的入口。没有解绑现有客服邮箱或关闭生产模式。
+
+官方 [Domain Verification](https://docs.waffo.ai/settings/domain-verification.md) 的 “I want to change my product website later” 段落明确区分：审核前可以自行撤销；审核后需从账号邮箱联系支持，提供 Merchant ID、新旧域名，由支持解绑旧域名后再提交新域名审核。换客服邮箱的流程不能替代这一步。官网文档与回信的通用操作说明存在这一关键差异。
+
+下一步请在 Gmail 打开同一封邮件 → 点击“回复 / Reply” → 复制下面全文 → 点击“发送 / Send”。仍使用原来的邮件主题，便于客服看到上下文：
+
+```text
+Hello,
+
+Thank you. My store has already passed KYB and production is enabled. I have checked the dashboard again, but Settings > General still says the website is locked because production is enabled. It still shows https://aimetadateremover.pro/. There is no option to revoke the old domain or start verification for a different domain, and the completed KYB section does not reopen Step 8.
+
+Your Domain Verification documentation, under "I want to change my product website later", says that after KYB approval, support must unbind the old domain before the merchant can verify a new domain and submit it for review again:
+https://docs.waffo.ai/settings/domain-verification.md
+
+Please have a human support agent unbind the old website domain or enable the supported domain-change flow for this already-approved store:
+
+Merchant ID: MER_0Ca1DBngIQV3s35pRE1wcg
+Store ID: STO_5iFEBLTOBoV0tSNB4jxOTJ
+Store name: ImageFinisher
+Old website: https://aimetadateremover.pro/
+New website: https://aimetadataremover.pro/
+
+I can complete DNS TXT verification for the new domain once the verification flow is available. Please confirm when the old binding has been removed and tell me whether the existing production approval will be paused during re-review.
+
+I also plan to verify support@aimetadataremover.pro as the support email, but the website field is currently locked independently of the email verification process.
+
+Thank you.
+```
+
+这封补充回复也仅为草稿，未代用户发送。确认标准：后台旧域名解绑 / 新域名验证入口实际可用，或客服明确完成变更；不能把通用操作说明当成变更完成。届时优先使用新域名的 DNS TXT 验证；如另需邮箱验证码，再在发送验证码后请用户提供当次 6 位码，不提前索取或反复发送。
+
 ## 沙箱剩余项：给 Waffo 的具体核查内容
 
 在上面的同一封支持邮件中附上下面内容即可；只涉及测试订单，不含密钥或真实卡资料：
