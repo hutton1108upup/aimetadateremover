@@ -15,3 +15,12 @@ FEEDBACK_FROM=feedback@notify.aimetadataremover.pro
 FEEDBACK_TO=support@aimetadataremover.pro
 # Random server-only anti-abuse secret; falls back to AUTH_SECRET if already configured.
 FEEDBACK_RATE_SECRET=
+
+# Server-only Waffo subscription configuration. Never commit real values.
+WAFFO_ENVIRONMENT=test
+WAFFO_MERCHANT_ID=
+WAFFO_PRIVATE_KEY=
+WAFFO_STORE_ID=
+WAFFO_SUBSCRIPTION_PRODUCT_ID=
+WAFFO_CHECKOUT_ENABLED=false
+BILLING_METERING_ENABLED=false

@@ -1,4 +1,5 @@
 "use client";
+import { UsageAllowance } from "@/components/pricing/usage-allowance";
 /* eslint-disable @next/next/no-img-element -- local blob previews cannot use the Next image optimizer */
 
 import { useEffect, useRef, useState } from "react";
@@ -20,7 +21,7 @@ function createSafeSampleFile() {
   return new File([bytes], "imagefinisher-safe-sample.png", { type: "image/png" });
 }
 export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "clean", acceptedFormats }: { variant?: "embedded" | "full"; defaultMode?: "inspect" | "clean"; acceptedFormats?: Array<"jpeg" | "png" | "webp"> }) {
-  const { files, filesRef, busy, notice, addFiles: queueFiles, cleanFiles, removeFile, clearFiles, downloadOne, downloadZip } = useLocalWorkspace(acceptedFormats);
+  const { files, filesRef, busy, notice, confirmationPending, retryConfirmation, addFiles: queueFiles, cleanFiles, removeFile, clearFiles, downloadOne, downloadZip } = useLocalWorkspace(acceptedFormats);
   const [activeId, setActiveId] = useState<string>();
   const [keepPrivacy, setKeepPrivacy] = useState(false);
   const [keepCredentials, setKeepCredentials] = useState(false);
@@ -104,6 +105,8 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
         <p className="settings-status" role="status">{settingsMessage}</p>
       </fieldset>
       {notice && <p className="batch-notice" role="status">{notice}</p>}
+      <UsageAllowance />
+      {confirmationPending && <button className="button secondary" disabled={busy} onClick={()=>void retryConfirmation()}>Retry usage confirmation</button>}
       {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {completed.length} ready to download · {partial.length} partial · {failed.length} failed{scanOnly.length > 0 ? ` · ${scanOnly.length} inspection only` : ""}</span><button className="button secondary" onClick={clearFiles}>Clear queue</button></div>}
       {files.length > 1 && completed.length > 0 && <div className="batch-download"><button className="button primary" disabled={busy} onClick={() => void downloadZip()}><Download aria-hidden="true" />Download completed images (ZIP)</button><p>{completed.length} of {files.length} files included · {partial.length} need review. Failed and inspection-only files are excluded.</p></div>}
       <div className="workspace-grid">
@@ -122,7 +125,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
               <p>{pngOnly ? "PNG images" : "JPG and PNG · WebP inspection only"} · No account needed</p>
               <p className="drop-policy">{defaultMode === "inspect" ? "Read-only check. Your file stays unchanged." : "Automatically cleans images using the settings above."}</p>
               <div className="drop-actions"><button className="button primary" onClick={() => inputRef.current?.click()} disabled={busy}><FolderOpen aria-hidden="true" /> Choose images</button><button className="button secondary" onClick={() => void addFiles([createSafeSampleFile()], "sample")} disabled={busy}><ScanSearch aria-hidden="true" /> Try a safe sample</button></div>
-              <div className="trust-row"><span><Check aria-hidden="true" /> Free to use</span><span><LockKeyhole aria-hidden="true" /> Runs locally</span><span><Check aria-hidden="true" /> Original file preserved</span><span><Check aria-hidden="true" /> No subscription required</span></div>
+              <div className="trust-row"><span><Check aria-hidden="true" /> Free daily allowance</span><span><LockKeyhole aria-hidden="true" /> Runs locally</span><span><Check aria-hidden="true" /> Original file preserved</span><span><Check aria-hidden="true" /> Batch plans available</span></div>
             </div>
           ) : (
             <div className="active-workspace">
@@ -174,7 +177,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
         </div>
       </div>
 
-      <p className="workspace-legal">Before choosing files, read our <Link href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and <Link href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service<span className="sr-only"> (opens in a new tab)</span></Link>. <Link href="/pricing" target="_blank" rel="noopener noreferrer">View upcoming plans<span className="sr-only"> (opens in a new tab)</span></Link>.</p>
+      <p className="workspace-legal">Before choosing files, read our <Link href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and <Link href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service<span className="sr-only"> (opens in a new tab)</span></Link>. <Link href="/pricing" target="_blank" rel="noopener noreferrer">View plans<span className="sr-only"> (opens in a new tab)</span></Link>.</p>
       <div className="automatic-policy">
         <p>{defaultMode === "inspect" ? "Check what is inside your image. Nothing is changed unless you choose to clean a copy." : "Choose images to clean automatically. We remove supported AI metadata and apply your choices above for private details and PNG Content Credentials. Image data and copyright stay intact."}</p>
 

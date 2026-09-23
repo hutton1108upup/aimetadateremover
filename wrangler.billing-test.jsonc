@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "imagefinisher-billing-test",
+  "account_id": "7fd7ed1128ca3d125feaa279f4d4c547",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-09-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "vars": {
+    "AUTH_BASE_URL": "https://imagefinisher-billing-test.duckweed1014.workers.dev",
+    "WAFFO_ENVIRONMENT": "test",
+    "WAFFO_STORE_ID": "STO_5iFEBLTOBoV0tSNB4jxOTJ",
+    "WAFFO_SUBSCRIPTION_PRODUCT_ID": "PROD_6aNZfJdapu5t7jQj3sg4VY",
+    "WAFFO_CHECKOUT_ENABLED": "true",
+    "BILLING_METERING_ENABLED": "true"
+  },
+  "d1_databases": [{
+    "binding": "AUTH_DB", "database_name": "imagefinisher-billing-test",
+    "database_id": "6eb11432-20ce-4b28-a9c3-a78f7192a6a0",
+    "migrations_dir": "migrations", "remote": false
+  }],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "observability": { "enabled": true }
+}
