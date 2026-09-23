@@ -1,5 +1,7 @@
 # Google 登录：本地演示配置与验收
 
+2026-09-23 支付验收补充：已添加本地 3227 与独立支付 Test Worker 的 Google 回调，并完成真实 Google 登录 Test 网站。认证处理器改为按数据库绑定/配置复用，用户会话仍逐请求验证；具体状态与 CPU 限制见 [Waffo 接入记录](waffo-subscription-launch.md)。下方 2026-09-17 内容为当时的历史验收记录。
+
 ## 当前状态（2026-09-17，上线准备）
 
 - 真实 Google 首次登录、退出、再次登录、刷新完成页恢复会话均已通过。退出后本地 D1 有效会话数为 0；再次登录后仍为 1 个用户、1 个 Google 账户、1 个有效会话，没有重复注册。
@@ -16,7 +18,7 @@
 - 基于 origin/main 的独立分支 codex/google-login。
 - 现有 Next.js 16.3.4 / OpenNext 1.20.6 不变。
 - Better Auth 1.7.3、对应 Drizzle adapter 1.7.3、Drizzle 0.45.2；仅 Google。
-- MkSaaS 复用来源为 src/lib/auth.ts、auth-client.ts 和 social-login-button.tsx 的认证/交互模式；重写 D1 schema、请求级实例、弹窗和会话隔离。未引入模板后台、营销订阅或支付代码。
+- MkSaaS 复用来源为 src/lib/auth.ts、auth-client.ts 和 social-login-button.tsx 的认证/交互模式；重写 D1 schema、弹窗和请求级会话隔离。2026-09-23 起复用不含用户状态的认证处理器；每次查询仍校验 cookie 和数据库会话。未引入模板后台或营销订阅。
 - D1 绑定 AUTH_DB，四张 auth_* 表。生产数据库 ID 为 `25630523-1dae-4032-b45b-f539622320f2`；`preview_database_id` 保留原本地模拟数据库 ID，且 `remote:false`，本地开发不连接生产用户数据。
 - Better Auth 适配器 transaction:false 符合 D1 不支持交互式事务的约束；不能据此宣称未来订单写入具备原子性，支付阶段需使用 D1 batch 与唯一约束。
 

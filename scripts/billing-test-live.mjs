@@ -51,6 +51,10 @@ if(command==="configure" || command==="fixture"){
   await sql("UPDATE billing_checkout SET expires_at=? WHERE user_id=? AND environment='test' AND provider_order_id IS NULL",[Date.now()-1,fixture.id]);console.log("Expired only the synthetic buyer pending checkout.");
 }else if(command==="status"){
   console.log(JSON.stringify(await call("/api/billing/status"),null,2));
+}else if(command==="status-repeat"){
+  const results=[];
+  for(let i=0;i<20;i++){const result=await call("/api/billing/status");assert.equal(result.status,200);assert.equal(result.data.signedIn,true);results.push({status:result.status,plan:result.data.plan,refreshPending:result.data.refreshPending});}
+  await writeFile(`artifacts/waffo-reference/status-repeat-${scenario}.json`,JSON.stringify({at:new Date().toISOString(),results},null,2));console.log(JSON.stringify({requests:results.length,allSucceeded:true,plans:[...new Set(results.map(r=>r.plan))]}));
 }else if(command==="checkout"){
   const result=await call("/api/billing/checkout",{consent:"batch-pro-monthly-2026-09-23"});await writeFile("artifacts/waffo-reference/test-checkout.json",JSON.stringify(result,null,2));console.log(JSON.stringify({status:result.status,data:result.data?.url?{checkoutCreated:true,host:new URL(result.data.url).hostname}:result.data}));
 }else if(command==="cancel"){

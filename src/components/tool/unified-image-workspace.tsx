@@ -177,7 +177,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
         </div>
       </div>
 
-      <p className="workspace-legal">Before choosing files, read our <Link href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and <Link href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service<span className="sr-only"> (opens in a new tab)</span></Link>. <Link href="/pricing" target="_blank" rel="noopener noreferrer">View plans<span className="sr-only"> (opens in a new tab)</span></Link>.</p>
+      <p className="workspace-legal">Before choosing files, read our <Link prefetch={false} href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and <Link prefetch={false} href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service<span className="sr-only"> (opens in a new tab)</span></Link>. <Link prefetch={false} href="/pricing" target="_blank" rel="noopener noreferrer">View plans<span className="sr-only"> (opens in a new tab)</span></Link>.</p>
       <div className="automatic-policy">
         <p>{defaultMode === "inspect" ? "Check what is inside your image. Nothing is changed unless you choose to clean a copy." : "Choose images to clean automatically. We remove supported AI metadata and apply your choices above for private details and PNG Content Credentials. Image data and copyright stay intact."}</p>
 

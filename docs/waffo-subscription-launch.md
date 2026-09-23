@@ -26,6 +26,8 @@
 5. 创建 Test 商品 `PROD_6aNZfJdapu5t7jQj3sg4VY`：ImageFinisher Batch Pro，USD 4.99，`monthly`，`saas`。未修改原来的测试商品。
 6. 已创建独立测试 D1 `imagefinisher-billing-test`，ID `6eb11432-20ce-4b28-a9c3-a78f7192a6a0`，完成 0001–0003 数据库迁移。正式数据库尚未应用本次迁移。
 7. 本任务 Cloudflare 登录单独保存在忽略目录 `artifacts/cloudflare-auth`，未覆盖原来的全局登录。正确账号为 `7fd7ed1128ca3d125feaa279f4d4c547`。
+8. 2026-09-23 实际核对 Waffo“通用”页：显示“所有激活步骤已完成 / 您的商店已准备好接收正式付款”。提款账户页已存在一个中国 CNY 支付宝账户，基本身份为胡晓成。没有新增、修改或执行提款；已绑定不代表实际提现到账。
+9. Google OAuth 客户端已补充两个确切重定向 URI：`https://imagefinisher-billing-test.duckweed1014.workers.dev/api/auth/callback/google` 和 `http://localhost:3227/api/auth/callback/google`。控制台显示保存成功；原来的 3180 和两个正式域名回调均保留，未轮换密钥或增加 Google 数据权限。
 
 ## 代码位置与行为
 
@@ -49,6 +51,7 @@
 - 已通过：官方 Visa 拒绝测试卡付款失败，订单 `ORD_6dH4wclSTlob1MhOgOKH0m` 为 `closed`，未获得 Pro；重试生成新结账，不复用失败订单的链接。
 - 已通过：官方 Visa 成功测试卡完成两笔 USD 4.99 沙箱首期付款。订单 `ORD_3jbY5PIxxVwxjEONQlk5lL` 和 `ORD_2R3VssKJiNXwL8I5VVgqxh` 均通过真实 RSA 签名通知开通会员；在点击回跳和调用状态补查之前，直接查询 Test 数据库已见 `active/paid=1`。
 - 已通过：Pro 的 20 次批量额度，完成一次变为 19；重复确认不再扣次；重复购买返回 409；取消、恢复、再次取消均完成并收到真实通知，取消后保留已付款当期权限。两笔沙箱订阅均已取消未来自动续费。
+- 已通过：真实 Google 账户登录 Test 网站，从账单页勾选月付说明、进入官方沙箱、使用测试卡付款、返回网站显示 Batch Pro 及 3 张/20 次额度，再通过网页“Cancel auto-renewal → Confirm cancellation”停止续费。该次测试订单为 `ORD_1ezr12yfLmmhnCQDfYS1Mo`，界面已显示 `Future renewal is canceled`。此项验证的是 Test 网站，不代表正式网站支付已经上线。
 - 已通过：Chrome 中内置样图清理、验证、两次下载；下载结果为 68 字节，额度不变，无页面控制台错误。
 - 已通过：沙箱全额退款。工单 `TKT_5fCPACjIrhfzMODb4nUpZm` 于 2026-09-23 20:00:02（中国时间）变为 `succeeded`；付款 `PAY_0q7pyLOe7vjAIjrWMsXgFG` 已退 USD 4.99、`isFullyRefunded=true`；`refund.succeeded` 通知送达 HTTP 200。网站数据库为 `paid=0`，账户恢复 Free account，实际批量请求返回 403。退款只提交过一次，无真实资金流动。
 - 尚待完成：官方文档写明测试订阅详情有 “Simulate renewal success/failure”，但本店铺实际详情、列表菜单及刷新后的页面均没有这两个入口，“管理订阅”显示“即将上线”。尚未验证真实周期推进、续费失败和恢复通知；到期模拟也需 Waffo 支持。没有通过修改数据库伪造这些结果。
@@ -64,6 +67,25 @@
 4. **不同账户共享付费扣次**：原来计数条件包含访客标识，使同一网络的两个账户互相影响。现在付费批量任务只按账户计数；已登录免费单张计入自己的记录及当前访客使用量，不计入其他已登录账户的记录。真实 SQLite 验证两个付费账户各可使用 20 次，同一账户换设备仍累计计数，退出登录不会恢复访客额度。部署后第二个测试账户从错误的 2 张/19 次恢复为正确的 3 张/20 次；执行自己的首个批量任务后为 3 张/19 次，重复确认不重复扣次。第一个账户在此期间已完成退款，其历史用量仍保留，不再影响第二个账户。
 
 通知记录的 HTTP 200 和数据库会员状态分别检查。`/api/billing/status` 会主动向 Waffo 补查；为了证明是通知自动开通，先执行 `snapshot`（只读数据库），再查 `status`。所有验收订单、付款和退款均为 Test 数据，没有真实扣款。
+
+## 免费 Workers 套餐的实际限制与优化
+
+用户于 2026-09-23 明确选择“暂不开通，继续排查免费方案”。当前账户后台确认为 Workers Free；没有开通 Paid 或新增套餐费用。
+
+真实登录后曾连续出现 `/api/billing/status` 返回 503，Cloudflare 日志为 `exceededCpu`、CPU 10 ms。不能把先前少量请求通过当成免费环境长期稳定。
+
+本次优化按以下顺序执行：
+
+1. `src/lib/auth/core.ts` 按 D1 绑定和认证配置复用 Better Auth 处理器，配置/密钥变化即重新创建。缓存不保存用户会话；真实 workerd/D1 测试覆盖并发两个账户、匿名、伪造 cookie 和退出登录。
+2. `src/lib/worker-api.ts` 复用原有登录、账单路由；`worker.mjs` 使用当前固定 OpenNext 版本生成的 `runWithCloudflareRequestContext` 提供请求级环境，直接运行这些接口，避免每个请求经过 Next 页面处理层。现有验签、来源校验、账户归属、D1 锁、反馈任务和页面路由保留。升级 OpenNext 时必须复验此入口。
+3. `src/lib/billing/provider.ts` 复用不含买家会话的官方 Waffo 客户端，避免反复解析私钥；每次请求仍由 SDK 独立签名，未缓存订单核验结果来替代支付验签。
+4. 公共导航、页脚和账单相关链接设置 `prefetch={false}`。日志确认此前打开账单页会自动预取十多个页面并消耗 CPU；现在只在用户点击时加载对应页面，不改变链接、页面正文或 SEO 信息。
+
+中间版本连续 20 次已登录状态请求通过，但仍捕获到一次付款回跳补查超限。随后加入 SDK 复用并关闭预取；`cd7cbae2-207a-4616-8826-5798159baf2b` 的一轮日志包含 31 次接口请求，0 次 `exceededCpu`、0 次自动预取；20 次连续已登录账单查询全部返回 200，普通热查询大多为 4–7 ms。认证限流随后显式设为开启，避免直达入口依赖页面框架设置的运行模式。
+
+这些是本轮有限样本，不能外推为正式高负载承诺。最终验证以最新 Test 部署的浏览器结果和 `artifacts/waffo-reference/direct-api-cpu.json` 为准；冷启动、支付核验和普通热查询分开记录。12 项真实 workerd/D1 验证、136 项单元测试、类型检查、Lint、Next/OpenNext 构建和 7 项线上反向检查通过。官方限制说明：[Cloudflare Workers Limits](https://developers.cloudflare.com/workers/platform/limits/)。
+
+限流修正后的 Test 版本 `47af72ed-51cc-4fda-9adf-efb83eec9c00`：截至 2026-09-23 20:42，本轮记录 24 次接口请求，0 次 CPU 超限、0 次自动预取，真实浏览器仍显示 Batch Pro 和已取消续费。随后补齐工作台自身链接的禁用预取，最终 Test 版本为 `eeaaa4ed-bcb6-4904-a7c4-50f0b384a4b4`。部分请求 CPU 仍高于 10 ms（上述末尾样本 12–58 ms）但获平台容忍，因此“这轮未报错”不等于所有请求均低于免费上限。正式收费前仍需保留 CPU 稳定性检查，不把自动重试当作扣款成功。生产当前实际承接流量的版本仍为 `7aba1e3e-abf4-4f6c-a416-934fbdc71737`，没有切到本次 Test 代码。
 
 ## 用户查看页面的具体步骤
 

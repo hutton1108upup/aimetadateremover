@@ -6,8 +6,10 @@ export function requestKey(action:string,id:string) {
   if (!/^[A-Za-z0-9_-]{1,256}$/.test(key)) throw new Error("Invalid local idempotency key");
   return {idempotencyKey:key};
 }
+let clientCache:{merchantId:string;privateKey:string;environment:string;client:WaffoPancake}|undefined;
 export function provider(config: BillingConfig) {
-  return new WaffoPancake({ merchantId: config.merchantId, privateKey: config.privateKey, environment: config.environment,
+  if(clientCache?.merchantId===config.merchantId && clientCache.privateKey===config.privateKey && clientCache.environment===config.environment)return clientCache.client;
+  const client=new WaffoPancake({ merchantId: config.merchantId, privateKey: config.privateKey, environment: config.environment,
     fetch: async (url, init) => {
       const headers = new Headers(init?.headers);
       // workerd supports manual/follow, but not the browser's redirect:"error".
@@ -17,6 +19,10 @@ export function provider(config: BillingConfig) {
       return response;
     },
   });
+  // Cache the stateless merchant SDK, never a buyer token, order or response.
+  // Rotation or environment changes invalidate it; the SDK still signs each call.
+  clientCache={merchantId:config.merchantId,privateKey:config.privateKey,environment:config.environment,client};
+  return client;
 }
 export interface ProviderSubscription {
   id: string; storeId: string; buyerEmail: string; status: string; testMode: boolean;
