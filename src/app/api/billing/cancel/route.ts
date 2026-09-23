@@ -12,8 +12,13 @@ export async function POST(request:Request) {
     if (!own) throw new BillingError(404,"NOT_FOUND","Subscription not found.");
     const lease=await lock(db,`${config.environment}:checkout:${user.id}`);
     try {
-      await provider(config).orders.cancelSubscription({orderId:own.order_id},requestKey("cancel",own.order_id));
-      const verified=await synchronizeOrder(db,config,own.order_id);
+      let verified=await synchronizeOrder(db,config,own.order_id);
+      if(verified?.order.willRenew) {
+        // A customer may resume and cancel again on the same day. Reusing an
+        // order-level key would replay the previous cancellation for 24 hours.
+        await provider(config).orders.cancelSubscription({orderId:own.order_id},requestKey("cancel",crypto.randomUUID()));
+        verified=await synchronizeOrder(db,config,own.order_id);
+      }
       if (!verified || verified.order.willRenew) throw new Error("Cancellation is not yet confirmed");
       return json({canceled:true,periodEnd:verified.snapshot.end});
     } finally {await lease.release();}

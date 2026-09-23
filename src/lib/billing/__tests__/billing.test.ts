@@ -40,4 +40,31 @@ describe("atomic daily usage with real SQLite",()=>{
   it("resets at UTC midnight and forbids another user's confirmation",async()=>{await reserveUsage(fixture.db,config,guest,"old","single");await expect(finishUsage(fixture.db,config,account,"old","complete")).rejects.toMatchObject({status:404});await finishUsage(fixture.db,config,guest,"old","complete");vi.setSystemTime(Date.parse("2026-09-24T00:00:00Z"));expect((await usageSummary(fixture.db,config,guest)).singleRemaining).toBe(1);});
   it("grants exactly 20 paid tasks separately from the free allowance",async()=>{fixture.sql.exec(`INSERT INTO billing_checkout(id,user_id,environment,product_id,buyer_email,created_at,expires_at,consent_version) VALUES('checkout','alice','test','product','alice@example.test',0,0,'monthly');INSERT INTO billing_subscription VALUES('order','test','alice','checkout','active',${now-1000},${now+86400000},1,1,${now});`);for(let i=0;i<20;i++)await reserveUsage(fixture.db,config,account,`batch-${i}`,"batch");await expect(reserveUsage(fixture.db,config,account,"extra","batch")).rejects.toMatchObject({status:429});expect((await usageSummary(fixture.db,config,account)).singleRemaining).toBe(3);});
   it("denies batch cleaning without a verified subscription",async()=>{await expect(reserveUsage(fixture.db,config,account,"no-paid","batch")).rejects.toMatchObject({status:403});});
+  it("keeps two paid accounts independent when their guest identity matches",async()=>{
+    fixture.sql.exec("INSERT INTO auth_user VALUES('bob','Bob','bob@example.test',1,NULL,0,0)");
+    for(const id of ["alice","bob"])fixture.sql.prepare(`INSERT INTO billing_checkout(id,user_id,environment,product_id,buyer_email,created_at,expires_at,consent_version) VALUES(?,?,'test','product',?,0,0,'monthly')`).run(`checkout-${id}`,id,`${id}@example.test`);
+    for(const id of ["alice","bob"])fixture.sql.prepare("INSERT INTO billing_subscription VALUES(?,'test',?,?,'active',?,?,1,1,?)").run(`order-${id}`,id,`checkout-${id}`,now-1000,now+86400000,now);
+    const bob={userId:"bob",guestId:account.guestId};
+    for(let i=0;i<20;i++)await reserveUsage(fixture.db,config,account,`alice-${i}`,"batch");
+    expect((await usageSummary(fixture.db,config,bob)).batchRemaining).toBe(20);
+    for(let i=0;i<20;i++)await reserveUsage(fixture.db,config,bob,`bob-${i}`,"batch");
+    await expect(reserveUsage(fixture.db,config,bob,"bob-over-limit","batch")).rejects.toMatchObject({status:429});
+    expect((await usageSummary(fixture.db,config,{...bob,guestId:"another-device"})).batchRemaining).toBe(0);
+  });
+  it("carries anonymous singles over without charging another signed-in account",async()=>{
+    await reserveUsage(fixture.db,config,guest,"anonymous","single");
+    await finishUsage(fixture.db,config,guest,"anonymous","complete");
+    await reserveUsage(fixture.db,config,account,"alice-single","single");
+    const bob={userId:"bob",guestId:account.guestId};
+    expect((await usageSummary(fixture.db,config,bob)).singleRemaining).toBe(2);
+    await reserveUsage(fixture.db,config,bob,"bob-one","single");
+    await reserveUsage(fixture.db,config,bob,"bob-two","single");
+    await expect(reserveUsage(fixture.db,config,bob,"bob-three","single")).rejects.toMatchObject({status:429});
+    expect((await usageSummary(fixture.db,config,account)).singleRemaining).toBe(1);
+  });
+  it("does not replenish the guest allowance after signing out",async()=>{
+    await reserveUsage(fixture.db,config,account,"signed-in-single","single");
+    await finishUsage(fixture.db,config,account,"signed-in-single","complete");
+    await expect(reserveUsage(fixture.db,config,guest,"signed-out-single","single")).rejects.toMatchObject({status:429});
+  });
 });

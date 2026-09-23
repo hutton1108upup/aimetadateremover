@@ -21,10 +21,14 @@ export async function guestIdentity(request:Request,secret:string,origin:string)
   return {id:fresh,cookie:`if_guest=${fresh}.${signed}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${origin.startsWith("https:")?"; Secure":""}`};
 }
 export interface UsageIdentity { userId: string | null; guestId: string }
+// Paid jobs belong only to the account. Sign-in carries over anonymous singles,
+// not another signed-in account's work, even when the guest/IP bootstrap matches.
+// Signed-out requests still count this browser's singles to prevent logout resets.
+const usageScope="(owner_id=? OR (kind='single' AND guest_id=? AND (?=1 OR owner_id=?)))";
 export async function usageSummary(db:BillingDB,config:BillingConfig,identity:UsageIdentity) {
   const now=Date.now(),day=utcDay(now),owner=identity.userId || `guest:${identity.guestId}`;
   const pro=identity.userId ? await activeSubscription(db,config,identity.userId,now) : null;
-  const rows=await db.prepare(`SELECT kind,COUNT(*) AS used FROM billing_usage WHERE environment=? AND day=? AND (owner_id=? OR guest_id=?) AND (state='consumed' OR (state='reserved' AND expires_at>?)) GROUP BY kind`).bind(config.environment,day,owner,identity.guestId,now).all<{kind:string;used:number}>();
+  const rows=await db.prepare(`SELECT kind,COUNT(*) AS used FROM billing_usage WHERE environment=? AND day=? AND ${usageScope} AND (state='consumed' OR (state='reserved' AND expires_at>?)) GROUP BY kind`).bind(config.environment,day,owner,identity.guestId,Number(!identity.userId),`guest:${identity.guestId}`,now).all<{kind:string;used:number}>();
   const singleLimit=identity.userId?3:1,batchLimit=pro?20:0;
   const used=(kind:string)=>rows.results.find(r=>r.kind===kind)?.used || 0;
   return {singleLimit,singleRemaining:Math.max(0,singleLimit-used("single")),batchLimit,batchRemaining:Math.max(0,batchLimit-used("batch")),resetsAt:Date.parse(`${day}T00:00:00Z`)+86400000,pro};
@@ -43,8 +47,8 @@ export async function reserveUsage(db:BillingDB,config:BillingConfig,identity:Us
   const limit=kind==="batch"?summary.batchLimit:summary.singleLimit;
   const expires=now+15*60000;
   const result=await db.prepare(`INSERT OR IGNORE INTO billing_usage(id,owner_id,guest_id,environment,day,kind,state,created_at,expires_at,subscription_order_id)
-    SELECT ?,?,?,?,?,?,'reserved',?,?,? WHERE (SELECT COUNT(*) FROM billing_usage WHERE environment=? AND day=? AND kind=? AND (owner_id=? OR guest_id=?) AND (state='consumed' OR (state='reserved' AND expires_at>?))) < ?`)
-    .bind(id,owner,identity.guestId,config.environment,day,kind,now,expires,kind==="batch"?summary.pro!.order_id:null,config.environment,day,kind,owner,identity.guestId,now,limit).run();
+    SELECT ?,?,?,?,?,?,'reserved',?,?,? WHERE (SELECT COUNT(*) FROM billing_usage WHERE environment=? AND day=? AND kind=? AND ${usageScope} AND (state='consumed' OR (state='reserved' AND expires_at>?))) < ?`)
+    .bind(id,owner,identity.guestId,config.environment,day,kind,now,expires,kind==="batch"?summary.pro!.order_id:null,config.environment,day,kind,owner,identity.guestId,Number(!identity.userId),`guest:${identity.guestId}`,now,limit).run();
   if (!result.meta.changes) throw new BillingError(429,"DAILY_LIMIT","Your daily allowance is used or reserved by another task. It resets at 00:00 UTC.");
   return {id,expiresAt:expires,allowZip:!!summary.pro};
 }

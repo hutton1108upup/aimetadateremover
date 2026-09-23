@@ -18,7 +18,7 @@ export async function POST(request:Request) {
       if (await activeSubscription(db,config,user.id)) throw new BillingError(409,"ALREADY_SUBSCRIBED","You already have Batch Pro. Manage it in account billing.");
       const previous=await db.prepare("SELECT * FROM billing_checkout WHERE user_id=? AND environment=? ORDER BY created_at DESC LIMIT 1").bind(user.id,config.environment).first<CheckoutRow>();
       let checkout=previous;
-      if (previous && previous.expires_at <= Date.now()) {
+      if (previous && (previous.expires_at <= Date.now() || ["canceled","closed","expired"].includes(previous.state))) {
         // Close any unresolved provider order before allowing another checkout.
         for (const order of await checkoutOrders(config,previous.id)) {
           if (order.status === "pending") await provider(config).orders.cancelSubscription({orderId:order.id},requestKey("close",order.id));
