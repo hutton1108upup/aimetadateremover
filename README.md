@@ -1,8 +1,8 @@
-# ImageFinisher
+# AI Metadata Remover
 
-ImageFinisher is a local-first image metadata workbench built with Next.js. It helps users inspect supported JPEG, PNG, and WebP metadata, remove supported AI workflow fields from a new copy, rescan the output, and download an evidence-backed result without uploading the image.
+AI Metadata Remover is a local-first image metadata workbench built with Next.js. It helps users inspect supported JPEG, PNG, and WebP metadata, remove supported AI workflow fields from a new copy, rescan the output, and download an evidence-backed result without uploading the image.
 
-`ImageFinisher` is a working product name. The final brand and production domain have not been selected.
+The website brand is `AI Metadata Remover`, and the production origin is `https://aimetadateremover.pro`.
 
 ## Current scope
 
@@ -47,7 +47,7 @@ npm.cmd run build
 npm.cmd run start
 ```
 
-Set `NEXT_PUBLIC_APP_URL` to the final HTTPS origin before a production deployment so canonical URLs, Open Graph metadata, robots, and the sitemap use the public domain.
+Set `NEXT_PUBLIC_APP_URL` to `https://aimetadateremover.pro` before a production deployment so canonical URLs, Open Graph metadata, robots, and the sitemap use the public domain.
 
 ## Verification
 

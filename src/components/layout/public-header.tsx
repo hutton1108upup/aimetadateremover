@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Check, Menu } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Menu } from "lucide-react";
+import { BrandLogo } from "./brand-logo";
 
 const navigation = [
   { href: "/", label: "Metadata Cleaner" },
@@ -26,7 +27,7 @@ export function PublicHeader() {
 
   return (
     <header className="site-header">
-      <Link href="/" className="brand"><span><Check aria-hidden="true" /></span>ImageFinisher</Link>
+      <Link href="/" className="brand"><BrandLogo /></Link>
       <nav aria-label="Primary navigation">
         {navigation.map((item) => {
           const current = isCurrentPath(pathname, item.href);
@@ -42,8 +43,8 @@ export function PublicHeader() {
           })}
         </div>
       </details>
-      <Link href={workspace ? "/" : "/workspace"} className={`header-cta ${workspace ? "header-cta-secondary" : ""}`}>
-        {workspace ? <><ArrowLeft aria-hidden="true" /> Back to cleaner</> : <>Open Workspace <ArrowUpRight aria-hidden="true" /></>}
+      <Link href={workspace ? "/" : "/workspace"} aria-label={workspace ? "Back to cleaner" : "Open Workspace"} className={`header-cta ${workspace ? "header-cta-secondary" : ""}`}>
+        {workspace ? <><ArrowLeft aria-hidden="true" /><span className="cta-full">Back to cleaner</span><span className="cta-short">Home</span></> : <><span className="cta-full">Open Workspace</span><span className="cta-short">Workspace</span><ArrowUpRight aria-hidden="true" /></>}
       </Link>
     </header>
   );

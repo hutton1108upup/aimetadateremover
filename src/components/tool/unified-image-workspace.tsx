@@ -18,7 +18,7 @@ const safeSampleBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQV
 function createSafeSampleFile() {
   const binary = atob(safeSampleBase64);
   const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-  return new File([bytes], "imagefinisher-safe-sample.png", { type: "image/png" });
+  return new File([bytes], "ai-metadata-remover-safe-sample.png", { type: "image/png" });
 }
 interface LocalImage {
   id: string;
@@ -48,7 +48,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
   const activeRef = useRef<LocalImage | undefined>(undefined);
   const active = files.find((item) => item.id === activeId) ?? files[0];
   const previewSrc = active ? (previewView === "cleaned" ? active.cleanPreview : active.preview) : undefined;
-  const isSafeSample = active?.file.name === "imagefinisher-safe-sample.png";
+  const isSafeSample = active?.file.name === "ai-metadata-remover-safe-sample.png";
 
   filesRef.current = files;
   activeRef.current = active;

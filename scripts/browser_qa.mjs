@@ -10,7 +10,7 @@ const routes = new Map([
   ["/remove-metadata-from-png", "Remove Metadata From PNG Images"],
   ["/guides", "Practical Image Metadata Guides"],
   ["/guides/image-metadata-before-publishing", "What Image Metadata Should You Review Before Publishing?"],
-  ["/about", "How ImageFinisher Handles Your Files"],
+  ["/about", "How AI Metadata Remover Handles Your Files"],
   ["/privacy", "Your Image Stays in This Browser Session"],
   ["/terms", "Terms for Using the Metadata Tools"],
   ["/workspace", "Your image workspace"],

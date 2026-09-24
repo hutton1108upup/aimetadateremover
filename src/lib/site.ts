@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { routeData } from "./publishing";
+import { brandName } from "./brand";
 
 export const productionOrigin = "https://aimetadateremover.pro";
 
@@ -15,7 +16,7 @@ export function resolveSiteUrl(configured = process.env.NEXT_PUBLIC_APP_URL, pro
 }
 
 export const siteUrl = resolveSiteUrl();
-export const socialImage = { url: new URL("/images/metadata-cleaner-preview.png", siteUrl).toString(), width: 1200, height: 630, alt: "ImageFinisher metadata cleaner showing verification of the built-in PNG sample" };
+export const socialImage = { url: new URL("/images/metadata-cleaner-preview.png", siteUrl).toString(), width: 1200, height: 630, alt: `${brandName} showing verification of the built-in PNG sample` };
 
 export function metadataFor(path: string): Metadata {
   const page = routeData(path);
@@ -24,7 +25,7 @@ export function metadataFor(path: string): Metadata {
     title: { absolute: page.title }, description: page.description,
     alternates: { canonical },
     robots: page.indexable ? undefined : { index: false, follow: true },
-    openGraph: { title: page.title, description: page.description, url: canonical, type: "website", siteName: "ImageFinisher", images: [socialImage] },
+    openGraph: { title: page.title, description: page.description, url: canonical, type: "website", siteName: brandName, images: [socialImage] },
     twitter: { card: "summary_large_image", title: page.title, description: page.description, images: [socialImage] },
   };
 }
