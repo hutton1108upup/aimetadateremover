@@ -10,7 +10,7 @@ export function createAuth(database: D1Database, env: AuthEnvironment) {
   const config=resolveAuthConfig(env);
   if(!config.ready) throw new Error("Google sign-in is not configured.");
   return betterAuth({
-    appName:"ImageFinisher",baseURL:config.baseURL,secret:config.secret,
+    appName:"AI Metadata Remover",baseURL:config.baseURL,secret:config.secret,
     trustedOrigins:[config.baseURL],
     database:drizzleAdapter(drizzle(database,{schema}),{provider:"sqlite",schema,transaction:false}),
     emailAndPassword:{enabled:false},

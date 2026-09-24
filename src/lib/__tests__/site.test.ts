@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { metadataFor, productionOrigin, resolveSiteUrl } from "../site";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
+import { brandName } from "../brand";
+import { websiteSchema } from "../structured-data";
 
 describe("public SEO origins", () => {
   it("defaults to the public origin and rejects misconfigured production origins", () => {
@@ -22,5 +24,7 @@ describe("public SEO origins", () => {
     }
     expect(robots().sitemap).toBe(`${productionOrigin}/sitemap.xml`);
     expect(metadataFor("/remove-metadata-from-png").robots).toBeUndefined();
+    expect(metadataFor("/").openGraph?.siteName).toBe(brandName);
+    expect(websiteSchema(productionOrigin).name).toBe(brandName);
   });
 });

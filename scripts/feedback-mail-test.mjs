@@ -25,7 +25,7 @@ if (missing.length) {
     const result = await fetch("https://api.resend.com/emails", {
       method: "POST", signal: AbortSignal.timeout(15000),
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY.trim()}`, "Content-Type": "application/json", "Idempotency-Key": `feedback-setup/${reference}` },
-      body: JSON.stringify({ from: env.FEEDBACK_FROM, to: [env.FEEDBACK_TO], subject: "[ImageFinisher] Feedback delivery setup test", text: `This is a synthetic setup test. No visitor data is included.\nReference: ${reference}\nIf you can read this in your receiving mailbox, this test reached the mailbox.` }),
+      body: JSON.stringify({ from: env.FEEDBACK_FROM, to: [env.FEEDBACK_TO], subject: "[AI Metadata Remover] Feedback delivery setup test", text: `This is a synthetic setup test. No visitor data is included.\nReference: ${reference}\nIf you can read this in your receiving mailbox, this test reached the mailbox.` }),
     });
     if (!result.ok) throw new Error(`Provider rejected the test (HTTP ${result.status}). Check the verified sender domain and API-key permissions in Resend.`);
     const data = await result.json();

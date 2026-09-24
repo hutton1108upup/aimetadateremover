@@ -26,7 +26,7 @@ export const guides: GuideRecord[] = [
   {
     slug: "stable-diffusion-comfyui-metadata", kicker: "Workflow metadata", updated: "September 20, 2026", updatedIso: "2026-09-20",
     title: "Stable Diffusion and ComfyUI Metadata: Prompts, Seeds and Node Graphs",
-    description: "Learn where Stable Diffusion and ComfyUI workflow details can appear and what ImageFinisher can safely remove.",
+    description: "Learn where Stable Diffusion and ComfyUI workflow details can appear and what AI Metadata Remover can safely remove.",
     h1: "What Stable Diffusion and ComfyUI metadata should you remove?",
     answer: "Prompts, seeds, samplers, model settings and node graphs can be stored in image metadata, especially PNG text fields. They may reveal a private workflow, but their absence does not make an image undetectable.",
     sections: [
@@ -45,7 +45,7 @@ export const guides: GuideRecord[] = [
     h1: "C2PA Content Credentials: what does a valid signature mean?",
     answer: "C2PA is a provenance standard. A valid integrity result means the signed claims and asset binding pass the verifier; it does not automatically mean the issuer is trusted, the image is authentic in every sense, or that it was made by AI.",
     sections: [
-      { heading: "Three questions to keep separate", paragraphs: ["First ask whether a C2PA manifest is present. Then ask whether its cryptographic integrity validates. Finally ask whether the issuer is trusted in your context. The checker reports these as separate states.", "Without configured trust anchors, ImageFinisher must not display a generic “trusted” label. An unknown issuer can still have a mathematically valid signature."] },
+      { heading: "Three questions to keep separate", paragraphs: ["First ask whether a C2PA manifest is present. Then ask whether its cryptographic integrity validates. Finally ask whether the issuer is trusted in your context. The checker reports these as separate states.", "Without configured trust anchors, AI Metadata Remover must not display a generic “trusted” label. An unknown issuer can still have a mathematically valid signature."] },
       { heading: "What a failed validation tells you", paragraphs: ["A tampered asset or invalid claim should be treated as unresolved provenance evidence. It is not proof that the image is fake or AI-generated.", "If the browser verifier cannot safely parse a format, the interface falls back to the existing embedded/unverified finding instead of blocking ordinary metadata scanning."] },
     ],
     limits: ["Issuer trust is not inferred from a valid signature.", "External provenance histories are not fetched or guaranteed.", "The feature does not detect SynthID or pixel watermarks."],
@@ -71,7 +71,7 @@ export const guides: GuideRecord[] = [
   {
     slug: "jpeg-png-webp-metadata-support", kicker: "Format guide", updated: "September 20, 2026", updatedIso: "2026-09-20",
     title: "JPEG, PNG and WebP Metadata Support: What Changes by Format",
-    description: "Understand what ImageFinisher can inspect, clean and verify in JPEG, PNG and WebP files.",
+    description: "Understand what AI Metadata Remover can inspect, clean and verify in JPEG, PNG and WebP files.",
     h1: "Which JPEG, PNG and WebP metadata can you clean?",
     answer: "JPEG and PNG support the current local cleaning workflow for recognized AI and privacy fields. WebP can be inspected, but it remains scan-only until its rewrite compatibility gate passes.",
     sections: [

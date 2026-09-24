@@ -17,7 +17,7 @@ const safeSampleBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQV
 function createSafeSampleFile() {
   const binary = atob(safeSampleBase64);
   const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-  return new File([bytes], "imagefinisher-safe-sample.png", { type: "image/png" });
+  return new File([bytes], "ai-metadata-remover-safe-sample.png", { type: "image/png" });
 }
 export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "clean", acceptedFormats }: { variant?: "embedded" | "full"; defaultMode?: "inspect" | "clean"; acceptedFormats?: Array<"jpeg" | "png" | "webp"> }) {
   const { files, filesRef, busy, notice, addFiles: queueFiles, cleanFiles, removeFile, clearFiles, downloadOne, downloadZip } = useLocalWorkspace(acceptedFormats);

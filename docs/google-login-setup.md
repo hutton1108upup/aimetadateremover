@@ -22,8 +22,8 @@
 
 ## 创建 Google 演示 OAuth 应用
 
-1. 打开 [Google Auth Platform](https://console.cloud.google.com/auth/overview)，创建或选择独立演示项目，例如 `ImageFinisher Demo`。
-2. 配置 Branding：应用名填 `ImageFinisher Demo`，支持邮箱与开发者联系邮箱选自己的邮箱。Audience 选择 External，演示期间保持 Testing，并将自己准备登录的 Google 账号加入 Test users。
+1. 打开 [Google Auth Platform](https://console.cloud.google.com/auth/overview)，创建或选择独立演示项目，例如 `AI Metadata Remover Demo`。
+2. 配置 Branding：应用名填 `AI Metadata Remover Demo`，支持邮箱与开发者联系邮箱选自己的邮箱。Audience 选择 External，演示期间保持 Testing，并将自己准备登录的 Google 账号加入 Test users。
 3. 在 Clients 创建 Web application OAuth client，例如命名为 `Local Demo`。
 4. Authorized JavaScript origin 填 `http://localhost:3180`。
 5. Authorized redirect URI 精确填写 `http://localhost:3180/api/auth/callback/google`。

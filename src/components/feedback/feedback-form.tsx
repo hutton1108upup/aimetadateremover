@@ -58,7 +58,7 @@ export function FeedbackForm({ trigger, path, onSaved }: { trigger: FeedbackTrig
         : "What result were you hoping for? What are you unsure about?"
     : trigger === "error" ? "What were you trying to do, and where did you get stuck?" : "What are you hoping to do with this tool today?";
   return <form className="feedback-form" onSubmit={submit} noValidate aria-describedby="feedback-intro" data-clarity-mask="true">
-    <header className="feedback-heading"><span className="feedback-icon"><MessageSquare aria-hidden="true" /></span><div><p className="feedback-kicker">Help shape ImageFinisher</p><h2>Tell us what you need</h2></div></header>
+    <header className="feedback-heading"><span className="feedback-icon"><MessageSquare aria-hidden="true" /></span><div><p className="feedback-kicker">Help shape AI Metadata Remover</p><h2>Tell us what you need</h2></div></header>
     <p id="feedback-intro" className="feedback-intro">Every question is optional. One answer is enough — no account needed.</p>
     <fieldset disabled={sending} className="feedback-fields">
       {isDownload && <fieldset className="feedback-outcomes"><legend>Did this tool help you solve your problem?</legend><div>
