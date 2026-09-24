@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { publicRoutes, sitemapRoutes } from "../publishing";
+import sitemap from "@/app/sitemap";
 
 describe("Phase 1 publishing manifest", () => {
   it("publishes only complete public routes and excludes private or later-phase surfaces", () => {
@@ -33,5 +34,19 @@ describe("Phase 1 publishing manifest", () => {
     }
     expect(new Set(publicRoutes.map((route) => route.title)).size).toBe(publicRoutes.length);
     expect(new Set(publicRoutes.map((route) => route.h1)).size).toBe(publicRoutes.length);
+  });
+
+  it("uses the last substantive route update for sitemap lastModified", () => {
+    const entries = new Map(sitemap().map((entry) => [new URL(entry.url).pathname, entry]));
+    for (const path of ["/", "/metadata-checker", "/remove-metadata-from-png", "/about"]) {
+      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-24T00:00:00.000Z");
+    }
+    for (const path of ["/guides/chatgpt-dalle-image-metadata", "/guides/stable-diffusion-comfyui-metadata", "/guides/c2pa-content-credentials-explained"]) {
+      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-20T00:00:00.000Z");
+    }
+    for (const path of ["/privacy", "/terms", "/pricing", "/guides", "/guides/image-metadata-before-publishing"]) {
+      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-18T00:00:00.000Z");
+    }
+    expect(entries.has("/workspace")).toBe(false);
   });
 });

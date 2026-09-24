@@ -4,6 +4,7 @@ import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { brandName } from "../brand";
 import { websiteSchema } from "../structured-data";
+import { metadata as workspaceMetadata } from "@/app/workspace/page";
 
 describe("public SEO origins", () => {
   it("defaults to the public origin and rejects misconfigured production origins", () => {
@@ -23,7 +24,10 @@ describe("public SEO origins", () => {
       expect(metadata.openGraph?.url).toBe(entry.url);
     }
     expect(robots().sitemap).toBe(`${productionOrigin}/sitemap.xml`);
+    expect(robots().rules).toEqual({ userAgent: "*", allow: "/" });
     expect(metadataFor("/remove-metadata-from-png").robots).toBeUndefined();
+    expect(metadataFor("/").robots).toBeUndefined();
+    expect(workspaceMetadata.robots).toEqual({ index: false, follow: false });
     expect(metadataFor("/").openGraph?.siteName).toBe(brandName);
     expect(websiteSchema(productionOrigin).name).toBe(brandName);
   });
