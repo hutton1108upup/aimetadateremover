@@ -1,6 +1,6 @@
 export type ImageFormat = "jpeg" | "png" | "webp";
 export type FindingStatus = "action" | "review" | "informational";
-export type CleanMode = "ai_workflow" | "privacy" | "full";
+export type CleanMode = "ai_workflow" | "privacy" | "publish" | "full";
 export type FileStage =
   | "queued"
   | "validating"
@@ -49,6 +49,7 @@ export interface ScanResult {
   properties: ImageProperties;
   warnings: string[];
   cleanSupport: "supported" | "scan_only" | "limited";
+  c2pa?: import("@/lib/c2pa/verify").C2paVerification;
 }
 
 export interface CleanPolicy {
@@ -87,6 +88,10 @@ export interface VerificationResult {
   dimensionsChanged?: boolean;
   iccPreserved?: boolean;
   transparencyPreserved?: boolean;
+  encodedPayloadPreserved?: boolean;
+  orientationPreserved?: boolean;
+  inputBytes?: number;
+  outputBytes?: number;
 }
 
 export type WorkerRequest =

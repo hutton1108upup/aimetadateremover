@@ -1,3 +1,4 @@
+import { PublicFooter } from "@/components/layout/public-footer";
 import type { Metadata } from "next"; import { PublicHeader } from "@/components/layout/public-header"; import { UnifiedImageWorkspace } from "@/components/tool/unified-image-workspace";
 export const metadata:Metadata={title:"Local Image Workspace",description:"Inspect, clean, verify and export image metadata in one browser session.",robots:{index:false,follow:false}};
-export default function Page(){return <><PublicHeader/><main className="workspace-page"><div className="workspace-title"><h1>Your image workspace</h1><p>Add your files once, then inspect, clean, verify, and download a separate copy.</p></div><UnifiedImageWorkspace variant="full" defaultMode="inspect"/></main></>}
+export default function Page(){return <><PublicHeader/><main className="workspace-page"><div className="workspace-title"><h1>Your image workspace</h1><p>Choose your images. We check, clean and verify automatically; you download the results.</p></div><UnifiedImageWorkspace variant="full" defaultMode="clean"/></main><PublicFooter/></>}

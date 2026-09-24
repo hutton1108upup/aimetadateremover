@@ -1,3 +1,7 @@
-import Link from "next/link"; import { ArrowRight, BookOpen } from "lucide-react"; import { InfoPage } from "@/components/marketing/info-page"; import { metadataFor } from "@/lib/site";
-export const metadata=metadataFor("/guides");
-export default function Page(){return <InfoPage label="Guides" h1="Practical Image Metadata Guides" lede="Find out what travels with an image, what each field means, and what you might lose by removing it."><div className="guide-grid"><Link href="/guides/image-metadata-before-publishing"><BookOpen/><span><small>Metadata basics · 8 min</small><h2>What image metadata should you review before publishing?</h2><p>A field-by-field guide to prompts, privacy details, attribution, color, and provenance.</p><b>Read the guide <ArrowRight/></b></span></Link><article className="guide-coming"><small>Coming next</small><h2>C2PA is provenance, not an AI score</h2><p>How to read Content Credentials without treating them as a verdict.</p></article></div></InfoPage>}
+import Link from "next/link";
+import { ArrowRight, BookOpen } from "lucide-react";
+import { InfoPage } from "@/components/marketing/info-page";
+import { metadataFor } from "@/lib/site";
+import { guides } from "@/lib/guides";
+export const metadata = metadataFor("/guides");
+export default function Page() { return <InfoPage label="Guides" h1="Practical Image Metadata Guides" lede="Evidence-bounded explanations of what travels with an image, what each field means, and what you might lose by removing it."><div className="guide-grid guide-grid-expanded">{guides.map((guide) => <Link href={`/guides/${guide.slug}`} key={guide.slug}><BookOpen aria-hidden="true" /><span><small>{guide.kicker} · Updated {guide.updated}</small><h2>{guide.title}</h2><p>{guide.description}</p><b>Read the guide <ArrowRight aria-hidden="true" /></b></span></Link>)}</div></InfoPage>; }

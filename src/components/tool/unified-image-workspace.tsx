@@ -2,17 +2,16 @@
 /* eslint-disable @next/next/no-img-element -- local blob previews cannot use the Next image optimizer */
 
 import { useEffect, useRef, useState } from "react";
-import JSZip from "jszip";
-import { Check, ChevronDown, Download, FileImage, FolderOpen, LockKeyhole, Plus, ScanSearch, ShieldCheck, Sparkles, Trash2, UploadCloud, ZoomIn, ZoomOut } from "lucide-react";
-import { getBatchLimits } from "@/lib/image-metadata-core/limits";
-import { mapWithConcurrency } from "@/lib/concurrency";
-import type { CleanMode, CleanPolicy, FileStage, ScanResult, VerificationResult } from "@/lib/image-metadata-core/types";
-import { cleanLocally, scanLocally, validateBrowserImage } from "@/lib/local-processor";
-import { FindingRow } from "./finding-row";
+import Link from "next/link";
+import { Check, Download, FileImage, FolderOpen, LockKeyhole, Plus, ScanSearch, ShieldCheck, Trash2, UploadCloud, ZoomIn, ZoomOut } from "lucide-react";
+import type { CleanPolicy } from "@/lib/image-metadata-core/types";
+import { downloadLocal as download, useLocalWorkspace, type LocalImage, unresolvedCount } from "./use-local-workspace";
+import { FindingNextActions, FindingRow } from "./finding-row";
 import { VerificationCard } from "./verification-card";
+import { FunnelReview } from "./funnel-review";
+import { FeedbackButton } from "@/components/feedback/feedback-button";
 
-type ToolTab = "inspect" | "clean" | "humanize" | "export";
-const toolTabs: ToolTab[] = ["inspect", "clean", "humanize", "export"];
+
 const safeSampleBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAApdEVYdHBhcmFtZXRlcnMAc3RlcHM9MzAgc2VlZD00MiBzYW1wbGVyPWV1bGVyj/t2VgAAAABJRU5ErkJggg==";
 
 function createSafeSampleFile() {
@@ -20,57 +19,28 @@ function createSafeSampleFile() {
   const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
   return new File([bytes], "ai-metadata-remover-safe-sample.png", { type: "image/png" });
 }
-interface LocalImage {
-  id: string;
-  file: File;
-  preview?: string;
-  status: FileStage;
-  scan?: ScanResult;
-  error?: string;
-  cleaned?: ArrayBuffer;
-  verification?: VerificationResult;
-  cleanPreview?: string;
-}
-
 export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "clean", acceptedFormats }: { variant?: "embedded" | "full"; defaultMode?: "inspect" | "clean"; acceptedFormats?: Array<"jpeg" | "png" | "webp"> }) {
-  const [files, setFiles] = useState<LocalImage[]>([]);
+  const { files, filesRef, busy, notice, addFiles: queueFiles, cleanFiles, removeFile, clearFiles, downloadOne, downloadZip } = useLocalWorkspace(acceptedFormats);
   const [activeId, setActiveId] = useState<string>();
-  const [tab, setTab] = useState<ToolTab>(defaultMode);
-  const [cleanMode, setCleanMode] = useState<CleanMode>("ai_workflow");
-  const [removeC2pa, setRemoveC2pa] = useState(false);
-  const [advanced, setAdvanced] = useState(false);
+  const [keepPrivacy, setKeepPrivacy] = useState(false);
+  const [keepCredentials, setKeepCredentials] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState("");
   const [expanded, setExpanded] = useState<string>();
-  const [busy, setBusy] = useState(false);
-  const [previewView, setPreviewView] = useState<"original" | "cleaned">("original");
+  const [previewView, setPreviewView] = useState<"original" | "cleaned">("cleaned");
   const [zoom, setZoom] = useState(100);
   const inputRef = useRef<HTMLInputElement>(null);
-  const filesRef = useRef<LocalImage[]>([]);
   const activeRef = useRef<LocalImage | undefined>(undefined);
   const active = files.find((item) => item.id === activeId) ?? files[0];
-  const previewSrc = active ? (previewView === "cleaned" ? active.cleanPreview : active.preview) : undefined;
-  const isSafeSample = active?.file.name === "ai-metadata-remover-safe-sample.png";
+  const showingCleaned = previewView === "cleaned" && Boolean(active?.cleanPreview);
+  const previewSrc = active ? (showingCleaned ? active.cleanPreview : active.preview) : undefined;
+  const isSafeSample = active?.source === "sample";
 
-  filesRef.current = files;
-  activeRef.current = active;
-  useEffect(() => () => filesRef.current.forEach((item) => { if (item.preview) URL.revokeObjectURL?.(item.preview); if (item.cleanPreview) URL.revokeObjectURL?.(item.cleanPreview); }), []);
+  useEffect(() => { activeRef.current = active; }, [active]);
   useEffect(() => {
     const context = document.modelContext;
     if (!context?.registerTool) return;
     const lifecycle = new AbortController();
     const registrations = [
-      context.registerTool({
-        name: "select_metadata_step",
-        title: "Select metadata step",
-        description: "Show one existing local workspace step: inspect, clean, humanize information, or export.",
-        inputSchema: { type: "object", properties: { step: { type: "string", enum: ["inspect", "clean", "humanize", "export"] } }, required: ["step"], additionalProperties: false },
-        annotations: { readOnlyHint: false, untrustedContentHint: false },
-        execute(input) {
-          const step = typeof input === "object" && input !== null && "step" in input ? (input as { step: unknown }).step : undefined;
-          if (!(["inspect", "clean", "humanize", "export"] as unknown[]).includes(step)) throw new Error("step must be inspect, clean, humanize, or export");
-          setTab(step as ToolTab);
-          return { selectedStep: step };
-        },
-      }, { signal: lifecycle.signal }),
       context.registerTool({
         name: "read_local_workspace_status",
         title: "Read local workspace status",
@@ -82,99 +52,76 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
     ];
     for (const registration of registrations) void Promise.resolve(registration).catch(() => undefined);
     return () => lifecycle.abort();
-  }, []);
+  }, [filesRef]);
 
-  async function addFiles(list: File[]) {
-    const limits = getBatchLimits(typeof window === "undefined" ? 1440 : window.innerWidth);
-    const available = limits.maxFiles - files.length;
-    const selected = list.slice(0, Math.max(0, available));
-    const batchBytes = files.reduce((sum, item) => sum + item.file.size, 0) + selected.reduce((sum, item) => sum + item.size, 0);
-    if (batchBytes > limits.maxBatchBytes) {
-      const issue: LocalImage = { id: `limit-${Date.now()}`, file: selected[0], status: "failed", error: `These files are over the ${limits.maxBatchBytes / 1024 / 1024} MB limit for local processing.` };
-      setFiles((current) => [...current, issue]); setActiveId(issue.id); return;
-    }
-    const queued = selected.map((file) => ({ id: `${file.name}-${file.size}-${Math.random()}`, file, status: "queued" as const, preview: file.type.startsWith("image/") && typeof URL.createObjectURL === "function" ? URL.createObjectURL(file) : undefined }));
-    setFiles((current) => [...current, ...queued]);
-    if (!activeId && queued[0]) setActiveId(queued[0].id);
-    setBusy(true);
-    await mapWithConcurrency(queued, limits.concurrency, async (item) => {
-      if (item.file.size > limits.maxFileBytes) {
-        setFiles((current) => current.map((entry) => entry.id === item.id ? { ...entry, status: "failed", error: "This file is over the 25 MB limit for local processing." } : entry)); return;
-      }
-      setFiles((current) => current.map((entry) => entry.id === item.id ? { ...entry, status: "scanning" } : entry));
+  const policy: CleanPolicy = { mode: keepPrivacy ? "ai_workflow" : "publish", removeC2pa: !keepCredentials, removeColorProfile: false };
+  const pngOnly = acceptedFormats?.length === 1 && acceptedFormats[0] === "png";
+  const completed = files.filter(file => file.status === "ready");
+  const partial = completed.filter(file => file.verification && unresolvedCount(file.verification));
+  const failed = files.filter(file => file.error);
+  const scanOnly = files.filter(file => file.scan?.cleanSupport === "scan_only");
+  const activeProcessing = active && ["queued", "validating", "scanning", "cleaning", "verifying"].includes(active.status);
+  const removed = active?.verification?.items.filter(item => item.after === "removed").length ?? 0;
+  const unchanged = Boolean(active?.verification && !removed && !unresolvedCount(active.verification));
+
+  async function addFiles(list: File[], source: "file" | "sample" = "file") {
+    if (!busy && !filesRef.current.length) { setPreviewView("cleaned"); setZoom(100); setActiveId(undefined); }
+    await queueFiles(list, source, defaultMode === "clean" ? policy : undefined);
+  }
+
+  async function updateSettings(nextPrivacy: boolean, nextCredentials: boolean) {
+    if (busy) return;
+    setKeepPrivacy(nextPrivacy); setKeepCredentials(nextCredentials);
+    const ids = filesRef.current.filter(file => defaultMode === "clean" || file.verification).map(file => file.id);
+    if (ids.length) {
+      setSettingsMessage("Reprocessing with your new settings…");
       try {
-        const buffer = await item.file.arrayBuffer();
-        const scan = await scanLocally(buffer);
-        if (acceptedFormats && !acceptedFormats.includes(scan.format)) throw new Error(`This page accepts ${acceptedFormats.join(", ").toUpperCase()} images.`);
-        setFiles((current) => current.map((entry) => entry.id === item.id ? { ...entry, scan, status: "ready_for_action" } : entry));
-      } catch (error) {
-        const issue = error as Error & { code?: string };
-        const safeMessage = issue.code ? issue.message : "We could not read this as a supported JPEG, PNG, or WebP image.";
-        setFiles((current) => current.map((entry) => entry.id === item.id ? { ...entry, status: "unsupported", error: safeMessage } : entry));
+        await cleanFiles(ids, { mode: nextPrivacy ? "ai_workflow" : "publish", removeC2pa: !nextCredentials, removeColorProfile: false });
+        setSettingsMessage("Settings applied. Review each image’s result below.");
+      } catch {
+        setSettingsMessage("Reprocessing did not finish. Check the results before downloading.");
       }
-    });
-    setBusy(false);
-  }
-
-  async function cleanActive() {
-    if (!active?.scan) return;
-    if (cleanMode !== "ai_workflow") {
-      setFiles((current) => current.map((entry) => entry.id === active.id ? { ...entry, error: "Privacy Clean and Full Clean are not ready yet. They will unlock after the extended EXIF tests pass." } : entry));
-      return;
-    }
-    const policy: CleanPolicy = { mode: cleanMode, removeC2pa, removeColorProfile: false };
-    setBusy(true);
-    setFiles((current) => current.map((entry) => entry.id === active.id ? { ...entry, status: "cleaning", error: undefined } : entry));
-    try {
-      const { clean, verification } = await cleanLocally(await active.file.arrayBuffer(), policy);
-      if (clean.output) await validateBrowserImage(clean.output.slice(0), active.file.type);
-      const cleanPreview = clean.output && typeof URL.createObjectURL === "function" ? URL.createObjectURL(new Blob([clean.output], { type: active.file.type })) : undefined;
-      setFiles((current) => current.map((entry) => entry.id === active.id ? { ...entry, cleaned: clean.output, cleanPreview, verification, status: "ready" } : entry));
-      setPreviewView("cleaned");
-      setTab("export");
-    } catch (error) {
-      setFiles((current) => current.map((entry) => entry.id === active.id ? { ...entry, status: "unsupported", error: (error as Error).message } : entry));
-    } finally { setBusy(false); }
-  }
-
-  function removeFile(id: string) {
-    const target = files.find((item) => item.id === id);
-    if (target?.preview) URL.revokeObjectURL?.(target.preview);
-    if (target?.cleanPreview) URL.revokeObjectURL?.(target.cleanPreview);
-    const remaining = files.filter((item) => item.id !== id);
-    setFiles(remaining); if (activeId === id) setActiveId(remaining[0]?.id);
-  }
-
-  function download(buffer: ArrayBuffer, name: string, type: string) {
-    const url = URL.createObjectURL(new Blob([buffer], { type }));
-    const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click(); URL.revokeObjectURL(url);
-  }
-
-  async function downloadZip() {
-    const zip = new JSZip();
-    files.filter((item) => item.cleaned).forEach((item) => zip.file(`clean-${item.file.name}`, item.cleaned!));
-    const blob = await zip.generateAsync({ type: "blob" });
-    const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = "clean-images.zip"; anchor.click(); URL.revokeObjectURL(url);
+    } else setSettingsMessage("Settings saved for the next images you clean.");
   }
 
   return (
     <section className={`workspace-shell ${variant === "full" ? "workspace-full" : "workspace-embedded"}`} aria-label="Local image metadata workspace">
       <div className="local-notice"><span><ShieldCheck aria-hidden="true" /> Your files stay in this browser</span><span>Nothing gets uploaded</span></div>
+      <fieldset className="clean-settings" disabled={busy}>
+        <legend>Cleaning settings</legend>
+        <div className="clean-settings-heading"><span>Applies to all images</span><span>Original files stay unchanged</span></div>
+        <div className="clean-settings-options">
+          <label className={`clean-setting-option${keepPrivacy ? " is-selected" : ""}`}>
+            <input type="checkbox" checked={keepPrivacy} onChange={event => void updateSettings(event.target.checked, keepCredentials)} />
+            <span><strong>Keep capture details</strong><small>Location, dates &amp; device</small></span>
+          </label>
+          <label className={`clean-setting-option${keepCredentials ? " is-selected" : ""}`}>
+            <input type="checkbox" checked={keepCredentials} onChange={event => void updateSettings(keepPrivacy, event.target.checked)} />
+            <span><strong>Keep Content Credentials</strong><small>Source &amp; edit history</small></span>
+          </label>
+        </div>
+        <p>{defaultMode === "inspect" ? "These settings apply when you choose to clean a copy. Inspection never changes your file." : "Unchecked fields are removed where supported. Changes rebuild existing copies from your originals."} <span className="desktop-boundary-copy">Only embedded PNG credentials can be removed; JPEG credentials and other unsupported fields may remain.</span><span className="mobile-boundary-copy">Unsupported fields may remain.</span></p>
+        <p className="settings-status" role="status">{settingsMessage}</p>
+      </fieldset>
+      {notice && <p className="batch-notice" role="status">{notice}</p>}
+      {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {completed.length} ready to download · {partial.length} partial · {failed.length} failed{scanOnly.length > 0 ? ` · ${scanOnly.length} inspection only` : ""}</span><button className="button secondary" onClick={clearFiles}>Clear queue</button></div>}
+      {files.length > 1 && completed.length > 0 && <div className="batch-download"><button className="button primary" disabled={busy} onClick={() => void downloadZip()}><Download aria-hidden="true" />Download completed images (ZIP)</button><p>{completed.length} of {files.length} files included · {partial.length} need review. Failed and inspection-only files are excluded.</p></div>}
       <div className="workspace-grid">
         {variant === "full" && (
           <aside className="file-rail" aria-label="File queue">
-            <div className="rail-heading"><span>File queue</span><button onClick={() => inputRef.current?.click()} aria-label="Add more images">+</button></div>
-            {files.map((item) => <button key={item.id} className={`file-row ${item.id === active?.id ? "active" : ""}`} onClick={() => setActiveId(item.id)}><FileImage aria-hidden="true" /><span><b>{item.file.name}</b><small>{item.status.replaceAll("_", " ")}</small></span></button>)}
+            <div className="rail-heading"><span>File queue</span><button disabled={busy} onClick={() => inputRef.current?.click()} aria-label="Add more images">+</button></div>
+            {files.map((item) => <button key={item.id} className={`file-row ${item.id === active?.id ? "active" : ""}`} onClick={() => setActiveId(item.id)}><FileImage aria-hidden="true" /><span><b>{item.file.name}</b><small>{fileStatus(item)}</small></span></button>)}
           </aside>
         )}
         <div className="tool-stage">
-          {variant === "full" && files.length > 0 && <select className="mobile-file-select" value={active?.id} onChange={(event) => setActiveId(event.target.value)} aria-label="Active image">{files.map((item) => <option value={item.id} key={item.id}>{item.file.name}</option>)}</select>}
+          {files.length > 0 && <select className="queue-file-select" value={active?.id} onChange={(event) => setActiveId(event.target.value)} aria-label="Active image">{files.map((item) => <option value={item.id} key={item.id}>{item.file.name} · {fileStatus(item)}</option>)}</select>}
           {!active ? (
             <div className="dropzone" role="button" aria-label="Open file picker" onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inputRef.current?.click(); } }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void addFiles(Array.from(event.dataTransfer.files)); }} onPaste={(event) => void addFiles(Array.from(event.clipboardData.files))} tabIndex={0}>
               <span className="upload-icon"><UploadCloud aria-hidden="true" /></span>
               <h2>Drop, paste, or choose your images</h2>
-              <p>JPG, PNG, or WebP · No account needed</p>
-              <div className="drop-actions"><button className="button primary" onClick={() => inputRef.current?.click()} disabled={busy}><FolderOpen aria-hidden="true" /> Choose images</button><button className="button secondary" onClick={() => void addFiles([createSafeSampleFile()])} disabled={busy}><ScanSearch aria-hidden="true" /> Try a safe sample</button></div>
+              <p>{pngOnly ? "PNG images" : "JPG and PNG · WebP inspection only"} · No account needed</p>
+              <p className="drop-policy">{defaultMode === "inspect" ? "Read-only check. Your file stays unchanged." : "Automatically cleans images using the settings above."}</p>
+              <div className="drop-actions"><button className="button primary" onClick={() => inputRef.current?.click()} disabled={busy}><FolderOpen aria-hidden="true" /> Choose images</button><button className="button secondary" onClick={() => void addFiles([createSafeSampleFile()], "sample")} disabled={busy}><ScanSearch aria-hidden="true" /> Try a safe sample</button></div>
               <div className="trust-row"><span><Check aria-hidden="true" /> Free to use</span><span><LockKeyhole aria-hidden="true" /> Runs locally</span><span><Check aria-hidden="true" /> Original file preserved</span><span><Check aria-hidden="true" /> No subscription required</span></div>
             </div>
           ) : (
@@ -183,30 +130,65 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
                 <div className="preview-toolbar">
                   <span className="preview-name" title={active.file.name}>{active.file.name}</span>
                   <span className="preview-tools">
-                    <span className="preview-view-toggle" aria-label="Preview version"><button className={previewView === "original" ? "selected" : ""} onClick={() => setPreviewView("original")} aria-label="Show original">Original</button><button className={previewView === "cleaned" ? "selected" : ""} onClick={() => setPreviewView("cleaned")} disabled={!active.cleanPreview} aria-label="Show cleaned">Cleaned</button></span>
+                    <span className="preview-view-toggle" aria-label="Preview version"><button className={!showingCleaned ? "selected" : ""} onClick={() => setPreviewView("original")} aria-label="Show original">Original</button><button className={showingCleaned ? "selected" : ""} onClick={() => setPreviewView("cleaned")} disabled={!active.cleanPreview} aria-label="Show cleaned">Cleaned</button></span>
                     <span className="preview-zoom-controls" aria-label="Preview zoom"><button onClick={() => setZoom((value) => Math.max(50, value - 25))} aria-label="Zoom out"><ZoomOut aria-hidden="true" /></button><b>{zoom}%</b><button onClick={() => setZoom((value) => Math.min(200, value + 25))} aria-label="Zoom in"><ZoomIn aria-hidden="true" /></button></span>
-                    <span className="preview-file-controls" aria-label="File actions"><button onClick={() => inputRef.current?.click()} aria-label="Add images"><Plus aria-hidden="true" /></button><button className="remove-action" onClick={() => removeFile(active.id)} aria-label={`Remove ${active.file.name}`}><Trash2 aria-hidden="true" /></button></span>
+                    <span className="preview-file-controls" aria-label="File actions"><button disabled={busy} onClick={() => inputRef.current?.click()} aria-label="Add images"><Plus aria-hidden="true" /></button><button className="remove-action" onClick={() => removeFile(active.id)} aria-label={`Remove ${active.file.name}`}><Trash2 aria-hidden="true" /></button></span>
                   </span>
                 </div>
-                <div className={`image-stage ${isSafeSample ? "safe-sample-stage" : ""}`}>{previewSrc ? <img style={{ transform: `scale(${zoom / 100})` }} src={previewSrc} alt={`${previewView === "cleaned" ? "Cleaned" : "Original"} file preview`} /> : <FileImage aria-hidden="true" />}{isSafeSample && <span className="safe-sample-card"><ShieldCheck aria-hidden="true" /><b>Safe sample</b><small>Built-in test PNG · one sample workflow field</small></span>}</div>
+                <div className={`image-stage ${isSafeSample ? "safe-sample-stage" : ""}`}>{previewSrc ? <img style={{ transform: `scale(${zoom / 100})` }} src={previewSrc} alt={`${showingCleaned ? "Cleaned" : "Original"} file preview`} /> : <FileImage aria-hidden="true" />}{isSafeSample && <span className="safe-sample-card"><ShieldCheck aria-hidden="true" /><b>Safe sample</b><small>Built-in test PNG · one sample workflow field</small></span>}</div>
                 <p>{active.scan ? `${active.scan.format.toUpperCase()} · ${formatBytes(active.file.size)} · ${active.scan.findings.length} finding${active.scan.findings.length === 1 ? "" : "s"}` : active.status.replaceAll("_", " ")}</p>
               </div>
               <div className="action-panel">
-                <div className="tool-tabs" role="tablist" aria-label="Workspace steps">{toolTabs.map((item) => <button id={`tab-${item}`} aria-controls={`panel-${item}`} role="tab" aria-selected={tab === item} key={item} onClick={() => setTab(item)}>{item}</button>)}</div>
-                <div aria-live="polite" className="sr-status">{busy ? "Processing locally" : active.error ?? active.status.replaceAll("_", " ")}</div>
-                {active.error && <div className="error-banner">{active.error}</div>}
-                {tab === "inspect" && active.scan && <div className="panel-stack" role="tabpanel" id="panel-inspect" aria-labelledby="tab-inspect"><div className="result-strip"><span>{active.scan.findings.length} metadata finding{active.scan.findings.length === 1 ? "" : "s"}</span><b>{active.scan.cleanSupport === "scan_only" ? "Scan only" : "Scan complete"}</b></div><button className="advanced-toggle" onClick={() => setAdvanced((value) => !value)}> {advanced ? "Back to summary" : "Show technical details"}<ChevronDown /></button>{active.scan.findings.length ? active.scan.findings.map((finding) => <FindingRow key={finding.id + finding.rawKey} finding={finding} expanded={expanded === finding.id} onToggle={() => setExpanded(expanded === finding.id ? undefined : finding.id)} />) : <div className="empty-result"><ShieldCheck /><h3>We did not find supported metadata</h3><p>The file may still contain data this tool cannot read or signals stored in the pixels. This is not an AI detection result.</p><button className="button secondary" onClick={() => inputRef.current?.click()}>Inspect another image</button></div>}{advanced && <div className="advanced-table"><table><thead><tr><th>Field</th><th>Category</th><th>Value</th><th /></tr></thead><tbody>{active.scan.findings.map((finding)=><tr key={finding.id}><td>{finding.rawKey ?? finding.label}</td><td>{finding.category.replaceAll("_"," ")}</td><td>{finding.category === "location" || finding.category === "ai_workflow" ? "Hidden" : finding.rawValue ?? "Present"}</td><td><button onClick={() => void navigator.clipboard?.writeText(`${finding.rawKey ?? finding.label}: ${finding.rawValue ?? "present"}`)}>Copy</button></td></tr>)}</tbody></table><button className="button secondary wide" onClick={() => download(new TextEncoder().encode(JSON.stringify(active.scan, null, 2)).buffer, `${active.file.name}.metadata.json`, "application/json")}><Download/> Export scan JSON</button></div>}</div>}
-                {tab === "clean" && <div className="panel-stack" role="tabpanel" id="panel-clean" aria-labelledby="tab-clean"><p className="panel-intro">Choose what to remove from the new copy. We will not touch your original.</p>{(["ai_workflow", "privacy", "full"] as CleanMode[]).map((mode) => <label className={`mode-card ${cleanMode === mode ? "selected" : ""} ${mode !== "ai_workflow" ? "gated" : ""}`} key={mode}><input type="radio" name="clean-mode" disabled={mode !== "ai_workflow"} checked={cleanMode === mode} onChange={() => setCleanMode(mode)} /><span><b>{mode === "ai_workflow" ? "AI Workflow Clean" : mode === "privacy" ? "Privacy Clean · coming later" : "Full Clean · coming later"}</b><small>{mode === "ai_workflow" ? "Removes supported prompts, workflows, model settings, and seeds" : "You can preview this option, but it will stay disabled until the extended EXIF, thumbnail, and MakerNote tests pass."}</small></span></label>)}<label className="check-row"><input type="checkbox" disabled={active.scan?.format !== "png" || !active.scan.findings.some((finding) => finding.id === "c2pa")} checked={removeC2pa} onChange={(event) => setRemoveC2pa(event.target.checked)} /><span><b>Remove Content Credentials</b><small>Off by default. When found, PNG caBX records can be removed; JPEG and WebP are still scan-only.</small></span></label><button className="button primary wide" onClick={() => void cleanActive()} disabled={busy || !active.scan}>{busy ? "Processing locally…" : "Create clean copy"}</button></div>}
-                {tab === "humanize" && <div className="unavailable-panel" role="tabpanel" id="panel-humanize" aria-labelledby="tab-humanize"><Sparkles /><p className="eyebrow">Coming later</p><h3>Visual repair is not ready yet</h3><p>Cleaning metadata changes information stored in the file. It does not fix visible artifacts, remove watermarks stored in the pixels, or control a third-party detector. We will add visual repair after the provider results pass our quality tests.</p></div>}
-                {tab === "export" && <div className="panel-stack" role="tabpanel" id="panel-export" aria-labelledby="tab-export">{active.verification ? <VerificationCard verification={active.verification} /> : <div className="empty-result"><Download /><h3>No clean copy to download yet</h3><p>Run a supported cleaning option first. The download will appear after the tool scans the new file again.</p></div>}{active.cleaned && <><button className="button primary wide" onClick={() => download(active.cleaned!, `clean-${active.file.name}`, active.file.type)}><Download /> Download clean copy</button><button className="button secondary wide" onClick={() => download(new TextEncoder().encode(JSON.stringify(active.verification, null, 2)).buffer, `${active.file.name}.metadata-report.json`, "application/json")}><Download /> Export verification JSON</button>{files.filter((item) => item.cleaned).length > 1 && <button className="button secondary wide" onClick={() => void downloadZip()}>Download clean ZIP</button>}</>}</div>}
+                <div aria-live="polite" className="sr-status">{active.error ?? fileStatus(active)}</div>
+                {activeProcessing && <div className="processing-result" role="status"><ScanSearch aria-hidden="true" /><h3>{active.status === "cleaning" ? "Cleaning your copy…" : active.status === "verifying" ? "Verifying your copy…" : "Checking your image…"}</h3><p>{defaultMode === "clean" ? "Check → Clean → Verify. Your download will appear automatically." : "Reading supported metadata locally. Your file stays unchanged."}</p></div>}
+                {active.error && <div className="error-banner" role="alert"><b>Could not process this image</b><p>{active.error}</p><FeedbackButton /></div>}
+                {!activeProcessing && active.scan && !active.error && <div className="panel-stack">
+                  {active.verification ? <>
+                    <div className="result-heading"><ShieldCheck aria-hidden="true" /><h3>{unresolvedCount(active.verification) ? "Partially cleaned — review remaining data" : unchanged ? "No supported data needed cleaning" : "Cleaning complete"}</h3></div>
+                    {unchanged && <p className="panel-intro">No supported fields were removed. Download your unchanged original, or inspect another image.</p>}
+                    <button className="button primary wide download-result" disabled={busy} onClick={() => downloadOne(active)}><Download aria-hidden="true" />{unchanged ? "Download original" : "Download clean copy"}</button>
+                    <VerificationCard verification={active.verification} />
+                  </> : <>
+                    <div className="result-strip"><span>{active.scan.findings.length} metadata finding{active.scan.findings.length === 1 ? "" : "s"}</span><b>{active.scan.cleanSupport === "scan_only" ? "Inspection only" : "Scan complete"}</b></div>
+                    {active.scan.cleanSupport === "scan_only" ? <p className="batch-notice">This format can only be inspected. No cleaned copy was created.</p> : <>
+                      <h3>{active.scan.findings.length ? "Here is what your image contains" : "No supported metadata detected"}</h3>
+                      <p className="panel-intro">Your original is unchanged. {active.scan.findings.length ? "You can clean a copy here without selecting the image again." : "Other data may still exist outside this scanner’s coverage."}</p>
+                      <FindingNextActions findings={active.scan.findings} />
+                      {active.scan.c2pa && <div className="c2pa-status" role="status"><strong>Content Credentials</strong><span>{active.scan.c2pa.status.replaceAll("_", " ")}</span><p>{active.scan.c2pa.summary}</p>{active.scan.c2pa.issuer && <small>Issuer: {active.scan.c2pa.issuer}{active.scan.c2pa.time ? ` · ${active.scan.c2pa.time}` : ""}</small>}</div>}
+                      {active.scan.findings.some(finding => ["ai_workflow", "location", "provenance"].includes(finding.category)) && <button className="button primary wide" disabled={busy} onClick={() => void cleanFiles([active.id], policy)}>Clean and create a copy</button>}
+                    </>}
+                    {active.scan.findings.map((finding, index) => <FindingRow key={`${finding.id}-${index}`} finding={finding} expanded={expanded === `${finding.id}-${index}`} onToggle={() => setExpanded(expanded === `${finding.id}-${index}` ? undefined : `${finding.id}-${index}`)} />)}
+                  </>}
+                  <details className="processing-details"><summary>View processing details</summary><div>
+                    {active.verification && <button className="button secondary wide" onClick={() => download(new TextEncoder().encode(JSON.stringify(active.verification, null, 2)).buffer, `${active.file.name}.metadata-report.json`, "application/json")}>Download verification report</button>}
+                    <p>Original scan · {active.scan.findings.length} findings. Reports can contain private metadata; they stay on your device.</p>
+                    {active.verification && active.scan.findings.map((finding, index) => <FindingRow key={`${finding.id}-${index}`} finding={finding} expanded={expanded === `${finding.id}-${index}`} onToggle={() => setExpanded(expanded === `${finding.id}-${index}` ? undefined : `${finding.id}-${index}`)} />)}
+                    <button className="button secondary wide" onClick={() => download(new TextEncoder().encode(JSON.stringify(active.scan, null, 2)).buffer, `${active.file.name}.metadata.json`, "application/json")}>Download original scan report</button>
+                  </div></details>
+                  <p className="result-limit">Checks cover supported metadata only, not invisible watermarks or a platform’s AI verdict.</p>
+                </div>}
+                {!activeProcessing && <button className="button secondary wide next-image" disabled={busy} onClick={() => inputRef.current?.click()}>Process other images</button>}
               </div>
             </div>
           )}
         </div>
       </div>
-      <input ref={inputRef} className="visually-hidden" type="file" multiple accept="image/jpeg,image/png,image/webp" aria-label="Choose JPG, PNG, or WebP images" onChange={(event) => void addFiles(Array.from(event.target.files ?? []))} />
+
+      <p className="workspace-legal">Before choosing files, read our <Link href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and <Link href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service<span className="sr-only"> (opens in a new tab)</span></Link>. <Link href="/pricing" target="_blank" rel="noopener noreferrer">View upcoming plans<span className="sr-only"> (opens in a new tab)</span></Link>.</p>
+      <div className="automatic-policy">
+        <p>{defaultMode === "inspect" ? "Check what is inside your image. Nothing is changed unless you choose to clean a copy." : "Choose images to clean automatically. We remove supported AI metadata and apply your choices above for private details and PNG Content Credentials. Image data and copyright stay intact."}</p>
+
+      </div>
+      <input ref={inputRef} className="visually-hidden" type="file" multiple accept={pngOnly ? "image/png" : "image/jpeg,image/png,image/webp"} aria-label={pngOnly ? "Choose PNG images" : "Choose JPG, PNG, or WebP images"} onChange={(event) => { const list = Array.from(event.target.files ?? []); event.target.value = ""; void addFiles(list); }} />
+      <FunnelReview />
     </section>
   );
 }
 
 function formatBytes(bytes: number) { return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
+
+function fileStatus(file: LocalImage) {
+  if (file.status === "ready") return file.verification && unresolvedCount(file.verification) ? "Partial · review remaining data" : file.verification?.items.some(item => item.after === "removed") ? "Verified · ready to download" : "Unchanged · checked";
+  if (file.status === "ready_for_action") return file.scan?.cleanSupport === "scan_only" ? "Scanned · inspection only" : "Scanned · ready to clean";
+  return file.status.replaceAll("_", " ");
+}

@@ -2,7 +2,7 @@
 
 AI Metadata Remover is a local-first image metadata workbench built with Next.js. It helps users inspect supported JPEG, PNG, and WebP metadata, remove supported AI workflow fields from a new copy, rescan the output, and download an evidence-backed result without uploading the image.
 
-The website brand is `AI Metadata Remover`, and the production origin is `https://aimetadateremover.pro`.
+The website brand is `AI Metadata Remover`, and the configured production origin is `https://aimetadataremover.pro`.
 
 ## Current scope
 
@@ -17,11 +17,11 @@ Available in this Phase 1 review build:
 
 Evidence-gated features:
 
-- Privacy Clean and Full Clean remain disabled until the extended EXIF, thumbnail, and MakerNote fixture matrix passes;
+- Privacy Clean supports EXIF GPS, capture dates, device IDs, MakerNote payloads and JPEG thumbnails (both TIFF byte orders); it preserves orientation and copyright. Nested SubIFDs, strip/tiled thumbnails, overlapping or malformed EXIF are rejected. It does not certify removal of all private data. Full Clean remains disabled;
 - WebP cleaning is scan-only;
 - JPEG and WebP Content Credentials removal is scan-only;
-- the PNG remover review page is `noindex, follow` and excluded from navigation and the sitemap until its complete compatibility gate passes;
-- AI visual repair, authentication, billing, credits, storage, and pricing are not implemented.
+- the PNG remover is public and indexable after the supported PNG/EXIF compatibility and browser download gates passed;
+- Optional Google authentication uses Better Auth and Cloudflare D1. Local development uses isolated D1 storage; production uses a separate database and Worker secrets. AI visual repair, billing, credits, cloud image storage, and pricing are not implemented.
 
 The product does not claim detector bypass, guaranteed platform acceptance, or an AI probability score.
 
@@ -29,7 +29,7 @@ The product does not claim detector bypass, guaranteed platform acceptance, or a
 
 - Node.js 20.9 or newer
 - npm
-- Python with Playwright and a Chromium browser for `npm run test:e2e`
+- Node Playwright and a Chromium browser for `npm run test:e2e`
 
 ## Local development
 
@@ -47,7 +47,7 @@ npm.cmd run build
 npm.cmd run start
 ```
 
-Set `NEXT_PUBLIC_APP_URL` to `https://aimetadateremover.pro` before a production deployment so canonical URLs, Open Graph metadata, robots, and the sitemap use the public domain.
+Set `NEXT_PUBLIC_APP_URL` to the final HTTPS origin before a production deployment so canonical URLs, Open Graph metadata, robots, and the sitemap use the public domain.
 
 ## Verification
 
@@ -73,7 +73,7 @@ npm.cmd run test:e2e
 - `/`
 - `/metadata-checker`
 - `/remove-ai-detection-from-image`
-- `/remove-metadata-from-png` — review-only, noindex
+- `/remove-metadata-from-png` — public supported PNG cleaner
 - `/workspace` — noindex, nofollow
 - `/guides`
 - `/guides/image-metadata-before-publishing`
@@ -84,3 +84,21 @@ npm.cmd run test:e2e
 ## Privacy boundary
 
 Phase 1 does not implement an image upload API. File bytes, file names, previews, prompts, GPS values, and raw metadata remain inside the browser session. The original file is never overwritten.
+
+## Phase 1 reliability review
+
+See [the local acceptance record](docs/phase1-review.md) for scope, reproducible checks, supported privacy-cleaning boundaries, and the separate GSC / remote analytics blockers.
+
+```powershell
+$env:BASE_URL = "http://127.0.0.1:3173"
+node scripts/workspace_qa.mjs
+node scripts/seo_qa.mjs
+```
+
+The workspace QA includes 195 MB desktop / 95 MB mobile-emulation batches. Generated fixtures, screenshots and JSON evidence are written to ignored `artifacts/phase1-review/`.
+
+## Optional Google login (local D1 demo)
+
+See [Google login setup and acceptance boundaries](docs/google-login-setup.md). Configure `.dev.vars` locally using `.dev.vars.example`, then run the local D1 migration. Google Client Secret and AUTH_SECRET must never be committed.
+
+The current Google-login work is isolated in `codex/google-login`. Payment is a separate, later phase. `npm run test:auth-d1` validates the actual local workerd/D1 adapter; `npm run test:auth-browser` explicitly distinguishes UI fixtures from real Google authorization.

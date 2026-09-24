@@ -1,8 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { UnifiedImageWorkspace } from "../unified-image-workspace";
 
 const encoder = new TextEncoder();
+afterEach(() => vi.restoreAllMocks());
 
 describe("UnifiedImageWorkspace", () => {
   it("provides keyboard selection and the truthful local privacy boundary", () => {
@@ -16,7 +17,7 @@ describe("UnifiedImageWorkspace", () => {
     render(<UnifiedImageWorkspace variant="embedded" defaultMode="inspect" />);
     const input = screen.getByLabelText(/choose jpg, png, or webp images/i);
     fireEvent.change(input, { target: { files: [new File([encoder.encode("plain text")], "fake.png", { type: "image/png" })] } });
-    expect((await screen.findAllByText(/not a supported jpeg, png, or webp/i)).some((node) => node.classList.contains("error-banner"))).toBe(true);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/not a supported jpeg, png, or webp/i);
     await waitFor(() => expect(screen.getByRole("button", { name: /add images/i })).toBeEnabled());
     expect(screen.getByRole("button", { name: /show original/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /show cleaned/i })).toBeDisabled();
@@ -39,5 +40,36 @@ describe("UnifiedImageWorkspace", () => {
     expect(await screen.findByText("AI generation parameters")).toBeVisible();
     expect(screen.getByText("1 metadata finding")).toBeVisible();
     expect(screen.getByText("Scan complete")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Download clean copy" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Clean and create a copy" }));
+    await screen.findByRole("button", { name: "Download clean copy" });
+  });
+
+  it("releases the previous output when cleaning again and all previews on removal", async () => {
+    let sequence = 0;
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn(() => `blob:test-${++sequence}`) });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
+    render(<UnifiedImageWorkspace />);
+    fireEvent.click(screen.getByRole("button", { name: /try a safe sample/i }));
+    await screen.findByRole("button", { name: "Download clean copy" });
+    const firstOutput = sequence;
+    fireEvent.click(screen.getByRole("checkbox", { name: /keep capture details/i }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Download clean copy" })).toBeEnabled());
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(`blob:test-${firstOutput}`);
+    fireEvent.click(screen.getByRole("button", { name: /remove ai-metadata-remover/i }));
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test-1");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(`blob:test-${sequence}`);
+  });
+
+  it("automatically cleans a sample without tabs, modes or a start button", async () => {
+    render(<UnifiedImageWorkspace />);
+    fireEvent.click(screen.getByRole("button", { name: /try a safe sample/i }));
+    await screen.findByRole("button", { name: "Download clean copy" });
+    expect(screen.getByLabelText("Active image")).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.getByText("Removed", { exact: true })).toBeVisible();
+    expect(screen.getByText("Preserved", { exact: true })).toBeVisible();
+    expect(screen.getByText("Unresolved", { exact: true })).toBeVisible();
   });
 });

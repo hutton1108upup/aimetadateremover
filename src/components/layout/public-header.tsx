@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, Menu } from "lucide-react";
+import { AuthControls } from "@/components/auth/auth-controls";
 import { BrandLogo } from "./brand-logo";
 
 const navigation = [
   { href: "/", label: "Metadata Cleaner" },
   { href: "/metadata-checker", label: "Metadata Checker" },
   { href: "/remove-metadata-from-png", label: "PNG Remover" },
-  { href: "/guides", label: "Guides" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 function isCurrentPath(pathname: string, href: string) {
@@ -43,9 +44,10 @@ export function PublicHeader() {
           })}
         </div>
       </details>
-      <Link href={workspace ? "/" : "/workspace"} aria-label={workspace ? "Back to cleaner" : "Open Workspace"} className={`header-cta ${workspace ? "header-cta-secondary" : ""}`}>
-        {workspace ? <><ArrowLeft aria-hidden="true" /><span className="cta-full">Back to cleaner</span><span className="cta-short">Home</span></> : <><span className="cta-full">Open Workspace</span><span className="cta-short">Workspace</span><ArrowUpRight aria-hidden="true" /></>}
-      </Link>
+      <div className="header-account-actions"><AuthControls />
+      <Link aria-label={workspace ? "Back to cleaner" : "Open Workspace"} title={workspace ? "Back to cleaner" : "Open Workspace"} href={workspace ? "/" : "/workspace"} className={`header-cta ${workspace ? "header-cta-secondary" : ""}`}>
+        {workspace ? <><ArrowLeft aria-hidden="true" /> <span className="header-cta-label">Back to cleaner</span></> : <><span className="header-cta-label">Open Workspace</span> <ArrowUpRight aria-hidden="true" /></>}
+      </Link></div>
     </header>
   );
 }

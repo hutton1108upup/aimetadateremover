@@ -9,7 +9,7 @@ describe("public SEO origins", () => {
   it("defaults to the public origin and rejects misconfigured production origins", () => {
     expect(resolveSiteUrl("", true)).toBe(productionOrigin);
     expect(resolveSiteUrl(`${productionOrigin}/`, true)).toBe(productionOrigin);
-    for (const value of ["http://localhost:3000", "https://preview.example.com", `${productionOrigin}/path`, `${productionOrigin}?q=1`, "https://user:pass@aimetadateremover.pro"]) {
+    for (const value of ["http://localhost:3000", "https://preview.example.com", "https://aimetadateremover.pro", `${productionOrigin}/path`, `${productionOrigin}?q=1`, "https://user:pass@aimetadataremover.pro"]) {
       expect(() => resolveSiteUrl(value, true)).toThrow();
     }
     expect(resolveSiteUrl("http://localhost:3217", false)).toBe("http://localhost:3217");
@@ -23,7 +23,7 @@ describe("public SEO origins", () => {
       expect(metadata.openGraph?.url).toBe(entry.url);
     }
     expect(robots().sitemap).toBe(`${productionOrigin}/sitemap.xml`);
-    expect(metadataFor("/remove-metadata-from-png").robots).toEqual({ index: false, follow: true });
+    expect(metadataFor("/remove-metadata-from-png").robots).toBeUndefined();
     expect(metadataFor("/").openGraph?.siteName).toBe(brandName);
     expect(websiteSchema(productionOrigin).name).toBe(brandName);
   });

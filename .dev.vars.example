@@ -1,0 +1,17 @@
+# Local Google OAuth. Never put these values in NEXT_PUBLIC_* variables.
+AUTH_BASE_URL=http://localhost:3180
+AUTH_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+# Google Authorized redirect URI:
+# http://localhost:3180/api/auth/callback/google
+
+# Optional feedback notification delivery. The form saves to D1 even when these are blank.
+# Website requests and the scheduled mail worker share the same deployment/settings.
+# FEEDBACK_TO defaults to support@aimetadataremover.pro when omitted.
+RESEND_API_KEY=
+# After verifying notify.aimetadataremover.pro in Resend:
+FEEDBACK_FROM=feedback@notify.aimetadataremover.pro
+FEEDBACK_TO=support@aimetadataremover.pro
+# Random server-only anti-abuse secret; falls back to AUTH_SECRET if already configured.
+FEEDBACK_RATE_SECRET=
