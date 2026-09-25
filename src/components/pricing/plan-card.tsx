@@ -9,17 +9,18 @@ interface PlanCardProps {
   allowance: string;
   allowanceNote: string;
   features: string[];
-  action: ReactNode;
+  action?: ReactNode;
   featured?: boolean;
+  label?: string;
 }
 
-export function PlanCard({ name, audience, price, priceNote, allowance, allowanceNote, features, action, featured = false }: PlanCardProps) {
+export function PlanCard({ name, audience, price, priceNote, allowance, allowanceNote, features, action, featured = false, label }: PlanCardProps) {
   return <article className={`plan-card${featured ? " plan-card-featured" : ""}`}>
-    <div className="plan-heading"><span className="plan-label">{featured ? "FOR BATCH WORK" : "FREE PLAN"}</span><ArrowUpRight aria-hidden="true" size={20} /></div>
+    <div className="plan-heading"><span className="plan-label">{label ?? (featured ? "PRO PLAN" : "FREE PLAN")}</span><ArrowUpRight aria-hidden="true" size={20} /></div>
     <h2>{name}</h2><p className="plan-audience">{audience}</p>
     <div className="plan-price"><strong>{price}</strong><span>{priceNote}</span></div>
     <div className="plan-allowance"><strong>{allowance}</strong><span>{allowanceNote}</span></div>
     <ul>{features.map(feature => <li key={feature}><Check aria-hidden="true" size={16}/><span>{feature}</span></li>)}</ul>
-    <div className="plan-action">{action}</div>
+    {action ? <div className="plan-action">{action}</div> : null}
   </article>;
 }
