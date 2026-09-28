@@ -20,7 +20,7 @@ try {
    check((await page.locator('.legal-version').innerText()).includes('Effective date:'),route+' effective date');
    check(await page.locator('#contact').count()===1,route+' support region');
    if(route==='/privacy')check((await page.locator('#rights').innerText()).includes('30 calendar days'),'request response deadline');
-   if(route==='/terms'){check((await page.locator('#fees').innerText()).includes('USD $4.99 every 30 days'),'subscription billing explanation');check((await page.locator('#breach').innerText()).includes('suspend or terminate'),'breach consequences');}
+    if(route==='/terms'){const fees=await page.locator('#fees').innerText();check(fees.includes('USD $9.90 per month') && fees.includes('USD $89.90 per year'),'subscription billing explanation');check((await page.locator('#breach').innerText()).includes('suspend or terminate'),'breach consequences');}
    const expectedSections=route==='/privacy'?13:12;
    check(await page.locator('.legal-section').count()===expectedSections,route+' sections');
    check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),route+' overflow '+width);

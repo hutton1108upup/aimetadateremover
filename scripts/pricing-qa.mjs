@@ -13,12 +13,24 @@ try {
   assert(response.status()===200,'pricing status');
   assert(await page.locator('h1').count()===1,'one h1');
   assert(await page.locator('.plan-card').count()===3,'three plans');
-  assert(await page.getByRole('button',{name:'Subscriptions coming soon'}).isDisabled(),'not an active checkout');
-  assert((await page.locator('.plan-card-featured').innerText()).includes('$4.99'),'price');
-  assert((await page.locator('.plan-card-featured').innerText()).includes('30 days'),'billing term');
-  assert((await page.locator('.plan-card-featured').innerText()).includes('20 batch tasks / day'),'quota');
+  assert(await page.getByRole('button',{name:'Get Pro Monthly'}).isDisabled(),'monthly purchase entry without navigation');
+  assert(await page.getByRole('button',{name:'Get Pro Yearly'}).isDisabled(),'yearly purchase entry without navigation');
+  const cards=await page.locator('.plan-card').allInnerTexts();
+  assert(cards[0].includes('5 photos / day'),'free plan allowance');
+  assert(cards[1].includes('$9.90') && cards[1].includes('$4.90'),'monthly prices');
+  assert(cards[2].includes('$89.90') && cards[2].includes('$49.90'),'yearly prices');
+  const monthly=page.locator('.plan-card').nth(1),yearly=page.locator('.plan-card').nth(2);
+  assert(await monthly.locator('.plan-price strong').innerText()==='$4.90','first-month price is primary');
+  assert(await monthly.locator('.plan-price del').innerText()==='$9.90','monthly renewal price is struck through');
+  assert((await monthly.locator('.plan-price > span').innerText()).includes('then $9.90/month'),'monthly renewal is explained');
+  assert(await yearly.locator('.plan-price strong').innerText()==='$49.90','first-year price is primary');
+  assert(await yearly.locator('.plan-price del').innerText()==='$89.90','yearly renewal price is struck through');
+  assert((await yearly.locator('.plan-price > span').innerText()).includes('then $89.90/year'),'yearly renewal is explained');
+  assert(cards[1].includes('Up to 10 photos per batch') && cards[2].includes('Up to 10 photos per batch'),'pro batch limits');
+  assert(cards[1].includes('Batch ZIP downloads') && cards[2].includes('Batch ZIP downloads'),'deliverable pro benefit');
+  assert((await page.locator('.pricing-intro').innerText()).includes('choose Pro for recurring batch work'),'final plan positioning');
+  assert(!(await page.locator('main').innerText()).match(/plan preview|coming soon|not open yet|planned options|not enforced/i),'no internal launch status in pricing copy');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'page overflow '+width);
-  assert(await page.locator('a[href="/auth/start"][target="_blank"]').count()===1,'sign-in destination');
   for(const summary of await page.locator('.faq-list summary').all()){await summary.click();assert(await summary.locator('..').getAttribute('open')!==null,'faq opens');await summary.click();}
   const header=await page.locator('.site-header').evaluate(el=>{const visible=[...el.children].filter(e=>getComputedStyle(e).display!=='none');return visible.map(e=>({x:e.getBoundingClientRect().x,right:e.getBoundingClientRect().right}));});
   for(let i=1;i<header.length;i++)assert(header[i].x>=header[i-1].right-1,'header overlap '+width);
@@ -32,6 +44,7 @@ try {
  for(const route of ['/','/metadata-checker','/workspace','/privacy','/terms']) {
   await page.goto(base+route);await page.waitForLoadState('networkidle');
   assert(await page.locator('a[href="/pricing"]').count()>=2,'pricing links '+route);
+  if(route==='/' || route==='/privacy' || route==='/terms')assert(!(await page.locator('main').innerText()).match(/plan preview|coming soon|checkout is not open|not enforced in this version/i),'no internal launch status '+route);
  }
  await page.goto(base+'/');await page.getByRole('link',{name:'Compare plans'}).click();await page.waitForURL('**/pricing');
  const sitemap=await page.request.get(base+'/sitemap.xml');assert((await sitemap.text()).includes('/pricing'),'sitemap');

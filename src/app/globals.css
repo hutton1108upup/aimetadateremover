@@ -226,8 +226,11 @@ html{scroll-padding-top:72px}
 .plan-card-featured .plan-heading { color: var(--accent); }
 .plan-card h2 { margin: 1.5rem 0 .4rem; font-size: 1.6rem; color: var(--text-heading); letter-spacing: -.025em; }
 .plan-audience { margin: 0; color: var(--text-secondary); min-height: 3rem; font-size: .85rem; }
-.plan-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .6rem; padding: 1.8rem 0; min-height: 120px; }
+.plan-price { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: .4rem; padding: 1.8rem 0; min-height: 120px; }
+.plan-price-amounts { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem .85rem; }
 .plan-price strong { font-size: 3.1rem; letter-spacing: -.06em; line-height: 1; color: var(--text-heading); font-weight: 600; }
+.plan-price-offer strong { color: var(--accent); }
+.plan-price del { color: var(--text-muted); font-size: 1.15rem; font-weight: 500; text-decoration-thickness: 1.5px; }
 .plan-price > span { color: var(--text-muted); font-size: .78rem; }
 .plan-allowance { padding: 1rem 0; border-top: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); display: flex; flex-direction: column; gap: .35rem; }
 .plan-allowance strong { color: var(--text-heading); font-size: 1.05rem; }
@@ -263,7 +266,7 @@ html{scroll-padding-top:72px}
 @media(max-width:1100px){.pricing-plans{gap:.8rem}.plan-card{padding:1.25rem}.plan-price strong{font-size:2.7rem}.pricing-details{gap:2rem}}
 @media(max-width:800px){.pricing-plans,.pricing-details{grid-template-columns:1fr}.plan-audience{min-height:0}.plan-price{min-height:0;padding:1.5rem 0}.pricing-intro{margin-top:2.5rem}.pricing-teaser{align-items:flex-start;flex-direction:column}.pricing-table{min-width:600px}.pricing-table th,.pricing-table td{padding:.8rem}}
 .plan-renewal { margin: .8rem 0 0; font-size: .72rem; line-height: 1.6; color: var(--text-secondary); }
-.plan-action button:disabled { cursor: not-allowed; opacity: .75; }
+.plan-action button:disabled { cursor: not-allowed; opacity: 1; }
 .pricing-trust { display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem 2rem; padding: 2rem 0 1rem; color: var(--text-secondary); font-size: .8rem; }
 .pricing-trust span { display: inline-flex; align-items: center; gap: .5rem; }
 .pricing-trust svg { color: var(--accent); }

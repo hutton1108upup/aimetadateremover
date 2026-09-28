@@ -31,7 +31,7 @@ export function AuthControls() {
     return ()=>{alive.current=false;pending.current=false;clearInterval(timer.current);window.removeEventListener("focus",onFocus);window.removeEventListener("message",onMessage);};
   },[refresh]);
   function signIn() {
-    if(!enabled){setMessage("Sign-in is unavailable in this demo. You can keep using all local tools.");return;}
+    if(!enabled){setMessage("Sign-in is temporarily unavailable. You can keep using local inspection tools.");return;}
     const popup=window.open("/auth/start","imagefinisher-google","popup,width=500,height=680");
     if(!popup){setMessage("Please allow popups for this site, then try Sign in again. Your images stay here.");return;}
     setWaiting(true);setMessage("Complete Google sign-in in the other window. Your images stay here.");
