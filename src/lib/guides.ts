@@ -24,10 +24,10 @@ export const guides: GuideRecord[] = [
     faq: { question: "Does a C2PA record prove an image is AI-generated?", answer: "No. It is provenance evidence, not an AI probability or ownership verdict." },
   },
   {
-    slug: "stable-diffusion-comfyui-metadata", kicker: "Workflow metadata", updated: "September 20, 2026", updatedIso: "2026-09-20",
+    slug: "stable-diffusion-comfyui-metadata", kicker: "Workflow metadata", updated: "September 28, 2026", updatedIso: "2026-09-28",
     title: "Stable Diffusion and ComfyUI Metadata: Prompts, Seeds and Node Graphs",
-    description: "Learn where Stable Diffusion and ComfyUI workflow details can appear and what AI Metadata Remover can safely remove.",
-    h1: "What Stable Diffusion and ComfyUI metadata should you remove?",
+    description: "Learn where Stable Diffusion and ComfyUI prompts, seeds, samplers and node graphs can appear in image files.",
+    h1: "What metadata do Stable Diffusion and ComfyUI images contain?",
     answer: "Prompts, seeds, samplers, model settings and node graphs can be stored in image metadata, especially PNG text fields. They may reveal a private workflow, but their absence does not make an image undetectable.",
     sections: [
       { heading: "Inspect before choosing a delivery copy", paragraphs: ["The checker classifies recognized generation fields as an action suggestion and keeps sensitive values hidden until you choose to reveal them.", "AI Workflow Clean removes supported fields from JPEG and PNG copies without decoding or re-encoding the image payload. Mixed XMP and unsupported compressed text may remain."] },
@@ -69,11 +69,11 @@ export const guides: GuideRecord[] = [
     faq: { question: "Should I delete copyright metadata too?", answer: "Usually review and keep it when it supports attribution or licensing. The tool does not remove it by default." },
   },
   {
-    slug: "jpeg-png-webp-metadata-support", kicker: "Format guide", updated: "September 20, 2026", updatedIso: "2026-09-20",
+    slug: "jpeg-png-webp-metadata-support", kicker: "Format guide", updated: "September 28, 2026", updatedIso: "2026-09-28",
     title: "JPEG, PNG and WebP Metadata Support: What Changes by Format",
-    description: "Understand what AI Metadata Remover can inspect, clean and verify in JPEG, PNG and WebP files.",
-    h1: "Which JPEG, PNG and WebP metadata can you clean?",
-    answer: "JPEG and PNG support the current local cleaning workflow for recognized AI and privacy fields. WebP can be inspected, but it remains scan-only until its rewrite compatibility gate passes.",
+    description: "Compare the metadata structures commonly found in JPEG, PNG and WebP images, including workflow, privacy and provenance fields.",
+    h1: "Can JPEG, PNG and WebP images contain metadata?",
+    answer: "Yes. JPEG files can contain EXIF, XMP, ICC, IPTC and C2PA records; PNG files can contain text chunks, EXIF, ICC and caBX Content Credentials; WebP files can contain EXIF, XMP and C2PA chunks alongside animation and transparency information. The exact fields vary by encoder and workflow, so a format name alone does not tell you what is embedded.",
     sections: [
       { heading: "JPEG", paragraphs: ["JPEG scans EXIF, XMP, ICC, confirmed C2PA markers and unsupported IPTC blocks. Mixed workflow XMP is retained and marked for review when removing it could also remove attribution."] },
       { heading: "PNG", paragraphs: ["PNG scans text chunks, EXIF, ICC, transparency, animation and caBX Content Credentials. Supported chunks are rebuilt with checksums, while compressed text that cannot be safely expanded remains unresolved."] },
@@ -85,10 +85,10 @@ export const guides: GuideRecord[] = [
     faq: { question: "Does PNG cleaning re-encode the image?", answer: "No. It rewrites supported metadata chunks and verifies that the encoded image payload remains unchanged." },
   },
   {
-    slug: "image-metadata-before-publishing", kicker: "Metadata basics", updated: "September 18, 2026", updatedIso: "2026-09-18",
+    slug: "image-metadata-before-publishing", kicker: "Metadata basics", updated: "September 28, 2026", updatedIso: "2026-09-28",
     title: "What Image Metadata Should You Review Before Publishing?",
     description: "Learn which image metadata fields affect privacy, workflow confidentiality, attribution, color and provenance before you publish.",
-    h1: "What Image Metadata Should You Review Before Publishing?",
+    h1: "Image Metadata Before Publishing: A Practical Review Checklist",
     answer: "An image file can carry much more than the pixels you see. Prompts, node graphs, locations, creator details, color profiles and provenance records may all be tucked inside, and deleting everything by default is rarely the best move.",
     sections: [
       { heading: "Start with what this copy is for", paragraphs: ["A private client preview does not need the same metadata as a portfolio image or an archive. Keep the master file, decide what the copy needs, and remove only the details you do not want to send with it.", "Prompt and workflow fields may reveal how an image was made. GPS and device IDs can reveal a location or identify equipment. Creator and copyright details help with credit and licensing. An ICC profile keeps colors looking consistent. C2PA records provenance and edit history. Review each group before deciding."] },
