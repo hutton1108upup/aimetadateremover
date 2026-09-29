@@ -10,6 +10,13 @@ describe("Phase 1 publishing manifest", () => {
       "/metadata-checker",
       "/remove-ai-detection-from-image",
       "/remove-metadata-from-png",
+      "/batch-metadata-remover",
+      "/supported-formats",
+      "/comfyui-workflow-remover",
+      "/stable-diffusion-metadata-remover",
+      "/remove-metadata-from-jpeg",
+      "/c2pa-metadata-checker",
+      "/remove-gps-from-photo",
       "/blog",
       "/blog/chatgpt-dalle-image-metadata",
       "/blog/stable-diffusion-comfyui-metadata",
@@ -42,13 +49,16 @@ describe("Phase 1 publishing manifest", () => {
     for (const path of ["/", "/metadata-checker", "/remove-metadata-from-png", "/about"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-24T00:00:00.000Z");
     }
-    for (const path of ["/blog/chatgpt-dalle-image-metadata", "/blog/c2pa-content-credentials-explained", "/blog/exif-gps-privacy-before-sharing"]) {
+    for (const path of ["/blog/chatgpt-dalle-image-metadata"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-20T00:00:00.000Z");
     }
     for (const path of ["/privacy", "/terms", "/pricing", "/blog"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-18T00:00:00.000Z");
     }
-    for (const path of ["/blog/stable-diffusion-comfyui-metadata", "/blog/jpeg-png-webp-metadata-support", "/blog/image-metadata-before-publishing"]) {
+    for (const path of ["/blog/stable-diffusion-comfyui-metadata", "/blog/c2pa-content-credentials-explained", "/blog/exif-gps-privacy-before-sharing", "/blog/jpeg-png-webp-metadata-support", "/blog/image-metadata-before-publishing"]) {
+      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-28T00:00:00.000Z");
+    }
+    for (const path of ["/batch-metadata-remover", "/comfyui-workflow-remover", "/stable-diffusion-metadata-remover", "/remove-metadata-from-jpeg", "/supported-formats", "/c2pa-metadata-checker", "/remove-gps-from-photo"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-28T00:00:00.000Z");
     }
     expect(entries.has("/workspace")).toBe(false);

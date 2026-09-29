@@ -4,22 +4,23 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
 import { FAQSection, type FAQItem } from "./faq-section";
-import { UnifiedImageWorkspace } from "@/components/tool/unified-image-workspace";
+import { UnifiedImageWorkspace, type ToolFocus } from "@/components/tool/unified-image-workspace";
 import { appSchema, faqSchema } from "@/lib/structured-data";
 import { siteUrl } from "@/lib/site";
 
 export interface ToolPageProps {
-  path: string; h1: string; intro: string; label: string; defaultMode?: "inspect" | "clean"; acceptedFormats?: Array<"jpeg" | "png" | "webp">;
+  path: string; h1: string; intro: string; label: string; defaultMode?: "inspect" | "clean"; acceptedFormats?: Array<"jpeg" | "png" | "webp">; focus?: ToolFocus;
+  sectionTitles?: { coverage: string; preserved: string; steps: string };
   specifics: Array<{ title: string; body: string }>; preserved: string[]; limits: string[]; steps: Array<{ title: string; body: string }>; faqs: FAQItem[];
 }
 
 export function ToolPage(props: ToolPageProps) {
-  return <><PublicHeader /><main><section className="tool-hero"><div className="page-container"><Breadcrumbs current={props.label} /><div className="tool-hero-copy"><p className="eyebrow">Free · runs locally · no account</p><h1>{props.h1}</h1><p>{props.intro}</p></div><UnifiedImageWorkspace variant="embedded" defaultMode={props.defaultMode} acceptedFormats={props.acceptedFormats} /></div></section>
-    <section className="section section-alt"><div className="page-container"><div className="section-heading"><p className="eyebrow">What you can do here</p><h2>What this tool covers</h2></div><div className="info-grid">{props.specifics.map((item,index)=><article key={item.title}><span>{String(index+1).padStart(2,"0")}</span><h3>{item.title}</h3><p>{item.body}</p></article>)}</div></div></section>
-    <section className="section"><div className="page-container preserve-grid"><div><p className="eyebrow">What stays by default</p><h2>Useful image data stays with the file</h2>{props.preserved.map((item)=><p className="check-line" key={item}><Check />{item}</p>)}</div><div className="boundary-card"><CircleAlert /><h3>What the tool cannot promise</h3>{props.limits.map((item)=><p key={item}>{item}</p>)}</div></div></section>
-    <section className="section section-alt"><div className="page-container"><div className="section-heading"><p className="eyebrow">How it works</p><h2>Choose an image and review the result</h2></div><ol className="step-list">{props.steps.map((step,index)=><li key={step.title}><span>{index+1}</span><div><h3>{step.title}</h3><p>{step.body}</p></div></li>)}</ol></div></section>
+  return <><PublicHeader /><main><section className="tool-hero"><div className="page-container"><Breadcrumbs current={props.label} /><div className="tool-hero-copy"><p className="eyebrow">Free · runs locally · no account</p><h1>{props.h1}</h1><p>{props.intro}</p></div><UnifiedImageWorkspace variant="embedded" defaultMode={props.defaultMode} acceptedFormats={props.acceptedFormats} focus={props.focus} /></div></section>
+    <section className="section section-alt"><div className="page-container"><div className="section-heading"><p className="eyebrow">In this file</p><h2>{props.sectionTitles?.coverage ?? "What this tool covers"}</h2></div><div className="info-grid">{props.specifics.map((item,index)=><article key={item.title}><span>{String(index+1).padStart(2,"0")}</span><h3>{item.title}</h3><p>{item.body}</p></article>)}</div></div></section>
+    <section className="section"><div className="page-container preserve-grid"><div><p className="eyebrow">In the output</p><h2>{props.sectionTitles?.preserved ?? "Useful image data stays with the file"}</h2>{props.preserved.map((item)=><p className="check-line" key={item}><Check />{item}</p>)}</div><div className="boundary-card"><CircleAlert /><h3>Limits to review</h3>{props.limits.map((item)=><p key={item}>{item}</p>)}</div></div></section>
+    <section className="section section-alt"><div className="page-container"><div className="section-heading"><p className="eyebrow">Use the tool</p><h2>{props.sectionTitles?.steps ?? "Choose an image and review the result"}</h2></div><ol className="step-list">{props.steps.map((step,index)=><li key={step.title}><span>{index+1}</span><div><h3>{step.title}</h3><p>{step.body}</p></div></li>)}</ol></div></section>
     <FAQSection title={`Questions about ${props.label.toLowerCase()}`} items={props.faqs} />
-    <section className="section section-alt"><div className="page-container related-card"><span><Eye /><b>Other image tools</b></span><div><Link href="/">AI metadata cleaner <ArrowRight /></Link>{props.path !== "/metadata-checker" && <Link href="/metadata-checker">Metadata checker <ArrowRight /></Link>}<Link href="/workspace">Open the full workspace <ArrowRight /></Link></div></div></section>
+    <section className="section section-alt"><div className="page-container related-card"><span><Eye /><b>Other image tools</b></span><div><Link href="/">AI metadata cleaner <ArrowRight /></Link>{props.path !== "/metadata-checker" && <Link href="/metadata-checker">Metadata checker <ArrowRight /></Link>}<Link href="/batch-metadata-remover">Batch metadata remover <ArrowRight /></Link><Link href="/supported-formats">Supported formats <ArrowRight /></Link></div></div></section>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(props.faqs)) }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema(props.h1, props.intro, new URL(props.path, siteUrl).toString())) }} />
   </main><PublicFooter /></>;
 }

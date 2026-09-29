@@ -63,8 +63,10 @@ try {
       if(cycle===0) {
         const downloading=page.waitForEvent("download");await page.getByRole("button",{name:"Download completed images (ZIP)"}).click();
         const download=await downloading;const zip=await JSZip.loadAsync(await readFile(await download.path()));
-        expect(Object.keys(zip.files)).toHaveLength(count);
-        for(const file of Object.values(zip.files)){const data=await file.async("nodebuffer");expect(data.includes(enc(marker))).toBe(false);expect(parts(data).find(c=>c.type==="IDAT").bytes.equals(parts(sample).find(c=>c.type==="IDAT").bytes)).toBe(true);}
+        expect(Object.keys(zip.files)).toHaveLength(count+1);
+        const manifest=JSON.parse(await zip.file("batch-results.json").async("string"));
+        expect(manifest.summary.included).toBe(count);expect(manifest.files).toHaveLength(count);
+        for(const file of Object.values(zip.files).filter(file=>file.name!=="batch-results.json")){const data=await file.async("nodebuffer");expect(data.includes(enc(marker))).toBe(false);expect(parts(data).find(c=>c.type==="IDAT").bytes.equals(parts(sample).find(c=>c.type==="IDAT").bytes)).toBe(true);}
         await page.evaluate(()=>scrollTo(0,0));
         await page.screenshot({path:`${dir}/${mobile?"mobile":"desktop"}-verified.png`,fullPage:true});
         expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -86,7 +88,7 @@ try {
     check(`${count} files x 3 cycles; concurrency; duplicate-name ZIP; payload identity; URL/worker release; bounded post-GC JS heap`);
     const log=await page.evaluate(()=>window.__qa.events);
     expect(JSON.stringify(log)).not.toContain(marker);
-    expect(log.filter(e=>e.event==="download")).toHaveLength(count);
+    expect(log.filter(e=>e.event==="download_initiated")).toHaveLength(count);
     check(`${mobile?"mobile":"desktop"} funnel allowlist and per-output download deduplication`);
 
     // Deletion while work is pending must not resurrect files or results.

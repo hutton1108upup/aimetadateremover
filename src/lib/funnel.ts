@@ -1,8 +1,8 @@
 // A bounded, browser-session log. No image identifiers or free-form values.
-export type FunnelEventName = "select_files" | "scan_success" | "scan_failed" | "clean_success" | "clean_failed" | "verify_success" | "verify_review" | "download";
+export type FunnelEventName = "select_files" | "scan_success" | "scan_failed" | "clean_success" | "clean_failed" | "verify_success" | "verify_review" | "download_initiated";
 export type FunnelEvent = Readonly<Record<string,string> & {event:FunnelEventName}>;
 const events:FunnelEvent[]=[];
-const routes=new Set(["/","/workspace","/metadata-checker","/remove-metadata-from-png","/remove-ai-detection-from-image"]);
+const routes=new Set(["/","/workspace","/metadata-checker","/remove-metadata-from-png","/remove-ai-detection-from-image","/batch-metadata-remover","/comfyui-workflow-remover","/stable-diffusion-metadata-remover","/remove-metadata-from-jpeg","/c2pa-metadata-checker","/remove-gps-from-photo"]);
 const errors=new Set(["invalid_file","malformed_container","malformed_exif","unsupported_exif","unsupported_thumbnail","metadata_too_large","png_crc_invalid","processing_timeout","pixel_limit","verification_failed","decode_failed"]);
 export function clearFunnel() { events.length=0;if(typeof window!=="undefined")window.dispatchEvent(new CustomEvent("imagefinisher:funnel")); }
 export function getFunnelEvents() { return events.map(e=>({...e})); }
