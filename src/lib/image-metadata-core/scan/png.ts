@@ -30,30 +30,57 @@ export function parsePngChunks(bytes: Uint8Array) {
   return chunks;
 }
 
-function parseTextChunk(bytes: Uint8Array, chunk: PngChunk) {
+const maxExpandedTextBytes = 1024 * 1024;
+
+async function expandText(bytes: Uint8Array, maxBytes: number) {
+  if (typeof DecompressionStream === "undefined") return null;
+  try {
+    const stream = new ReadableStream<BufferSource>({ start(controller) { controller.enqueue(bytes.slice()); controller.close(); } });
+    const reader = stream.pipeThrough(new DecompressionStream("deflate")).getReader();
+    const parts: Uint8Array[] = [];
+    let length = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.length;
+      if (length > maxBytes) { await reader.cancel(); return null; }
+      parts.push(value);
+    }
+    const expanded = new Uint8Array(length);
+    let offset = 0;
+    for (const part of parts) { expanded.set(part, offset); offset += part.length; }
+    return { value: new TextDecoder("utf-8", { fatal: true }).decode(expanded), expandedBytes: length };
+  } catch { return null; }
+}
+
+async function parseTextChunk(bytes: Uint8Array, chunk: PngChunk, remainingBytes = maxExpandedTextBytes) {
   const data = bytes.subarray(chunk.dataStart, chunk.dataStart + chunk.dataLength);
   const zero = data.indexOf(0);
   if (zero < 1 || zero > 79) return null;
   const key = text(data, 0, zero);
-  if (chunk.type === "tEXt") return { key, value: text(data, zero + 1) };
+  if (chunk.type === "tEXt") return { key, value: text(data, zero + 1), expandedBytes: 0 };
   if (chunk.type === "zTXt") {
-    return null;
+    if (data[zero + 1] !== 0 || data.length <= zero + 2) return null;
+    const expanded = await expandText(data.subarray(zero + 2), Math.min(maxExpandedTextBytes, remainingBytes));
+    return expanded === null ? null : { key, ...expanded };
   }
   if (chunk.type === "iTXt") {
     const rest = data.subarray(zero + 1);
-    if (rest.length < 5 || rest[0] !== 0) return null;
+    if (rest.length < 5 || ![0, 1].includes(rest[0]) || rest[1] !== 0) return null;
     let cursor = 2;
     for (let separators = 0; separators < 2; separators += 1) {
       const next = rest.indexOf(0, cursor);
       if (next < 0) return null;
       cursor = next + 1;
     }
-    return { key, value: text(rest, cursor) };
+    if (rest[0] === 0) return { key, value: text(rest, cursor), expandedBytes: 0 };
+    const expanded = await expandText(rest.subarray(cursor), Math.min(maxExpandedTextBytes, remainingBytes));
+    return expanded === null ? null : { key, ...expanded };
   }
   return null;
 }
 
-export function scanPng(bytes: Uint8Array): ScanResult {
+export async function scanPng(bytes: Uint8Array): Promise<ScanResult> {
   const chunks = parsePngChunks(bytes);
   const findings: Finding[] = [];
   let width: number | undefined;
@@ -63,6 +90,7 @@ export function scanPng(bytes: Uint8Array): ScanResult {
   let hasIcc = false;
   let orientation: number | undefined;
   const warnings: string[] = [];
+  let expandedBudget = 4 * maxExpandedTextBytes;
   for (const chunk of chunks) {
     if (chunk.type === "IHDR") {
       width = readU32BE(bytes, chunk.dataStart);
@@ -70,12 +98,15 @@ export function scanPng(bytes: Uint8Array): ScanResult {
       assertRange(bytes, chunk.dataStart + 9, 1);
       hasTransparency = bytes[chunk.dataStart + 9] === 4 || bytes[chunk.dataStart + 9] === 6;
     } else if (["tEXt", "zTXt", "iTXt"].includes(chunk.type)) {
-      const entry = parseTextChunk(bytes, chunk);
-      if (entry) findings.push(classifyTextEntry(entry.key, entry.value));
+      const entry = await parseTextChunk(bytes, chunk, expandedBudget);
+      if (entry) { expandedBudget -= entry.expandedBytes; findings.push(classifyTextEntry(entry.key, entry.value)); }
       else {
-        warnings.push(`A ${chunk.type} text block was left untouched because bounded decompression is not available.`);
-        findings.push(finding(`unsupported-${chunk.start}`, "Compressed text metadata", "structure", "review", chunk.type, "hidden", "This compressed text block was not expanded to avoid unbounded memory use.", "Review with a specialist tool if it must be removed.", "This release leaves the block untouched."));
+        warnings.push(`A ${chunk.type} text block could not be read within the 1 MB expanded-text limit.`);
+        findings.push(finding(`unsupported-${chunk.start}`, "Unreadable text metadata", "structure", "review", chunk.type, "hidden", "This text block could not be safely expanded or parsed within the size limit.", "Review with a specialist tool if it must be removed.", "This release leaves the block untouched."));
       }
+    } else if (chunk.type === "comf") {
+      warnings.push("An animated ComfyUI metadata block was left untouched.");
+      findings.push(finding(`unsupported-comf-${chunk.start}`, "Animated ComfyUI metadata", "structure", "review", "comf", "hidden", "ComfyUI can place workflow or prompt data in this APNG chunk.", "Review the file with a tool that supports animated ComfyUI metadata.", "This block remains in the output copy."));
     } else if (chunk.type === "caBX") {
       findings.push(finding("c2pa", "Content Credentials", "provenance", "review", "caBX", "present", "A provenance manifest is embedded. Its presence does not prove AI generation.", "Review its origin before choosing removal.", "The provenance and edit history will no longer travel with this copy."));
     } else if (chunk.type === "iCCP") {
@@ -91,4 +122,4 @@ export function scanPng(bytes: Uint8Array): ScanResult {
   return { format: "png", findings, properties: { width, height, hasTransparency, hasAnimation, hasIcc, orientation }, warnings, cleanSupport: "supported" };
 }
 
-export function pngTextEntry(bytes: Uint8Array, chunk: PngChunk) { return parseTextChunk(bytes, chunk); }
+export function pngTextEntry(bytes: Uint8Array, chunk: PngChunk, remainingBytes?: number) { return parseTextChunk(bytes, chunk, remainingBytes); }

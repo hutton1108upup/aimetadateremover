@@ -150,7 +150,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
   function clearFiles() {controllers.current.forEach(c=>c.abort());controllers.current.clear();filesRef.current.forEach(release);delivered.current.clear();commit([]);setNotice("");}
   function recordDownload(item:LocalImage,delivery:"single"|"zip") {
     if(delivered.current.has(item.id))return;delivered.current.add(item.id);
-    trackFunnel("download",{source:item.source,format:item.scan?.format,result:item.verification && !unresolvedCount(item.verification)?"verified":"review_needed",delivery});
+    trackFunnel("download_initiated",{source:item.source,format:item.scan?.format,result:item.verification && !unresolvedCount(item.verification)?"verified":"review_needed",delivery});
   }
   function downloadOne(item:LocalImage) {if(!item.cleaned || busy)return;const unchanged=unchangedResult(item);downloadLocal(unchanged?item.file:item.cleaned,unchanged?item.file.name:`clean-${item.file.name}`,mime(item.scan));recordDownload(item,"single");}
   async function downloadZip() {
@@ -160,6 +160,16 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
       const zip=new JSZip();
       // Index prefixes prevent duplicate filenames from overwriting ZIP entries.
       selected.forEach((f,i)=>zip.file(`${String(i+1).padStart(2,"0")}-${unchangedResult(f) ? "original" : "clean"}-${f.file.name.replace(/[\\/]/g,"_")}`,unchangedResult(f) ? f.file.arrayBuffer() : f.cleaned!));
+      const entries=filesRef.current.map(f=>({
+        fileName:f.file.name,
+        format:f.scan?.format ?? null,
+        result:f.verification ? unresolvedCount(f.verification)>0 ? "review_needed" : unchangedResult(f) ? "unchanged" : "cleaned" : f.scan?.cleanSupport==="scan_only" ? "inspection_only" : f.error ? "failed" : "not_ready",
+        removed:f.verification?.items.filter(item=>item.after==="removed").length ?? 0,
+        preserved:f.verification?.items.filter(item=>item.after==="preserved").length ?? 0,
+        unresolved:f.verification ? unresolvedCount(f.verification) : 0,
+        includedInZip:Boolean(f.cleaned && f.verification),
+      }));
+      zip.file("batch-results.json",JSON.stringify({version:1,generatedAt:new Date().toISOString(),summary:{selected:entries.length,included:selected.length,needsReview:entries.filter(entry=>entry.result==="review_needed").length,excluded:entries.length-selected.length},files:entries},null,2));
       const blob=await zip.generateAsync({type:"blob",compression:"STORE",streamFiles:true});
       if(!mounted.current || selected.some(f=>!present(f.id)))return;
       downloadLocal(blob,"clean-images.zip","application/zip");selected.forEach(f=>recordDownload(f,"zip"));

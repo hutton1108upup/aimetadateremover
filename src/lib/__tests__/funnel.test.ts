@@ -17,7 +17,7 @@ describe("private funnel events",()=>{
   });
   it("does not send network requests when no receiver is configured",()=>{
     const fetch=vi.spyOn(globalThis,"fetch");
-    trackFunnel("download",{source:"file",format:"jpeg",result:"verified"});
+    trackFunnel("download_initiated",{source:"file",format:"jpeg",result:"verified"});
     expect(fetch).not.toHaveBeenCalled();fetch.mockRestore();
   });
 });
