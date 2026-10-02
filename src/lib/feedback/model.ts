@@ -23,7 +23,7 @@ export interface FeedbackSubmission extends FeedbackAnswers {
 export const emptyAnswers: FeedbackAnswers = { outcome: "", need: "", occupation: "", otherOccupation: "", age: "", suggestion: "", email: "", contactConsent: false };
 export const toolPaths = new Set(["/", "/workspace", "/metadata-checker", "/remove-metadata-from-png", "/remove-ai-detection-from-image"]);
 export function safeFeedbackPath(path: string): string {
-  return toolPaths.has(path) || ["/about", "/pricing", "/guides", "/privacy", "/terms", "/feedback"].includes(path) ? path : path.startsWith("/guides/") ? "/guides" : "other";
+  return toolPaths.has(path) || ["/about", "/pricing", "/blog", "/privacy", "/terms", "/feedback"].includes(path) ? path : path.startsWith("/blog/") ? "/blog" : "other";
 }
 export function hasAnswer(answers: FeedbackAnswers): boolean {
   return Boolean(answers.outcome || answers.need.trim() || answers.occupation || answers.otherOccupation.trim() || answers.age || answers.suggestion.trim() || answers.email.trim());

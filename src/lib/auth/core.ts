@@ -8,7 +8,7 @@ import { resolveAuthConfig, type AuthEnvironment } from "./config";
 
 function buildAuth(database:D1Database,config:ReturnType<typeof resolveAuthConfig>) {
   return betterAuth({
-    appName:"ImageFinisher",baseURL:config.baseURL,secret:config.secret,
+    appName:"AI Metadata Remover",baseURL:config.baseURL,secret:config.secret,
     trustedOrigins:[config.baseURL],
     database:drizzleAdapter(drizzle(database,{schema}),{provider:"sqlite",schema,transaction:false}),
     emailAndPassword:{enabled:false},

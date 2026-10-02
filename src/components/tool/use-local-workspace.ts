@@ -147,10 +147,22 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
   async function cleanSelection(selected:LocalImage[],policy:CleanPolicy) {
     if(!selected.length)return false;
     if(pendingUsage.current){setNotice("Confirm the previous task before starting another cleaning task.");return false;}
+    if(selected.length>10 && !selected.every(item=>item.source==="sample")) {
+      try {
+        const response=await fetch("/api/billing/status",{cache:"no-store"});
+        const status=await response.json() as {enabled:boolean;planId?:string};
+        if(!response.ok)throw new Error("Plan verification is unavailable. Please retry.");
+        if(status.enabled) {
+          if(status.planId!=="yearly" || selected.length>30)throw new Error("Pro batches contain up to 10 images. Pro Yearly can process up to 30 images per session in three batches.");
+          for(let offset=0;offset<selected.length;offset+=10)if(!await cleanSelection(selected.slice(offset,offset+10),policy))return false;
+          return true;
+        }
+      } catch(error) {setNotice(error instanceof Error?error.message:"Plan verification failed.");return false;}
+    }
     const id=crypto.randomUUID();let reserved=false,bypass=selected.every(item=>item.source==="sample");let completed=0;
     try {
       let allowZip=bypass;
-      if(!bypass){const result=await usageRequest(id,"reserve",selected.length>1?"batch":"single");bypass=!!result.bypass;reserved=!bypass;allowZip=bypass || !!result.allowZip;}
+      if(!bypass){const result=await usageRequest(id,"reserve",selected.length>1?"batch":"single",selected.length);bypass=!!result.bypass;reserved=!bypass;allowZip=bypass || !!result.allowZip;}
       for(const item of selected)patch(item.id,{zipAllowed:allowZip});
       await mapWithConcurrency(selected,limits().concurrency,async item=>{
         if(!present(item.id))return;
@@ -181,7 +193,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
   function clearFiles() {controllers.current.forEach(c=>c.abort());controllers.current.clear();filesRef.current.forEach(release);delivered.current.clear();commit([]);setNotice("");if(pendingUsage.current)void usageRequest(pendingUsage.current.id,"release").catch(()=>{});pendingUsage.current=null;setConfirmationPending(false);}
   function recordDownload(item:LocalImage,delivery:"single"|"zip") {
     if(delivered.current.has(item.id))return;delivered.current.add(item.id);
-    trackFunnel("download",{source:item.source,format:item.scan?.format,result:item.verification && !unresolvedCount(item.verification)?"verified":"review_needed",delivery});
+    trackFunnel("download_initiated",{source:item.source,format:item.scan?.format,result:item.verification && !unresolvedCount(item.verification)?"verified":"review_needed",delivery});
   }
   function downloadOne(item:LocalImage) {if(!item.cleaned || item.status!=="ready" || busy)return;const unchanged=unchangedResult(item);downloadLocal(unchanged?item.file:item.cleaned,unchanged?item.file.name:`clean-${item.file.name}`,mime(item.scan));recordDownload(item,"single");}
   async function downloadZip() {
@@ -191,12 +203,22 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
       if(!selected.length)return;
       if(selected.some(item=>!item.zipAllowed)) {
         const response=await fetch("/api/billing/status",{cache:"no-store"});
-        const status=await response.json() as {enabled:boolean;batchLimit?:number};
-        if(!response.ok || (status.enabled && !status.batchLimit)){setNotice("ZIP export requires Batch Pro. Your cleaned images are still available as individual downloads.");return;}
+        const status=await response.json() as {enabled:boolean;batchLimit?:number;unlimited?:boolean};
+        if(!response.ok || (status.enabled && !status.unlimited && !status.batchLimit)){setNotice("ZIP export requires Pro. Your cleaned images are still available as individual downloads.");return;}
       }
       const zip=new JSZip();
       // Index prefixes prevent duplicate filenames from overwriting ZIP entries.
       selected.forEach((f,i)=>zip.file(`${String(i+1).padStart(2,"0")}-${unchangedResult(f) ? "original" : "clean"}-${f.file.name.replace(/[\\/]/g,"_")}`,unchangedResult(f) ? f.file.arrayBuffer() : f.cleaned!));
+      const entries=filesRef.current.map(f=>({
+        fileName:f.file.name,
+        format:f.scan?.format ?? null,
+        result:f.verification ? unresolvedCount(f.verification)>0 ? "review_needed" : unchangedResult(f) ? "unchanged" : "cleaned" : f.scan?.cleanSupport==="scan_only" ? "inspection_only" : f.error ? "failed" : "not_ready",
+        removed:f.verification?.items.filter(item=>item.after==="removed").length ?? 0,
+        preserved:f.verification?.items.filter(item=>item.after==="preserved").length ?? 0,
+        unresolved:f.verification ? unresolvedCount(f.verification) : 0,
+        includedInZip:Boolean(f.cleaned && f.verification),
+      }));
+      zip.file("batch-results.json",JSON.stringify({version:1,generatedAt:new Date().toISOString(),summary:{selected:entries.length,included:selected.length,needsReview:entries.filter(entry=>entry.result==="review_needed").length,excluded:entries.length-selected.length},files:entries},null,2));
       const blob=await zip.generateAsync({type:"blob",compression:"STORE",streamFiles:true});
       if(!mounted.current || selected.some(f=>!present(f.id)))return;
       downloadLocal(blob,"clean-images.zip","application/zip");selected.forEach(f=>recordDownload(f,"zip"));

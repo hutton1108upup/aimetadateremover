@@ -90,7 +90,7 @@ export function feedbackEmail(submission: FeedbackSubmission, createdAt: number)
   const outcome = submission.outcome ? outcomes[submission.outcome] : "Not answered";
   const occupation = submission.occupation ? occupations[submission.occupation] : "Not answered";
   const lines = [
-    "New ImageFinisher feedback", "",
+    "New AI Metadata Remover feedback", "",
     `Result: ${outcome}`, `Need / obstacle: ${submission.need || "Not answered"}`,
     `Occupation: ${occupation}`, `Other occupation: ${submission.otherOccupation || "Not answered"}`,
     `Age range: ${submission.age || "Not answered"}`, `Suggestion: ${submission.suggestion || "Not answered"}`,

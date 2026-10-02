@@ -56,7 +56,7 @@ describe("UnifiedImageWorkspace", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /keep capture details/i }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Download clean copy" })).toBeEnabled());
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(`blob:test-${firstOutput}`);
-    fireEvent.click(screen.getByRole("button", { name: /remove imagefinisher/i }));
+    fireEvent.click(screen.getByRole("button", { name: /remove ai-metadata-remover/i }));
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test-1");
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(`blob:test-${sequence}`);
   });

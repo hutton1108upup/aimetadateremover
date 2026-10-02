@@ -15,7 +15,7 @@ const routes = new Map([
   ["/guides/exif-gps-privacy-before-sharing", "How do you check EXIF and GPS privacy before sharing?"],
   ["/guides/jpeg-png-webp-metadata-support", "Which JPEG, PNG and WebP metadata can you clean?"],
   ["/guides/image-metadata-before-publishing", "What Image Metadata Should You Review Before Publishing?"],
-  ["/about", "How ImageFinisher Handles Your Files"],
+  ["/about", "How AI Metadata Remover Handles Your Files"],
   ["/privacy", "Your Image Stays in This Browser Session"],
   ["/terms", "Terms for Using the Metadata Tools"],
   ["/workspace", "Your image workspace"],

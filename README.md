@@ -1,8 +1,8 @@
-# ImageFinisher
+# AI Metadata Remover
 
-ImageFinisher is a local-first image metadata workbench built with Next.js. It helps users inspect supported JPEG, PNG, and WebP metadata, remove supported AI workflow fields from a new copy, rescan the output, and download an evidence-backed result without uploading the image.
+AI Metadata Remover is a local-first image metadata workbench built with Next.js. It helps users inspect supported JPEG, PNG, and WebP metadata, remove supported AI workflow fields from a new copy, rescan the output, and download an evidence-backed result without uploading the image.
 
-`ImageFinisher` is a working product name. The configured production origin is `https://aimetadataremover.pro`; the PRD does not lock a final brand name.
+The website brand is `AI Metadata Remover`, and the configured production origin is `https://aimetadataremover.pro`.
 
 ## Current scope
 
@@ -21,7 +21,7 @@ Evidence-gated features:
 - WebP cleaning is scan-only;
 - JPEG and WebP Content Credentials removal is scan-only;
 - the PNG remover is public and indexable after the supported PNG/EXIF compatibility and browser download gates passed;
-- Optional Google authentication uses Better Auth and Cloudflare D1. Local development uses isolated D1 storage; production uses a separate database and Worker secrets. AI visual repair, billing, credits, cloud image storage, and pricing are not implemented.
+- Optional Google authentication uses Better Auth and Cloudflare D1. Local development uses isolated D1 storage; production uses a separate database and Worker secrets. The pricing page previews Free, Pro Monthly, and Pro Yearly plans; checkout, paid entitlements, and daily metering are not live in this checkout. AI visual repair, credits, and cloud image storage are not implemented.
 
 The product does not claim detector bypass, guaranteed platform acceptance, or an AI probability score.
 

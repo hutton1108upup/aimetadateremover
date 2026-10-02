@@ -24,12 +24,14 @@ async function cleanPng(bytes: Uint8Array, policy: CleanPolicy) {
   const chunks = parsePngChunks(bytes);
   const parts: Uint8Array[] = [bytes.slice(0, 8)];
   const mutations: MutationRecord[] = [];
+  let expandedBudget = 4 * 1024 * 1024;
   for (const chunk of chunks) {
     let remove = false;
     let replacement: Uint8Array | undefined;
     if (["tEXt", "zTXt", "iTXt"].includes(chunk.type)) {
-      const entry = pngTextEntry(bytes, chunk);
+      const entry = await pngTextEntry(bytes, chunk, expandedBudget);
       if (entry) {
+        expandedBudget -= entry.expandedBytes;
         const finding = classifyTextEntry(entry.key, entry.value);
         remove = selected(finding, policy);
         mutations.push({ kind: remove ? "removed" : "preserved", category: finding.category, label: finding.label });

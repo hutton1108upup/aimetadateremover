@@ -18,7 +18,7 @@ describe("optional Google login",()=>{
     render(<AuthControls/>);
     await waitFor(()=>expect(screen.getByRole("button",{name:"Sign in"})).toBeEnabled());
     fireEvent.click(screen.getByRole("button",{name:"Sign in"}));
-    expect(await screen.findByText(/unavailable in this demo/i)).toBeVisible();
+    expect(await screen.findByText(/temporarily unavailable/i)).toBeVisible();
     expect(open).not.toHaveBeenCalled();
   });
   it("lets the user retry a blocked popup without falling back to full-page navigation",async()=>{

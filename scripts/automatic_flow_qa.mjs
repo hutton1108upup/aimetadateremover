@@ -47,8 +47,7 @@ try {
     const shot=`${dir}/${mobile?'mobile':'desktop'}-automatic-result.png`;await page.locator('.active-workspace').screenshot({path:shot});report.screenshots.push(shot);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     check(`${mobile?'mobile':'desktop'} upload only → combined AI/privacy/C2PA clean → verified download; copyright and pixel payload preserved`);
-    await page.locator('.clean-settings summary').click();
-    await page.getByRole('checkbox',{name:/Keep location/}).check();await expect(page.getByRole('button',{name:'Download clean copy',exact:true})).toBeEnabled();
+    await page.getByRole('checkbox',{name:/Keep capture details/}).check();await expect(page.getByRole('button',{name:'Download clean copy',exact:true})).toBeEnabled();
     await page.getByRole('checkbox',{name:/Keep Content Credentials/}).check();await expect(page.getByRole('button',{name:'Download clean copy',exact:true})).toBeEnabled();
     const retaining=page.waitForEvent('download');await page.getByRole('button',{name:'Download clean copy',exact:true}).click();
     const retained=await readFile(await (await retaining).path());expect(retained.includes(enc('SECRET-ID'))).toBe(true);expect(retained.includes(enc('QA-CREDENTIALS'))).toBe(true);expect(retained.includes(enc(marker))).toBe(false);
@@ -80,7 +79,8 @@ try {
     await expect(page.locator('.batch-toolbar')).toContainText('1 failed');
     await expect(page.locator('.batch-toolbar')).toContainText('1 inspection only');
     const zipDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Download completed images (ZIP)'}).click();
-    const zip=await JSZip.loadAsync(await readFile(await (await zipDownload).path()));expect(Object.keys(zip.files)).toHaveLength(2);
+    const zip=await JSZip.loadAsync(await readFile(await (await zipDownload).path()));expect(Object.keys(zip.files)).toHaveLength(3);
+    const manifest=JSON.parse(await zip.file('batch-results.json').async('string'));expect(manifest.summary.included).toBe(2);expect(manifest.summary.excluded).toBe(2);
     const originalEntry=Object.values(zip.files).find(file=>file.name.includes('original-plain.png'));expect(originalEntry).toBeTruthy();expect((await originalEntry.async('nodebuffer')).equals(untouched)).toBe(true);
     check('Mixed batch ZIP includes clean output and byte-identical no-op original, excludes failed and inspection-only files');
     await context.close();

@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { deflateSync } from "node:zlib";
+import { DecompressionStream as NodeDecompressionStream, ReadableStream as NodeReadableStream } from "node:stream/web";
 import { cleanImage, rebuildPngChunk } from "../clean";
 import { concatBytes, u32be } from "../bytes";
 import { scanImage } from "../scan";
@@ -8,6 +9,8 @@ import { cleanTiff, scanTiff } from "../tiff";
 
 const encode = (s: string) => new TextEncoder().encode(s);
 const policy = { mode: "ai_workflow" as const, removeC2pa: false, removeColorProfile: false };
+if (!globalThis.DecompressionStream) vi.stubGlobal("DecompressionStream", NodeDecompressionStream);
+if (!globalThis.ReadableStream) vi.stubGlobal("ReadableStream", NodeReadableStream);
 export function png(extra: Uint8Array[] = []) {
   return concatBytes([new Uint8Array([137,80,78,71,13,10,26,10]), rebuildPngChunk("IHDR", new Uint8Array([0,0,0,1,0,0,0,1,8,6,0,0,0])), ...extra, rebuildPngChunk("IDAT", deflateSync(new Uint8Array([0,100,150,200,128]))), rebuildPngChunk("IEND", new Uint8Array())]).buffer as ArrayBuffer;
 }
@@ -66,12 +69,21 @@ describe("output integrity and PNG compatibility gate", () => {
     const result=await verifyClean(await scanImage(input),other,policy,input);
     expect(result.encodedPayloadPreserved).toBe(false);
   });
-  it.each(["zTXt", "iTXt"])("keeps unsupported %s visible as unresolved after an earlier chunk is removed", async (type) => {
-    const data=type === "zTXt" ? concatBytes([encode("notes\0\0"),deflateSync(encode("PRIVATE-MARKER"))]) : concatBytes([encode("notes\0"),new Uint8Array([1,0,0,0]),deflateSync(encode("PRIVATE-MARKER"))]);
-    const input=png([rebuildPngChunk("tEXt",encode("parameters\0seed=1")),rebuildPngChunk(type,data)]);
+  it.each(["zTXt", "iTXt"])("cleans bounded compressed workflow text in %s", async (type) => {
+    const data=type === "zTXt" ? concatBytes([encode("parameters\0\0"),deflateSync(encode("PRIVATE-MARKER"))]) : concatBytes([encode("parameters\0"),new Uint8Array([1,0,0,0]),deflateSync(encode("PRIVATE-MARKER"))]);
+    const input=png([rebuildPngChunk("tEXt",encode("workflow\0seed=1")),rebuildPngChunk(type,data)]);
     const clean=await cleanImage(input,policy);
     const result=await verifyClean(await scanImage(input),clean.output!,policy,input);
-    expect(result.items.some(i=>i.after === "unsupported")).toBe(true);
+    expect(result.items.filter(i=>i.after === "removed")).toHaveLength(2);
+    expect(result.outputScan.findings.some(f=>f.category==="ai_workflow")).toBe(false);
+    expect(result.encodedPayloadPreserved).toBe(true);
+  });
+  it("leaves compressed text unresolved when expansion exceeds the 1 MB limit",async()=>{
+    const data=concatBytes([encode("parameters\0\0"),deflateSync(new Uint8Array(1024*1024+1).fill(65))]);
+    const input=png([rebuildPngChunk("tEXt",encode("workflow\0seed=1")),rebuildPngChunk("zTXt",data)]);
+    const clean=await cleanImage(input,policy);
+    const result=await verifyClean(await scanImage(input),clean.output!,policy,input);
+    expect(result.items.some(i=>i.after==="unsupported")).toBe(true);
     expect(result.encodedPayloadPreserved).toBe(true);
   });
   it("preserves alpha, ICC, animation data and unknown safe chunks byte for byte",async()=>{
@@ -84,5 +96,14 @@ describe("output integrity and PNG compatibility gate", () => {
     expect(verified.inputBytes).toBe(input.byteLength);
     expect(verified.outputBytes).toBe(clean.output!.byteLength);
     for(const chunk of extra.slice(0,3)) expect(Buffer.from(clean.output!).includes(Buffer.from(chunk))).toBe(true);
+  });
+  it("reports animated ComfyUI metadata as unresolved instead of claiming it was cleaned",async()=>{
+    const input=png([rebuildPngChunk("acTL",concatBytes([u32be(1),u32be(0)])),rebuildPngChunk("comf",encode("workflow\0{\"nodes\":[]}")),rebuildPngChunk("tEXt",encode("workflow\0{\"nodes\":[]}"))]);
+    const before=await scanImage(input);
+    const clean=await cleanImage(input,policy);
+    const verified=await verifyClean(before,clean.output!,policy,input);
+    expect(before.findings.some(f=>f.rawKey==="comf")).toBe(true);
+    expect(verified.items.some(item=>item.label==="Animated ComfyUI metadata" && item.after==="unsupported")).toBe(true);
+    expect(verified.encodedPayloadPreserved).toBe(true);
   });
 });

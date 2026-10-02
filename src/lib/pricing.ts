@@ -1,10 +1,13 @@
-// Calendar-month renewal approved on 2026-09-23. Runtime flags control launch.
+// Approved 2026-10-02: each Google account may claim each plan offer once.
 export const pricing = {
-  status: "preview",
   guestImagesPerDay: 1,
-  accountImagesPerDay: 3,
-  batchJobsPerDay: 20,
-  amountUsd: "4.99",
-  billingPeriod: "monthly",
+  accountImagesPerDay: 5,
   resetTimezone: "UTC",
+  free: { dailyImageLimit: 5, batchProcessing: false, signIn: "Google" },
+  pro: {
+    monthly: { standardAmountUsd: "9.90", firstPurchaseAmountUsd: "4.90", introDays: 30, periodLabel: "month", batchMaxPhotos: 10 },
+    yearly: { standardAmountUsd: "89.90", firstYearAmountUsd: "49.90", introDays: 365, periodLabel: "year", batchMaxPhotos: 10, sessionMaxImages: 30 },
+    dailyImageLimit: null,
+    batchZip: true,
+  },
 } as const;

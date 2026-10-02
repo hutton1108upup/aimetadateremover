@@ -7,7 +7,7 @@ case "$build_dir" in /tmp/imagefinisher-auth-build-*) ;; *) echo 'Unexpected bui
 test -d "$build_dir/node_modules"
 cmp "$source_dir/package.json" "$build_dir/package.json"
 cmp "$source_dir/package-lock.json" "$build_dir/package-lock.json"
-tar -C "$source_dir" -cf - src scripts migrations worker.mjs wrangler.jsonc wrangler.billing-test.jsonc | tar -C "$build_dir" -xf -
+tar -C "$source_dir" -cf - src public scripts migrations next.config.ts tsconfig.json worker.mjs wrangler.jsonc wrangler.billing-test.jsonc | tar -C "$build_dir" -xf -
 cd "$build_dir"
 npm run cf:build
 test -s .open-next/worker.js

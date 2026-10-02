@@ -9,7 +9,8 @@ import { WaffoPancake,WebhookEventType } from "@waffo/pancake-ts";
 const origin="https://imagefinisher-billing-test.duckweed1014.workers.dev";
 const account="7fd7ed1128ca3d125feaa279f4d4c547",database="6eb11432-20ce-4b28-a9c3-a78f7192a6a0";
 const command=process.argv[2];
-const scenario=process.argv.includes("--renewal")?"renewal":"default";
+const plan=process.argv.includes("--yearly")?"yearly":"monthly";
+const scenario=process.argv.includes("--pro")?`pro-${plan}`:process.argv.includes("--renewal")?"renewal":"default";
 const env=parseEnv(await readFile(".dev.vars","utf8"));
 if(env.WAFFO_ENVIRONMENT!=="test")throw new Error("This script requires test credentials.");
 const client=new WaffoPancake({merchantId:env.WAFFO_MERCHANT_ID,privateKey:env.WAFFO_PRIVATE_KEY,environment:"test"});
@@ -32,7 +33,7 @@ async function call(path,body){
 }
 if(command==="configure" || command==="fixture"){
   if(command==="configure"){const stored=spawnSync(process.execPath,["node_modules/wrangler/bin/wrangler.js","secret","bulk",secretPath,"--config","wrangler.billing-test.jsonc"],{encoding:"utf8",env:process.env});if(stored.status!==0)throw new Error("Test secret storage failed; inspect local Wrangler logs.");}
-  if(!fixture){const token=randomBytes(32).toString("hex"),id=randomUUID(),now=Date.now();await sql("INSERT INTO auth_user(id,name,email,email_verified,created_at,updated_at) VALUES(?,?,?,?,?,?)",[id,"ImageFinisher Test Buyer",scenario==="default"?"billing-test@example.test":"billing-renewal@example.test",1,now,now]);await sql("INSERT INTO auth_session(id,token,user_id,expires_at,created_at,updated_at) VALUES(?,?,?,?,?,?)",[randomUUID(),token,id,now+86400000,now,now]);const cookie=(await serializeSignedCookie("__Secure-better-auth.session_token",token,secrets.AUTH_SECRET,{secure:true,path:"/",httpOnly:true})).split(";")[0];fixture={id,cookie};await writeFile(fixturePath,JSON.stringify(fixture),{mode:0o600});}
+  if(!fixture){const token=randomBytes(32).toString("hex"),id=randomUUID(),now=Date.now();await sql("INSERT INTO auth_user(id,name,email,email_verified,created_at,updated_at) VALUES(?,?,?,?,?,?)",[id,"ImageFinisher Test Buyer",scenario==="default"?"billing-test@example.test":`billing-${scenario}@example.test`,1,now,now]);await sql("INSERT INTO auth_session(id,token,user_id,expires_at,created_at,updated_at) VALUES(?,?,?,?,?,?)",[randomUUID(),token,id,now+86400000,now,now]);const cookie=(await serializeSignedCookie("__Secure-better-auth.session_token",token,secrets.AUTH_SECRET,{secure:true,path:"/",httpOnly:true})).split(";")[0];fixture={id,cookie};await writeFile(fixturePath,JSON.stringify(fixture),{mode:0o600});}
   if(command==="fixture"){console.log("Isolated synthetic test buyer ready.");}else{
   const url=origin+"/api/billing/webhook";
   const existing=await client.graphql.query({query:`query($id:String!){store(id:$id){storeWebhooks{id url testMode}}}`,variables:{id:env.WAFFO_STORE_ID}});if(existing.errors?.length)throw new Error("Test webhook lookup failed");
@@ -56,7 +57,7 @@ if(command==="configure" || command==="fixture"){
   for(let i=0;i<20;i++){const result=await call("/api/billing/status");assert.equal(result.status,200);assert.equal(result.data.signedIn,true);results.push({status:result.status,plan:result.data.plan,refreshPending:result.data.refreshPending});}
   await writeFile(`artifacts/waffo-reference/status-repeat-${scenario}.json`,JSON.stringify({at:new Date().toISOString(),results},null,2));console.log(JSON.stringify({requests:results.length,allSucceeded:true,plans:[...new Set(results.map(r=>r.plan))]}));
 }else if(command==="checkout"){
-  const result=await call("/api/billing/checkout",{consent:"batch-pro-monthly-2026-09-23"});await writeFile("artifacts/waffo-reference/test-checkout.json",JSON.stringify(result,null,2));console.log(JSON.stringify({status:result.status,data:result.data?.url?{checkoutCreated:true,host:new URL(result.data.url).hostname}:result.data}));
+  const result=await call("/api/billing/checkout",{consent:"pro-plans-2026-10-02",plan});await writeFile("artifacts/waffo-reference/test-checkout.json",JSON.stringify(result,null,2));console.log(JSON.stringify({status:result.status,data:result.data?.url?{checkoutCreated:true,host:new URL(result.data.url).hostname}:result.data}));
 }else if(command==="cancel"){
   const {data}=await call("/api/billing/status");const subscription=data.subscriptions?.find(s=>s.will_renew);if(!subscription)throw new Error("No test subscription to cancel");console.log(JSON.stringify(await call("/api/billing/cancel",{orderId:subscription.order_id,confirm:true})));
 }else if(command==="reactivate"){
@@ -65,11 +66,11 @@ if(command==="configure" || command==="fixture"){
 }else if(command==="checks"){
   const checks=[];const check=(name,actual,expected)=>{assert.equal(actual,expected,name);checks.push(name);};
   check("unknown renewal consent rejected",(await call("/api/billing/checkout",{consent:"old-30-day-contract"})).status,400);
-  check("client price injection rejected",(await call("/api/billing/checkout",{consent:"batch-pro-monthly-2026-09-23",amount:"0.01"})).status,400);
+  check("client price injection rejected",(await call("/api/billing/checkout",{consent:"pro-plans-2026-10-02",plan,amount:"0.01"})).status,400);
   check("another account order cannot be canceled",(await call("/api/billing/cancel",{orderId:"ORD_not-owned",confirm:true})).status,404);
-  const cross=await fetch(origin+"/api/billing/checkout",{method:"POST",headers:{cookie:fixture.cookie,Origin:"https://untrusted.example","Content-Type":"application/json"},body:JSON.stringify({consent:"batch-pro-monthly-2026-09-23"})});check("cross-origin checkout rejected",cross.status,403);
+  const cross=await fetch(origin+"/api/billing/checkout",{method:"POST",headers:{cookie:fixture.cookie,Origin:"https://untrusted.example","Content-Type":"application/json"},body:JSON.stringify({consent:"pro-plans-2026-10-02",plan})});check("cross-origin checkout rejected",cross.status,403);
   const unsigned=await fetch(origin+"/api/billing/webhook",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({eventType:"subscription.activated",data:{orderId:"fake"}})});check("unsigned payment notification rejected",unsigned.status,401);
-  const guest=await fetch(origin+"/api/billing/checkout",{method:"POST",headers:{Origin:origin,"Content-Type":"application/json"},body:JSON.stringify({consent:"batch-pro-monthly-2026-09-23"})});check("unauthenticated checkout rejected",guest.status,401);
+  const guest=await fetch(origin+"/api/billing/checkout",{method:"POST",headers:{Origin:origin,"Content-Type":"application/json"},body:JSON.stringify({consent:"pro-plans-2026-10-02",plan})});check("unauthenticated checkout rejected",guest.status,401);
   const accountPage=await fetch(origin+"/account/billing?checkout=return");check("test account page is noindex",accountPage.headers.get("X-Robots-Tag"),"noindex, nofollow");
   await writeFile("artifacts/waffo-reference/live-negative-checks.json",JSON.stringify({at:new Date().toISOString(),checks},null,2));console.log(JSON.stringify({passed:checks.length,checks},null,2));
 }else if(command==="evidence"){
@@ -78,7 +79,7 @@ if(command==="configure" || command==="fixture"){
   const result=await sql("SELECT order_id,status,period_start,period_end,will_renew,paid,checked_at FROM billing_subscription WHERE user_id=? AND environment='test' ORDER BY checked_at DESC",[fixture.id]);
   const data={at:new Date().toISOString(),subscriptions:result[0].results};await writeFile("artifacts/waffo-reference/subscription-db-snapshot.json",JSON.stringify(data,null,2));console.log(JSON.stringify(data,null,2));
 }else if(command==="provider-snapshot"){
-  const result=await client.graphql.query({query:`query($store:String!,$buyer:String!,$product:String!){subscriptionOrders(storeId:$store,filter:{merchantProvidedBuyerIdentity:{eq:$buyer},productId:{eq:$product}},limit:10){id status testMode currentPeriodStart currentPeriodEnd currentPeriodNumber willRenew payments{id status periodNumber isFullyRefunded amount{display currency} refundedAmount{display currency} refunds{id status amount{display currency}}}}}`,variables:{store:env.WAFFO_STORE_ID,buyer:fixture.id,product:env.WAFFO_SUBSCRIPTION_PRODUCT_ID}});
+  const result=await client.graphql.query({query:`query($store:String!,$buyer:String!,$product:String!){subscriptionOrders(storeId:$store,filter:{merchantProvidedBuyerIdentity:{eq:$buyer},productId:{eq:$product}},limit:10){id status testMode currentPeriodStart currentPeriodEnd currentPeriodNumber willRenew payments{id status periodNumber isFullyRefunded amount{display currency} refundedAmount{display currency} refunds{id status amount{display currency}}}}}`,variables:{store:env.WAFFO_STORE_ID,buyer:fixture.id,product:process.argv.includes("--pro")?env[`WAFFO_${plan.toUpperCase()}_PRODUCT_ID`]:env.WAFFO_SUBSCRIPTION_PRODUCT_ID}});
   if(result.errors?.length)throw new Error(result.errors.map(e=>e.message).join("; "));
   await writeFile("artifacts/waffo-reference/provider-subscriptions.json",JSON.stringify(result.data,null,2));console.log(JSON.stringify(result.data,null,2));
 }else if(command==="delivery-status"){
@@ -88,5 +89,5 @@ if(command==="configure" || command==="fixture"){
   await writeFile("artifacts/waffo-reference/delivery-status.json",JSON.stringify(result.data,null,2));console.log(JSON.stringify(result.data,null,2));
 }else if(command==="usage"){
   const id=randomUUID();const kind=process.argv[3]==="batch"?"batch":"single";
-  const reserve=await call("/api/billing/usage",{id,action:"reserve",kind});console.log(JSON.stringify({reserve}));if(reserve.status===200){console.log(JSON.stringify({complete:await call("/api/billing/usage",{id,action:"complete"}),duplicate:await call("/api/billing/usage",{id,action:"complete"})}));}
+  const reserve=await call("/api/billing/usage",{id,action:"reserve",kind,imageCount:kind==="batch"?10:1});console.log(JSON.stringify({reserve}));if(reserve.status===200){console.log(JSON.stringify({complete:await call("/api/billing/usage",{id,action:"complete"}),duplicate:await call("/api/billing/usage",{id,action:"complete"})}));}
 }else throw new Error("Use configure, status, checkout, usage, cancel, or evidence.");

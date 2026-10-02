@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Check, Menu } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Menu } from "lucide-react";
 import { AuthControls } from "@/components/auth/auth-controls";
+import { BrandLogo } from "./brand-logo";
 
 const navigation = [
   { href: "/", label: "Metadata Cleaner" },
   { href: "/metadata-checker", label: "Metadata Checker" },
   { href: "/remove-metadata-from-png", label: "PNG Remover" },
+  { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" },
 ];
 
@@ -27,7 +29,7 @@ export function PublicHeader() {
 
   return (
     <header className="site-header">
-      <Link prefetch={false} href="/" className="brand"><span><Check aria-hidden="true" /></span>ImageFinisher</Link>
+      <Link prefetch={false} href="/" className="brand"><BrandLogo /></Link>
       <nav aria-label="Primary navigation">
         {navigation.map((item) => {
           const current = isCurrentPath(pathname, item.href);

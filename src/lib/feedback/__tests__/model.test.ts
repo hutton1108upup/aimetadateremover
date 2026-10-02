@@ -10,6 +10,6 @@ describe("feedback input boundary", () => {
   });
   it("strips query strings and unknown paths from transmitted context", () => {
     expect(parseSubmission({ ...base, need: "hello", path: "/workspace?email=private" }).path).toBe("other");
-    expect(parseSubmission({ ...base, need: "hello", path: "/guides/private-page" }).path).toBe("/guides");
+    expect(parseSubmission({ ...base, need: "hello", path: "/blog/private-page" }).path).toBe("/blog");
   });
 });

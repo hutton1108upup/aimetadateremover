@@ -29,11 +29,13 @@ export async function usageSummary(db:BillingDB,config:BillingConfig,identity:Us
   const now=Date.now(),day=utcDay(now),owner=identity.userId || `guest:${identity.guestId}`;
   const pro=identity.userId ? await activeSubscription(db,config,identity.userId,now) : null;
   const rows=await db.prepare(`SELECT kind,COUNT(*) AS used FROM billing_usage WHERE environment=? AND day=? AND ${usageScope} AND (state='consumed' OR (state='reserved' AND expires_at>?)) GROUP BY kind`).bind(config.environment,day,owner,identity.guestId,Number(!identity.userId),`guest:${identity.guestId}`,now).all<{kind:string;used:number}>();
-  const singleLimit=identity.userId?3:1,batchLimit=pro?20:0;
+  const unlimited=!!pro && pro.plan_id!=="legacy";
+  const singleLimit=unlimited?null:identity.userId?5:1,batchLimit=unlimited?null:pro?20:0;
   const used=(kind:string)=>rows.results.find(r=>r.kind===kind)?.used || 0;
-  return {singleLimit,singleRemaining:Math.max(0,singleLimit-used("single")),batchLimit,batchRemaining:Math.max(0,batchLimit-used("batch")),resetsAt:Date.parse(`${day}T00:00:00Z`)+86400000,pro};
+  return {singleLimit,singleRemaining:singleLimit===null?null:Math.max(0,singleLimit-used("single")),batchLimit,batchRemaining:batchLimit===null?null:Math.max(0,batchLimit-used("batch")),unlimited,batchMaxPhotos:pro?10:1,sessionMaxImages:pro?.plan_id==="yearly"?30:pro?10:1,resetsAt:Date.parse(`${day}T00:00:00Z`)+86400000,pro};
 }
-export async function reserveUsage(db:BillingDB,config:BillingConfig,identity:UsageIdentity,id:string,kind:"single"|"batch") {
+export async function reserveUsage(db:BillingDB,config:BillingConfig,identity:UsageIdentity,id:string,kind:"single"|"batch", imageCount=kind==="batch"?2:1) {
+  if(!Number.isInteger(imageCount) || imageCount<1 || imageCount>10 || (kind==="single" && imageCount!==1) || (kind==="batch" && imageCount<2))throw new BillingError(400,"BATCH_SIZE","Each batch must contain 2 to 10 images.");
   const now=Date.now(),day=utcDay(now),owner=identity.userId || `guest:${identity.guestId}`;
   const previous=await db.prepare("SELECT owner_id,kind,state,expires_at FROM billing_usage WHERE id=? AND environment=?").bind(id,config.environment).first<{owner_id:string;kind:string;state:string;expires_at:number}>();
   if (previous) {
@@ -43,12 +45,12 @@ export async function reserveUsage(db:BillingDB,config:BillingConfig,identity:Us
   }
   const summary=await usageSummary(db,config,identity);
   if(kind==="single" && summary.singleRemaining===0 && summary.pro)kind="batch";
-  if (kind==="batch" && !summary.pro) throw new BillingError(403,"PRO_REQUIRED","Batch cleaning requires Batch Pro. You can inspect these files for free, or clean one image at a time with your daily allowance.");
-  const limit=kind==="batch"?summary.batchLimit:summary.singleLimit;
+  if (kind==="batch" && !summary.pro) throw new BillingError(403,"PRO_REQUIRED","Batch cleaning requires Pro. You can inspect these files for free, or clean one image at a time with your daily allowance.");
+  const limit=(kind==="batch"?summary.batchLimit:summary.singleLimit) ?? Number.MAX_SAFE_INTEGER;
   const expires=now+15*60000;
   const result=await db.prepare(`INSERT OR IGNORE INTO billing_usage(id,owner_id,guest_id,environment,day,kind,state,created_at,expires_at,subscription_order_id)
     SELECT ?,?,?,?,?,?,'reserved',?,?,? WHERE (SELECT COUNT(*) FROM billing_usage WHERE environment=? AND day=? AND kind=? AND ${usageScope} AND (state='consumed' OR (state='reserved' AND expires_at>?))) < ?`)
-    .bind(id,owner,identity.guestId,config.environment,day,kind,now,expires,kind==="batch"?summary.pro!.order_id:null,config.environment,day,kind,owner,identity.guestId,Number(!identity.userId),`guest:${identity.guestId}`,now,limit).run();
+    .bind(id,owner,identity.guestId,config.environment,day,kind,now,expires,summary.pro?.order_id ?? null,config.environment,day,kind,owner,identity.guestId,Number(!identity.userId),`guest:${identity.guestId}`,now,limit).run();
   if (!result.meta.changes) throw new BillingError(429,"DAILY_LIMIT","Your daily allowance is used or reserved by another task. It resets at 00:00 UTC.");
   return {id,expiresAt:expires,allowZip:!!summary.pro};
 }
