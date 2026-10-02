@@ -29,11 +29,11 @@ export function PublicHeader() {
 
   return (
     <header className="site-header">
-      <Link href="/" className="brand"><BrandLogo /></Link>
+      <Link prefetch={false} href="/" className="brand"><BrandLogo /></Link>
       <nav aria-label="Primary navigation">
         {navigation.map((item) => {
           const current = isCurrentPath(pathname, item.href);
-          return <Link className={current ? "active" : undefined} aria-current={current ? "page" : undefined} href={item.href} key={item.href}>{item.label}</Link>;
+          return <Link prefetch={false} className={current ? "active" : undefined} aria-current={current ? "page" : undefined} href={item.href} key={item.href}>{item.label}</Link>;
         })}
       </nav>
       <details className="mobile-menu">
@@ -41,12 +41,12 @@ export function PublicHeader() {
         <div>
           {navigation.map((item) => {
             const current = isCurrentPath(pathname, item.href);
-            return <Link className={current ? "active" : undefined} aria-current={current ? "page" : undefined} href={item.href} key={item.href} onClick={closeMobileMenu}>{item.label}</Link>;
+            return <Link prefetch={false} className={current ? "active" : undefined} aria-current={current ? "page" : undefined} href={item.href} key={item.href} onClick={closeMobileMenu}>{item.label}</Link>;
           })}
         </div>
       </details>
       <div className="header-account-actions"><AuthControls />
-      <Link aria-label={workspace ? "Back to cleaner" : "Open Workspace"} title={workspace ? "Back to cleaner" : "Open Workspace"} href={workspace ? "/" : "/workspace"} className={`header-cta ${workspace ? "header-cta-secondary" : ""}`}>
+      <Link prefetch={false} aria-label={workspace ? "Back to cleaner" : "Open Workspace"} title={workspace ? "Back to cleaner" : "Open Workspace"} href={workspace ? "/" : "/workspace"} className={`header-cta ${workspace ? "header-cta-secondary" : ""}`}>
         {workspace ? <><ArrowLeft aria-hidden="true" /> <span className="header-cta-label">Back to cleaner</span></> : <><span className="header-cta-label">Open Workspace</span> <ArrowUpRight aria-hidden="true" /></>}
       </Link></div>
     </header>

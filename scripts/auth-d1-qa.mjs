@@ -4,7 +4,7 @@ import { readFile, mkdir,writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 
-const bundle=await build({entryPoints:["scripts/auth-d1-qa.worker.ts"],bundle:true,write:false,format:"esm",platform:"neutral",conditions:["workerd","worker","browser"],external:["node:*"],target:"es2022"});
+const bundle=await build({entryPoints:["scripts/auth-d1-qa.worker.ts"],bundle:true,write:false,format:"esm",platform:"neutral",conditions:["workerd","worker","browser"],alias:{crypto:"node:crypto"},external:["node:*"],target:"es2022"});
 const mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:bundle.outputFiles[0].text,compatibilityDate:"2026-09-09",compatibilityFlags:["nodejs_compat"],d1Databases:{AUTH_DB:"auth-d1-qa"},bindings:{AUTH_BASE_URL:"http://localhost:3180",AUTH_SECRET:randomBytes(48).toString("hex"),GOOGLE_CLIENT_ID:"test.apps.googleusercontent.com",GOOGLE_CLIENT_SECRET:"test-only"}}));
 const checks=[];
 const pass=name=>{checks.push(name);console.log("PASS "+name);};
@@ -22,6 +22,13 @@ try {
   const repeat=await call("/fixture");assert.notEqual(repeat.status,200);
   assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM auth_user").first()).count,1);
   assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM auth_account").first()).count,1);pass("duplicate identity cannot create duplicate user/account records");
+  const second=await (await call("/fixture-bob")).json();
+  const concurrent=await Promise.all([fixture.cookie,second.cookie,undefined,"better-auth.session_token=forged"].map(async cookie=>(await call("/api/auth/get-session",{headers:cookie?{cookie}:{}})).json()));
+  assert.equal(concurrent[0].user.id,fixture.id);assert.equal(concurrent[1].user.id,second.id);assert.equal(concurrent[2],null);assert.equal(concurrent[3],null);pass("reused auth instance isolates concurrent users, anonymous requests and forged cookies");
+  const forbiddenMethod=await call("/api/billing/checkout");assert.equal(forbiddenMethod.status,405);assert.equal(forbiddenMethod.headers.get("allow"),"POST, OPTIONS");
+  assert.equal((await call("/api/billing/checkout",{method:"OPTIONS"})).status,204);
+  const head=await call("/api/auth/status",{method:"HEAD"});assert.equal(head.status,200);assert.equal(await head.text(),"");
+  assert.match(head.headers.get("cache-control"),/private.*no-store/);pass("direct API path preserves method restrictions, HEAD and private response headers");
   assert.equal(await (await call("/api/auth/get-session",{headers:{cookie:"better-auth.session_token=forged"}})).json(),null);pass("forged session cookie rejected");
   const hostile=await call("/api/auth/sign-out",{method:"POST",headers:{cookie:fixture.cookie,origin:"https://untrusted.invalid","content-type":"application/json"},body:"{}"});assert.equal(hostile.status,403);pass("untrusted sign-out origin rejected");
   const oauth=await call("/api/auth/sign-in/social",{method:"POST",headers:{origin:"http://localhost:3180","content-type":"application/json"},body:JSON.stringify({provider:"google",callbackURL:"http://localhost:3180/auth/complete",disableRedirect:true})});
@@ -30,8 +37,9 @@ try {
   const badCallback=await call("/api/auth/callback/google?code=fake&state=fake");assert.ok(badCallback.status>=300 && badCallback.status<400);assert.match(badCallback.headers.get("location"),/error/);pass("invalid OAuth state rejected");
   const out=await call("/api/auth/sign-out",{method:"POST",headers:{cookie:fixture.cookie,origin:"http://localhost:3180","content-type":"application/json"},body:"{}"});assert.equal(out.status,200);
   assert.equal(await (await call("/api/auth/get-session",{headers:{cookie:fixture.cookie}})).json(),null);
-  assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM auth_session").first()).count,0);pass("sign-out deletes D1 session and invalidates old cookie");
-  await db.prepare("DELETE FROM auth_verification").run();await db.prepare("DELETE FROM auth_user WHERE id=?").bind(fixture.id).run();
+  assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM auth_session WHERE user_id=?").bind(fixture.id).first()).count,0);pass("sign-out deletes D1 session and invalidates old cookie");
+  assert.equal((await (await call("/api/auth/get-session",{headers:{cookie:second.cookie}})).json()).user.id,second.id);pass("signing out one account does not revoke another account session");
+  await db.prepare("DELETE FROM auth_verification").run();await db.prepare("DELETE FROM auth_user WHERE id IN (?,?)").bind(fixture.id,second.id).run();
   assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM auth_account").first()).count,0);pass("local fixture cleanup and account cascade");
   await mkdir("artifacts/google-login",{recursive:true});await writeFile("artifacts/google-login/d1-qa.json",JSON.stringify({at:new Date().toISOString(),checks,realGoogleAuthorization:false},null,2));
 }finally{await mf.dispose();}
