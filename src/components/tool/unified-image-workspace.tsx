@@ -31,7 +31,9 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
   const [expanded, setExpanded] = useState<string>();
   const [previewView, setPreviewView] = useState<"original" | "cleaned">("cleaned");
   const [zoom, setZoom] = useState(100);
+  const [downloadFeedback, setDownloadFeedback] = useState<{ id: string; message: string }>();
   const inputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<LocalImage | undefined>(undefined);
   const active = files.find((item) => item.id === activeId) ?? files[0];
   const showingCleaned = previewView === "cleaned" && Boolean(active?.cleanPreview);
@@ -39,6 +41,16 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
   const isSafeSample = active?.source === "sample";
 
   useEffect(() => { activeRef.current = active; }, [active]);
+  useEffect(() => {
+    if (active?.source !== "sample" || window.innerWidth > 720) return;
+    const frame = requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [active?.id, active?.source]);
+  useEffect(() => {
+    if (active?.source !== "sample" || !active.verification || window.innerWidth > 720) return;
+    const frame = requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [active?.id, active?.source, active?.verification]);
   useEffect(() => {
     const context = document.modelContext;
     if (!context?.registerTool) return;
@@ -70,8 +82,17 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
   const unchanged = Boolean(active?.verification && !removed && !unresolvedCount(active.verification));
 
   async function addFiles(list: File[], source: "file" | "sample" = "file") {
+    setDownloadFeedback(undefined);
     if (!busy && !filesRef.current.length) { setPreviewView("cleaned"); setZoom(100); setActiveId(undefined); }
     await queueFiles(list, source, defaultMode === "clean" ? policy : undefined);
+  }
+
+  function startDownload(file: LocalImage) {
+    try {
+      if (downloadOne(file)) setDownloadFeedback({ id: file.id, message: "Download started. Check your browser downloads." });
+    } catch {
+      setDownloadFeedback({ id: file.id, message: "The download could not start. Please try again." });
+    }
   }
 
   async function updateSettings(nextPrivacy: boolean, nextCredentials: boolean) {
@@ -109,7 +130,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
         <p className="settings-status" role="status">{settingsMessage}</p>
       </fieldset>}
       {notice && <p className="batch-notice" role="status">{notice}</p>}
-      {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {completed.length} ready to download · {partial.length} partial · {failed.length} failed{scanOnly.length > 0 ? ` · ${scanOnly.length} inspection only` : ""}</span><div className="batch-toolbar-actions">{retryable.length > 0 && <button className="button secondary" disabled={busy} onClick={() => void cleanFiles(retryable.map(file=>file.id),policy)}>Retry failed cleans ({retryable.length})</button>}<button className="button secondary" disabled={busy} onClick={clearFiles}>Clear queue</button></div></div>}
+      {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {completed.length} ready to download · {partial.length} partial · {failed.length} failed{scanOnly.length > 0 ? ` · ${scanOnly.length} inspection only` : ""}</span><div className="batch-toolbar-actions">{active && <button className="button secondary result-jump" onClick={() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{activeProcessing ? "View progress" : active.verification ? "View result & download" : active.error ? "View error" : "View result"}</button>}{retryable.length > 0 && <button className="button secondary" disabled={busy} onClick={() => void cleanFiles(retryable.map(file=>file.id),policy)}>Retry failed cleans ({retryable.length})</button>}<button className="button secondary" disabled={busy} onClick={clearFiles}>Clear queue</button></div></div>}
       {files.length > 1 && completed.length > 0 && <div className="batch-download"><button className="button primary" disabled={busy} onClick={() => void downloadZip()}><Download aria-hidden="true" />Download completed images (ZIP)</button><p>{completed.length} of {files.length} files included · {partial.length} need review. ZIP includes a local batch results file; files without a completed copy are excluded.</p></div>}
       <div className="workspace-grid">
         {variant === "full" && (
@@ -121,7 +142,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
         <div className="tool-stage">
           {files.length > 0 && <select className="queue-file-select" value={active?.id} onChange={(event) => setActiveId(event.target.value)} aria-label="Active image">{files.map((item) => <option value={item.id} key={item.id}>{item.file.name} · {fileStatus(item)}</option>)}</select>}
           {!active ? (
-            <div className="dropzone" role="button" aria-label="Open file picker" onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inputRef.current?.click(); } }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void addFiles(Array.from(event.dataTransfer.files)); }} onPaste={(event) => void addFiles(Array.from(event.clipboardData.files))} tabIndex={0}>
+            <div id="choose-images" className="dropzone" role="button" aria-label="Open file picker" onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inputRef.current?.click(); } }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void addFiles(Array.from(event.dataTransfer.files)); }} onPaste={(event) => void addFiles(Array.from(event.clipboardData.files))} tabIndex={0}>
               <span className="upload-icon"><UploadCloud aria-hidden="true" /></span>
               <h2>Drop, paste, or choose your images</h2>
               <p>{acceptedFormats ? `${acceptedLabel} images` : "JPG and PNG · WebP inspection only"} · No account needed</p>
@@ -143,8 +164,9 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
                 <div className={`image-stage ${isSafeSample ? "safe-sample-stage" : ""}`}>{previewSrc ? <img style={{ transform: `scale(${zoom / 100})` }} src={previewSrc} alt={`${showingCleaned ? "Cleaned" : "Original"} file preview`} /> : <FileImage aria-hidden="true" />}{isSafeSample && <span className="safe-sample-card"><ShieldCheck aria-hidden="true" /><b>Safe sample</b><small>{focus === "comfyui" ? "Synthetic PNG · workflow and prompt graph" : "Synthetic PNG · generation parameters"}</small></span>}</div>
                 <p>{active.scan ? `${active.scan.format.toUpperCase()} · ${formatBytes(active.file.size)} · ${active.scan.findings.length} finding${active.scan.findings.length === 1 ? "" : "s"}` : active.status.replaceAll("_", " ")}</p>
               </div>
-              <div className="action-panel">
+              <div ref={resultRef} className="action-panel" tabIndex={-1}>
                 <div aria-live="polite" className="sr-status">{active.error ?? fileStatus(active)}</div>
+                {downloadFeedback?.id === active.id && <p className="download-feedback" role="status">{downloadFeedback.message}</p>}
                 {activeProcessing && <div className="processing-result" role="status"><ScanSearch aria-hidden="true" /><h3>{active.status === "cleaning" ? "Cleaning your copy…" : active.status === "verifying" ? "Verifying your copy…" : "Checking your image…"}</h3><p>{defaultMode === "clean" ? "Check → Clean → Verify. Your download will appear automatically." : "Reading supported metadata locally. Your file stays unchanged."}</p></div>}
                 {active.error && <div className="error-banner" role="alert"><b>Could not process this image</b><p>{active.error}</p><FeedbackButton /></div>}
                 {!activeProcessing && active.scan && !active.error && <div className="panel-stack">
@@ -152,7 +174,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
                   {active.verification ? <>
                     <div className="result-heading"><ShieldCheck aria-hidden="true" /><h3>{unresolvedCount(active.verification) ? "Partially cleaned — review remaining data" : unchanged ? "No supported data needed cleaning" : "Cleaning complete"}</h3></div>
                     {unchanged && <p className="panel-intro">No supported fields were removed. Download your unchanged original, or inspect another image.</p>}
-                    <button className="button primary wide download-result" disabled={busy} onClick={() => downloadOne(active)}><Download aria-hidden="true" />{unchanged ? "Download original" : "Download clean copy"}</button>
+                    <button className="button primary wide download-result" disabled={busy} onClick={() => startDownload(active)}><Download aria-hidden="true" />{unchanged ? "Download original" : "Download clean copy"}</button>
                     <VerificationCard verification={active.verification} />
                   </> : <>
                     <div className="result-strip"><span>{active.scan.findings.length} metadata finding{active.scan.findings.length === 1 ? "" : "s"}</span><b>{active.scan.cleanSupport === "scan_only" ? "Inspection only" : "Scan complete"}</b></div>

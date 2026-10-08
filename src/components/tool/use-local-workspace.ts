@@ -152,7 +152,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
     if(delivered.current.has(item.id))return;delivered.current.add(item.id);
     trackFunnel("download_initiated",{source:item.source,format:item.scan?.format,result:item.verification && !unresolvedCount(item.verification)?"verified":"review_needed",delivery});
   }
-  function downloadOne(item:LocalImage) {if(!item.cleaned || busy)return;const unchanged=unchangedResult(item);downloadLocal(unchanged?item.file:item.cleaned,unchanged?item.file.name:`clean-${item.file.name}`,mime(item.scan));recordDownload(item,"single");}
+  function downloadOne(item:LocalImage) {if(!item.cleaned || busy)return false;const unchanged=unchangedResult(item);downloadLocal(unchanged?item.file:item.cleaned,unchanged?item.file.name:`clean-${item.file.name}`,mime(item.scan));recordDownload(item,"single");return true;}
   async function downloadZip() {
     if(!begin())return;
     const selected=filesRef.current.filter(f=>f.cleaned && f.verification);
