@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ArrowRight, Check, CircleAlert, Eye } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { PublicFooter } from "@/components/layout/public-footer";
@@ -11,6 +12,7 @@ import { siteUrl } from "@/lib/site";
 export interface ToolPageProps {
   path: string; h1: string; intro: string; label: string; defaultMode?: "inspect" | "clean"; acceptedFormats?: Array<"jpeg" | "png" | "webp">; focus?: ToolFocus;
   sectionTitles?: { coverage: string; preserved: string; steps: string };
+  children?: ReactNode;
   specifics: Array<{ title: string; body: string }>; preserved: string[]; limits: string[]; steps: Array<{ title: string; body: string }>; faqs: FAQItem[];
 }
 
@@ -19,6 +21,7 @@ export function ToolPage(props: ToolPageProps) {
     <section className="section section-alt"><div className="page-container"><div className="section-heading"><p className="eyebrow">In this file</p><h2>{props.sectionTitles?.coverage ?? "What this tool covers"}</h2></div><div className="info-grid">{props.specifics.map((item,index)=><article key={item.title}><span>{String(index+1).padStart(2,"0")}</span><h3>{item.title}</h3><p>{item.body}</p></article>)}</div></div></section>
     <section className="section"><div className="page-container preserve-grid"><div><p className="eyebrow">In the output</p><h2>{props.sectionTitles?.preserved ?? "Useful image data stays with the file"}</h2>{props.preserved.map((item)=><p className="check-line" key={item}><Check />{item}</p>)}</div><div className="boundary-card"><CircleAlert /><h3>Limits to review</h3>{props.limits.map((item)=><p key={item}>{item}</p>)}</div></div></section>
     <section className="section section-alt"><div className="page-container"><div className="section-heading"><p className="eyebrow">Use the tool</p><h2>{props.sectionTitles?.steps ?? "Choose an image and review the result"}</h2></div><ol className="step-list">{props.steps.map((step,index)=><li key={step.title}><span>{index+1}</span><div><h3>{step.title}</h3><p>{step.body}</p></div></li>)}</ol></div></section>
+    {props.children}
     <FAQSection title={`Questions about ${props.label.toLowerCase()}`} items={props.faqs} />
     <section className="section section-alt"><div className="page-container related-card"><span><Eye /><b>Other image tools</b></span><div><Link href="/">AI metadata cleaner <ArrowRight /></Link>{props.path !== "/metadata-checker" && <Link href="/metadata-checker">Metadata checker <ArrowRight /></Link>}<Link href="/batch-metadata-remover">Batch metadata remover <ArrowRight /></Link><Link href="/supported-formats">Supported formats <ArrowRight /></Link></div></div></section>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(props.faqs)) }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema(props.h1, props.intro, new URL(props.path, siteUrl).toString())) }} />

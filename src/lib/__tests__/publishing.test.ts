@@ -18,6 +18,7 @@ describe("Phase 1 publishing manifest", () => {
       "/c2pa-metadata-checker",
       "/remove-gps-from-photo",
       "/blog",
+      "/blog/why-edited-photos-get-ai-info-labels",
       "/blog/chatgpt-dalle-image-metadata",
       "/blog/stable-diffusion-comfyui-metadata",
       "/blog/c2pa-content-credentials-explained",
@@ -46,20 +47,23 @@ describe("Phase 1 publishing manifest", () => {
 
   it("uses the last substantive route update for sitemap lastModified", () => {
     const entries = new Map(sitemap().map((entry) => [new URL(entry.url).pathname, entry]));
-    for (const path of ["/", "/metadata-checker", "/remove-metadata-from-png", "/about"]) {
+    for (const path of ["/metadata-checker", "/remove-metadata-from-png", "/about"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-24T00:00:00.000Z");
     }
     for (const path of ["/blog/chatgpt-dalle-image-metadata"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-20T00:00:00.000Z");
     }
-    for (const path of ["/privacy", "/terms", "/pricing", "/blog"]) {
+    for (const path of ["/privacy", "/terms", "/pricing"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-18T00:00:00.000Z");
     }
-    for (const path of ["/blog/stable-diffusion-comfyui-metadata", "/blog/c2pa-content-credentials-explained", "/blog/exif-gps-privacy-before-sharing", "/blog/jpeg-png-webp-metadata-support", "/blog/image-metadata-before-publishing"]) {
+    for (const path of ["/blog/stable-diffusion-comfyui-metadata", "/blog/exif-gps-privacy-before-sharing", "/blog/jpeg-png-webp-metadata-support", "/blog/image-metadata-before-publishing"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-28T00:00:00.000Z");
     }
-    for (const path of ["/batch-metadata-remover", "/comfyui-workflow-remover", "/stable-diffusion-metadata-remover", "/remove-metadata-from-jpeg", "/supported-formats", "/c2pa-metadata-checker", "/remove-gps-from-photo"]) {
+    for (const path of ["/comfyui-workflow-remover", "/stable-diffusion-metadata-remover", "/remove-metadata-from-jpeg", "/supported-formats"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-28T00:00:00.000Z");
+    }
+    for (const path of ["/", "/remove-ai-detection-from-image", "/batch-metadata-remover", "/remove-gps-from-photo", "/c2pa-metadata-checker", "/blog", "/blog/c2pa-content-credentials-explained", "/blog/why-edited-photos-get-ai-info-labels"]) {
+      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-10-12T00:00:00.000Z");
     }
     expect(entries.has("/workspace")).toBe(false);
   });

@@ -10,19 +10,12 @@ import { FindingNextActions, FindingRow } from "./finding-row";
 import { VerificationCard } from "./verification-card";
 import { FunnelReview } from "./funnel-review";
 import { FeedbackButton } from "@/components/feedback/feedback-button";
+import { createBatchSampleFiles, createSafeSampleFile } from "@/lib/safe-samples";
 
 
-const safeSampleBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAApdEVYdHBhcmFtZXRlcnMAc3RlcHM9MzAgc2VlZD00MiBzYW1wbGVyPWV1bGVyj/t2VgAAAABJRU5ErkJggg==";
-const comfyuiSampleBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAApdEVYdHBhcmFtZXRlcnMAc3RlcHM9MzAgc2VlZD00MiBzYW1wbGVyPWV1bGVyj/t2VgAAACh0RVh0d29ya2Zsb3cAeyIxIjp7ImNsYXNzX3R5cGUiOiJLU2FtcGxlciJ9ff8hepAAAAAjdEVYdHByb21wdAB7IjEiOnsiaW5wdXRzIjp7InNlZWQiOjQyfX192O5bewAAAABJRU5ErkJggg==";
-
-function createSafeSampleFile(focus?: ToolFocus) {
-  const binary = atob(focus === "comfyui" ? comfyuiSampleBase64 : safeSampleBase64);
-  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-  return new File([bytes], focus === "comfyui" ? "synthetic-comfyui-workflow.png" : focus === "stable-diffusion" ? "synthetic-generation-parameters.png" : "ai-metadata-remover-safe-sample.png", { type: "image/png" });
-}
 export type ToolFocus = "comfyui" | "stable-diffusion" | "gps" | "c2pa";
 
-export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "clean", acceptedFormats, focus }: { variant?: "embedded" | "full"; defaultMode?: "inspect" | "clean"; acceptedFormats?: Array<"jpeg" | "png" | "webp">; focus?: ToolFocus }) {
+export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "clean", acceptedFormats, focus, sampleMode = "single" }: { variant?: "embedded" | "full"; defaultMode?: "inspect" | "clean"; acceptedFormats?: Array<"jpeg" | "png" | "webp">; focus?: ToolFocus; sampleMode?: "single" | "batch" }) {
   const { files, filesRef, busy, notice, addFiles: queueFiles, cleanFiles, removeFile, clearFiles, downloadOne, downloadZip } = useLocalWorkspace(acceptedFormats);
   const [activeId, setActiveId] = useState<string>();
   const [keepPrivacy, setKeepPrivacy] = useState(false);
@@ -147,7 +140,8 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
               <h2>Drop, paste, or choose your images</h2>
               <p>{acceptedFormats ? `${acceptedLabel} images` : "JPG and PNG · WebP inspection only"} · No account needed</p>
               <p className="drop-policy">{defaultMode === "inspect" ? "Read-only check. Your file stays unchanged." : focus === "gps" ? "Creates a copy with supported location and private EXIF fields removed." : focus ? "Creates a copy with supported workflow fields removed." : "Automatically cleans images using the settings above."}</p>
-              <div className="drop-actions"><button className="button primary" onClick={() => inputRef.current?.click()} disabled={busy}><FolderOpen aria-hidden="true" /> Choose images</button>{(!focus || focus === "comfyui" || focus === "stable-diffusion") && <button className="button secondary" onClick={() => void addFiles([createSafeSampleFile(focus)], "sample")} disabled={busy}><ScanSearch aria-hidden="true" /> Try a safe sample</button>}</div>
+              <div className="drop-actions"><button className="button primary" onClick={() => inputRef.current?.click()} disabled={busy}><FolderOpen aria-hidden="true" /> Choose images</button>{(!focus || focus === "comfyui" || focus === "stable-diffusion") && <button className="button secondary" onClick={() => void addFiles(sampleMode === "batch" ? createBatchSampleFiles() : [createSafeSampleFile(focus)], "sample")} disabled={busy}><ScanSearch aria-hidden="true" />{sampleMode === "batch" ? "Try a safe batch" : "Try a safe sample"}</button>}</div>
+              {sampleMode === "batch" && <p className="drop-policy">Three synthetic PNGs: cleaned, unchanged and review needed. Try the ZIP download without using your own files.</p>}
               <div className="trust-row">{variant === "full" && acceptedFormats ? <><span><LockKeyhole aria-hidden="true" /> Runs locally</span><span><Check aria-hidden="true" /> Original files preserved</span><span><Check aria-hidden="true" /> Per-file results</span><span><Check aria-hidden="true" /> ZIP summary</span></> : <><span><Check aria-hidden="true" /> Free to use</span><span><LockKeyhole aria-hidden="true" /> Runs locally</span><span><Check aria-hidden="true" /> Original file preserved</span><span><Check aria-hidden="true" /> No subscription required</span></>}</div>
             </div>
           ) : (
@@ -161,7 +155,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
                     <span className="preview-file-controls" aria-label="File actions"><button disabled={busy} onClick={() => inputRef.current?.click()} aria-label="Add images"><Plus aria-hidden="true" /></button><button className="remove-action" onClick={() => removeFile(active.id)} aria-label={`Remove ${active.file.name}`}><Trash2 aria-hidden="true" /></button></span>
                   </span>
                 </div>
-                <div className={`image-stage ${isSafeSample ? "safe-sample-stage" : ""}`}>{previewSrc ? <img style={{ transform: `scale(${zoom / 100})` }} src={previewSrc} alt={`${showingCleaned ? "Cleaned" : "Original"} file preview`} /> : <FileImage aria-hidden="true" />}{isSafeSample && <span className="safe-sample-card"><ShieldCheck aria-hidden="true" /><b>Safe sample</b><small>{focus === "comfyui" ? "Synthetic PNG · workflow and prompt graph" : "Synthetic PNG · generation parameters"}</small></span>}</div>
+                <div className={`image-stage ${isSafeSample ? "safe-sample-stage" : ""}`}>{previewSrc ? <img style={{ transform: `scale(${zoom / 100})` }} src={previewSrc} alt={`${showingCleaned ? "Cleaned" : "Original"} file preview`} /> : <FileImage aria-hidden="true" />}{isSafeSample && <span className="safe-sample-card"><ShieldCheck aria-hidden="true" /><b>Safe sample</b><small>{sampleMode === "batch" ? "Synthetic PNG · batch result example" : focus === "comfyui" ? "Synthetic PNG · workflow and prompt graph" : "Synthetic PNG · generation parameters"}</small></span>}</div>
                 <p>{active.scan ? `${active.scan.format.toUpperCase()} · ${formatBytes(active.file.size)} · ${active.scan.findings.length} finding${active.scan.findings.length === 1 ? "" : "s"}` : active.status.replaceAll("_", " ")}</p>
               </div>
               <div ref={resultRef} className="action-panel" tabIndex={-1}>
