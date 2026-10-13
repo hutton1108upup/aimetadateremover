@@ -5,13 +5,14 @@ import { nextActionGroup } from "@/components/tool/finding-row";
 import type { Finding } from "@/lib/image-metadata-core/types";
 
 describe("technical guides and next actions", () => {
-  it("contains the five new guides plus the existing publishing guide", () => {
+  it("contains distinct technical guides and the edited-photo label guide", () => {
     expect(guides.map((guide) => guide.slug)).toEqual([
+      "why-edited-photos-get-ai-info-labels",
       "chatgpt-dalle-image-metadata", "stable-diffusion-comfyui-metadata", "c2pa-content-credentials-explained", "exif-gps-privacy-before-sharing", "jpeg-png-webp-metadata-support",
       "image-metadata-before-publishing",
     ]);
     expect(guideBySlug("missing-guide")).toBeUndefined();
-    expect(new Set(guides.map((guide) => guide.title)).size).toBe(6);
+    expect(new Set(guides.map((guide) => guide.title)).size).toBe(7);
   });
   it.each([
     ["ai_workflow", "action", "clean"], ["location", "review", "clean"], ["provenance", "review", "review"], ["color", "informational", "keep"], ["structure", "review", "review"],
