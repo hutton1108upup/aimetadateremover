@@ -17,6 +17,8 @@ describe("Phase 1 publishing manifest", () => {
       "/remove-metadata-from-jpeg",
       "/c2pa-metadata-checker",
       "/remove-gps-from-photo",
+      "/pdf-metadata-remover",
+      "/docx-metadata-remover",
       "/blog",
       "/blog/why-edited-photos-get-ai-info-labels",
       "/blog/chatgpt-dalle-image-metadata",
@@ -59,10 +61,12 @@ describe("Phase 1 publishing manifest", () => {
     for (const path of ["/blog/stable-diffusion-comfyui-metadata", "/blog/exif-gps-privacy-before-sharing", "/blog/jpeg-png-webp-metadata-support", "/blog/image-metadata-before-publishing"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-28T00:00:00.000Z");
     }
-    for (const path of ["/comfyui-workflow-remover", "/stable-diffusion-metadata-remover", "/remove-metadata-from-jpeg", "/supported-formats"]) {
+    for (const path of ["/comfyui-workflow-remover", "/stable-diffusion-metadata-remover", "/remove-metadata-from-jpeg"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-28T00:00:00.000Z");
     }
-    for (const path of ["/", "/remove-ai-detection-from-image", "/batch-metadata-remover", "/remove-gps-from-photo", "/c2pa-metadata-checker", "/blog", "/blog/c2pa-content-credentials-explained", "/blog/why-edited-photos-get-ai-info-labels"]) {
+    for (const path of ["/pdf-metadata-remover", "/docx-metadata-remover"]) expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-10-21T00:00:00.000Z");
+    for (const path of ["/", "/supported-formats"]) expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-10-21T00:00:00.000Z");
+    for (const path of ["/remove-ai-detection-from-image", "/batch-metadata-remover", "/remove-gps-from-photo", "/c2pa-metadata-checker", "/blog", "/blog/c2pa-content-credentials-explained", "/blog/why-edited-photos-get-ai-info-labels"]) {
       expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-10-12T00:00:00.000Z");
     }
     expect(entries.has("/workspace")).toBe(false);
