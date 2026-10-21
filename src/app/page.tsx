@@ -9,7 +9,7 @@ import { ArrowRight, Boxes, Eye, FileCheck2, ScanSearch, Download } from "lucide
 import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
 import { FAQSection } from "@/components/marketing/faq-section";
-import { UnifiedImageWorkspace } from "@/components/tool/unified-image-workspace";
+import { FormatWorkspace } from "@/components/tool/format-workspace";
 import { ToolDirectory } from "@/components/marketing/tool-directory";
 import { LatestGuides } from "@/components/marketing/latest-guides";
 import { EvidenceTable } from "@/components/marketing/evidence-table";
@@ -28,7 +28,7 @@ const faqs = [
 
 export default function Home() {
   return <><PublicHeader /><main className="home-page">
-    <section className="hero-section"><div className="hero-orbit" aria-hidden="true"><span /><span /><span /></div><div className="page-container hero-copy"><p className="eyebrow"><span className="status-dot" /> Private image tools that run in your browser</p><h1>AI Metadata Cleaner for Images</h1><p className="hero-lede">Choose images to automatically clean supported AI and private metadata. Review the result and download your copy.</p><a className="hero-start-link" href="#choose-images">Choose images <ArrowRight aria-hidden="true" /></a><p className="hero-status">No upload. No account. Your original stays unchanged.</p></div><div className="page-container hero-tool"><UnifiedImageWorkspace variant="embedded" defaultMode="clean" /></div></section>
+    <section className="hero-section"><div className="hero-orbit" aria-hidden="true"><span /><span /><span /></div><div className="page-container hero-copy"><p className="eyebrow"><span className="status-dot" /> Private file tools that run in your browser</p><h1>AI Metadata Cleaner for Images</h1><p className="hero-lede">Start with images, or switch to PDF and Word files to clean supported document properties locally. Review the result and download a separate copy.</p><a className="hero-start-link" href="#choose-images">Choose a file <ArrowRight aria-hidden="true" /></a><p className="hero-status">No upload. No account. Your original stays unchanged.</p></div><div className="page-container hero-tool"><FormatWorkspace /></div></section>
     <ToolDirectory />
     <section className="section"><div className="page-container"><div className="section-heading"><h2>What the AI metadata cleaner removes and preserves</h2><p>Default cleaning creates a separate JPEG or PNG copy. Use the keep options when capture details or embedded PNG credentials belong in that copy.</p></div>
       <EvidenceTable caption="Default field handling for supported files" headers={["Field group", "Default result", "Details"]} rows={[
