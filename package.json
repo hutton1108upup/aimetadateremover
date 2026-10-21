@@ -29,7 +29,7 @@
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.3",
     "@contentauth/c2pa-web": "0.15.1",
-    "@opennextjs/cloudflare": "1.20.6",
+    "@opennextjs/cloudflare": "1.20.12",
     "@waffo/pancake-ts": "0.25.0",
     "better-auth": "1.7.3",
     "drizzle-orm": "0.45.2",
