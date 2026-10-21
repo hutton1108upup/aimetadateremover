@@ -9,9 +9,10 @@ import { ArrowRight, Boxes, Eye, FileCheck2, ScanSearch, Download } from "lucide
 import { PublicFooter } from "@/components/layout/public-footer";
 import { PublicHeader } from "@/components/layout/public-header";
 import { FAQSection } from "@/components/marketing/faq-section";
-import { UnifiedImageWorkspace } from "@/components/tool/unified-image-workspace";
+import { FormatWorkspace } from "@/components/tool/format-workspace";
 import { ToolDirectory } from "@/components/marketing/tool-directory";
 import { LatestGuides } from "@/components/marketing/latest-guides";
+import { EvidenceTable } from "@/components/marketing/evidence-table";
 import { brandName } from "@/lib/brand";
 
 const faqs = [
@@ -27,9 +28,20 @@ const faqs = [
 
 export default function Home() {
   return <><PublicHeader /><main className="home-page">
-    <section className="hero-section"><div className="hero-orbit" aria-hidden="true"><span /><span /><span /></div><div className="page-container hero-copy"><p className="eyebrow"><span className="status-dot" /> Private image tools that run in your browser</p><h1>AI Metadata Cleaner for Images</h1><p className="hero-lede">Choose images to automatically clean supported AI and private metadata. Review the result and download your copy.</p><p className="hero-status">No upload. No account. Your original stays unchanged.</p></div><div className="page-container hero-tool"><UnifiedImageWorkspace variant="embedded" defaultMode="clean" /></div></section>
+    <section className="hero-section"><div className="hero-orbit" aria-hidden="true"><span /><span /><span /></div><div className="page-container hero-copy"><p className="eyebrow"><span className="status-dot" /> Private file tools that run in your browser</p><h1>AI Metadata Cleaner for Images</h1><p className="hero-lede">Start with images, or switch to PDF and Word files to clean supported document properties locally. Review the result and download a separate copy.</p><a className="hero-start-link" href="#choose-images">Choose a file <ArrowRight aria-hidden="true" /></a><p className="hero-status">No upload. No account. Your original stays unchanged.</p></div><div className="page-container hero-tool"><FormatWorkspace /></div></section>
     <ToolDirectory />
-    <LatestGuides />
+    <section className="section"><div className="page-container"><div className="section-heading"><h2>What the AI metadata cleaner removes and preserves</h2><p>Default cleaning creates a separate JPEG or PNG copy. Use the keep options when capture details or embedded PNG credentials belong in that copy.</p></div>
+      <EvidenceTable caption="Default field handling for supported files" headers={["Field group", "Default result", "Details"]} rows={[
+        ["AI prompts, seeds and workflows", "Removed where supported", "Recognized generation fields; mixed or unreadable structures need review."],
+        ["GPS and private capture details", "Removed where supported", "Private EXIF such as dates, device IDs, MakerNotes and supported thumbnails."],
+        ["Embedded PNG Content Credentials", "Removed", "PNG caBX only. Choose Keep Content Credentials to retain them."],
+        ["Copyright and attribution", "Preserved where supported", "Mixed metadata may stay intact to avoid removing attribution."],
+        ["Encoded image data, orientation and ICC", "Preserved and checked", "Cleaning does not re-encode the image; relevant integrity checks must pass."],
+        ["JPEG or WebP Content Credentials", "Inspection only", "The checker can report supported records; this cleaner cannot remove them."],
+        ["Unsupported metadata", "Review required", "A partial result can still contain data. Read the verification report."],
+      ]} />
+      <div className="evidence-links"><Link className="text-link" href="/supported-formats">Compare JPEG, PNG and WebP support</Link><Link className="text-link" href="/blog/image-metadata-before-publishing">Use the image metadata review checklist</Link></div>
+    </div></section>
     <section className="section section-alt"><div className="page-container"><div className="section-heading split-heading"><div><p className="eyebrow">One file, one session</p><h2>How to Inspect, Clean, and Verify Your Image</h2></div><p>Choose your images once. We check, clean and verify them automatically, then show what changed before you download.</p></div><div className="capability-grid">
       <article><span className="step-number">01</span><ScanSearch /><h3>Inspect</h3><p>See prompt, workflow, privacy, provenance, camera, and color data in plain English.</p></article>
       <article><span className="step-number">02</span><Boxes /><h3>Clean</h3><p>Supported AI workflow and privacy fields are cleaned automatically, along with embedded PNG Content Credentials.</p></article>
@@ -43,6 +55,16 @@ export default function Home() {
     <section className="section boundary-section"><div className="page-container boundary-grid"><div><p className="eyebrow">What the tool can do</p><h2>Metadata is only one part of an image</h2></div><div className="boundary-list"><p><b>We can inspect</b><span>Supported metadata inside JPEG, PNG, and WebP files.</span></p><p><b>We can clean</b><span>Supported AI workflow and privacy fields in JPEG and PNG, without re-encoding the image data. Default Content Credentials removal applies to PNG caBX records only.</span></p><p><b>We cannot promise</b><span>A particular detector result, platform approval, or pixel-watermark removal. Visual repair is not ready yet.</span></p></div></div></section>
     <div className="page-container"><p className="section-lede">For background on provenance, see the <a href="https://spec.c2pa.org/specifications/2.2/explainer/Explainer.html">official C2PA and Content Credentials explainer</a>. Finding an embedded record is different from validating its signature or checking an external provenance history.</p></div>
     <section className="section section-alt"><div className="page-container"><div className="pricing-teaser"><div><p className="eyebrow">Find your plan</p><h2>Clean a few images free. Go Pro for batches.</h2><p>Compare Free, Pro Monthly and Pro Yearly for the image cleanup workflow that fits you. Your images stay in your browser on every plan.</p></div><Link href="/pricing" className="button secondary">Compare plans <ArrowRight aria-hidden="true" /></Link></div></div></section>
+    <section className="section"><div className="page-container"><div className="section-heading"><p className="eyebrow">Reproduce the result</p><h2>AI metadata cleaning: the safe sample before and after</h2><p>Choose “Try a safe sample” in the cleaner above. These results describe that synthetic one-pixel PNG with the default settings.</p></div>
+      <EvidenceTable caption="Expected verified result for the built-in PNG sample" headers={["Check", "Original sample", "Downloaded clean copy"]} rows={[
+        ["Generation parameters", "steps=30, seed=42, sampler=euler in a PNG text field", "The supported parameters field is removed."],
+        ["Image dimensions", "1 × 1 pixel", "1 × 1 pixel; dimensions unchanged."],
+        ["Encoded image data", "Original PNG image-data chunks", "Same encoded image data, without re-encoding."],
+        ["Result", "One supported AI metadata finding", "Cleaning complete; no unresolved sample findings."],
+      ]} />
+      <p className="evidence-note">Your files can contain different or unsupported fields. A result marked partial needs review; an unchanged result means no supported data needed cleaning. Reopen the downloaded copy in the <Link className="text-link" href="/metadata-checker">Metadata Checker</Link> for an additional check.</p>
+    </div></section>
+    <LatestGuides />
     <FAQSection title="Questions About AI Metadata Removal" items={faqs} />
     <section className="section section-alt"><div className="page-container closing-card"><div><p className="eyebrow">Keep your original</p><h2>Download a separate copy you can check.</h2><p>Use the AI Metadata Cleaner to make a delivery copy, then review the result. We never overwrite the file you started with.</p></div><Link href="/workspace" className="button primary">Open workspace <ArrowRight /></Link></div></section>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema(brandName, routeData("/").description, `${siteUrl}/`)) }} />

@@ -3,11 +3,47 @@ export interface GuideRecord {
   slug: string; title: string; description: string; h1: string; kicker: string; updated: string; updatedIso: string;
   answer: string; sections: GuideSection[]; limits: string[]; tools: Array<{ label: string; href: string }>;
   source: { label: string; href: string }; faq: { question: string; answer: string };
+  additionalSources?: Array<{ label: string; href: string }>;
+  extraFaqs?: Array<{ question: string; answer: string }>;
   table?: { headers: string[]; rows: string[][] };
   steps?: Array<{ title: string; body: string }>;
+  stepsHeading?: string;
 }
 
 export const guides: GuideRecord[] = [
+  {
+    slug: "why-edited-photos-get-ai-info-labels", kicker: "Photo editing and AI labels", updated: "October 12, 2026", updatedIso: "2026-10-12",
+    title: "Why Edited Photos Get AI Info Labels — What You Can Check",
+    description: "Learn why edited camera photos can get AI info labels, inspect embedded signals and check what metadata cleaning can change before sharing.",
+    h1: "Why do edited photos get AI info labels?",
+    answer: "A camera photo can pick up AI-related signals during editing, even when the original scene was photographed. Meta has documented labels triggered by minor AI retouching. Inspecting the file can help you understand its embedded records, but removing metadata does not guarantee that a platform will change a label.",
+    sections: [
+      { heading: "How an edit can leave a file-level signal", paragraphs: ["An export may carry software details, workflow fields or Content Credentials describing its history. Those records can travel with the photo even when an edit is visually small. A software name by itself is not proof that the whole picture was generated.", "In its labeling explanation, Meta distinguishes signals shared by the industry from an uploader's own disclosure. Its September 2024 update also described different treatment for AI-edited and AI-generated content. Read the explanation attached to the specific post rather than assuming every AI info label has the same cause."] },
+      { heading: "Review the metadata in the file you plan to share", paragraphs: ["Start with the exact exported file, not a screenshot of a post or a differently saved version. The Image Metadata Checker reads supported fields in JPEG, PNG and WebP without changing them. Open workflow, software and provenance findings separately; keep prompts and location values hidden unless you need to read them.", "A prompt field may describe an AI workflow. A Content Credential can describe capture or editing history. The local C2PA checker separates a record's presence from its integrity status; it does not certify an issuer or produce an AI probability. No finding does not prove that an image is human-made."] },
+      { heading: "Create a delivery copy when embedded details should stay private", paragraphs: ["The cleaner can remove recognized AI workflow fields and supported private EXIF from JPEG and PNG copies without re-encoding their image data. Embedded PNG caBX credentials are removed by default; use Keep Content Credentials when the delivery needs them. JPEG and WebP credentials cannot be removed here, and WebP is inspection-only.", "Decide whether location, capture details, prompts or provenance belong in the copy. A client handoff and a provenance-preserving archive have different needs. Keep the original export so that cleaning a delivery copy does not erase your own record.", "Read the verification result before downloading. Cleaning complete covers supported fields. A partial result contains unresolved data; an unchanged result means no supported fields needed removal. Download the copy and inspect that file again if the details matter to your handoff."] },
+      { heading: "Why a platform label may remain after cleaning", paragraphs: ["Cleaning changes a local file. It does not edit an existing Instagram or Facebook post, remove a disclosure from your account, or control a platform's stored records. Pixel-based signals and invisible watermarks are also outside this cleaner.", "If a label appears on a posted photo, open the platform's explanation and follow its own review or help options where available. Compare that explanation with your local file findings. Avoid treating a metadata-free-looking report as evidence that the platform made a mistake or that an AI-generated image is a camera original."] },
+    ],
+    table: { headers: ["What you see", "What to check", "Useful next action"], rows: [
+      ["Prompt or workflow finding", "Which supported field is embedded in this export?", "Review the value locally and clean a delivery copy when appropriate."],
+      ["Content Credentials", "Was a record found, and could its integrity be checked?", "Read the separate C2PA result; provenance is not an AI score."],
+      ["AI info on a post", "Does the label explanation name a shared signal or disclosure?", "Use the platform's explanation; a file tool cannot alter the post."],
+    ] },
+    stepsHeading: "Check an edited photo before sharing it",
+    steps: [
+      { title: "Inspect the exported file", body: "Choose the actual JPEG, PNG or WebP in the Metadata Checker and review supported workflow and provenance findings." },
+      { title: "Clean a separate copy if needed", body: "For JPEG or PNG, decide what to keep, then let the cleaner check, clean and verify the output." },
+      { title: "Review the copy and platform context", body: "Download the reviewed file, scan it again and handle a posted item's AI label through the platform's own explanation." },
+    ],
+    limits: ["Metadata cleaning does not guarantee a different AI info label or detector score.", "This tool does not remove pixel watermarks or rewrite a posted item.", "Unsupported fields can remain; retain the original and review partial results."],
+    tools: [{ label: "Inspect the exported photo", href: "/metadata-checker" }, { label: "Clean file-level AI signals", href: "/remove-ai-detection-from-image" }, { label: "Check Content Credentials", href: "/c2pa-metadata-checker" }, { label: "Prepare a batch delivery", href: "/batch-metadata-remover" }],
+    source: { label: "Meta: AI-generated and edited-content labeling", href: "https://about.fb.com/news/2024/04/metas-approach-to-labeling-ai-generated-content-and-manipulated-media/" },
+    additionalSources: [{ label: "C2PA: Content Credentials FAQ", href: "https://c2pa.org/faqs/" }],
+    faq: { question: "Does AI info mean the whole photo was generated?", answer: "Not necessarily. Meta has documented industry-standard signals on lightly AI-edited photos. Check the post's explanation and the export's actual metadata." },
+    extraFaqs: [
+      { question: "Will converting a photo to JPEG remove an AI label?", answer: "A conversion can change metadata and image data, but it does not guarantee a platform outcome. Inspect the resulting file instead of assuming a format change removed every signal." },
+      { question: "Can this remove the label from a photo already posted?", answer: "No. This tool works on local image copies. Use the platform's label explanation and help options for an existing post." },
+    ],
+  },
   {
     slug: "chatgpt-dalle-image-metadata", kicker: "AI image metadata", updated: "September 20, 2026", updatedIso: "2026-09-20",
     title: "ChatGPT and DALL·E Image Metadata: What to Check Before Sharing",
@@ -40,19 +76,30 @@ export const guides: GuideRecord[] = [
     faq: { question: "Will removing a prompt remove the pixels it created?", answer: "No. Cleaning changes supported file metadata and leaves encoded image data untouched." },
   },
   {
-    slug: "c2pa-content-credentials-explained", kicker: "Provenance", updated: "September 28, 2026", updatedIso: "2026-09-28",
-    title: "C2PA Content Credentials Explained: Presence, Integrity and Trust",
-    description: "Understand the difference between finding Content Credentials, validating a manifest and trusting its issuer.",
-    h1: "C2PA Content Credentials: what does a valid signature mean?",
-    answer: "C2PA is a provenance standard. A valid integrity result means the signed claims and asset binding pass the verifier; it does not automatically mean the issuer is trusted, the image is authentic in every sense, or that it was made by AI.",
+    slug: "c2pa-content-credentials-explained", kicker: "Provenance", updated: "October 12, 2026", updatedIso: "2026-10-12",
+    title: "What Are C2PA Content Credentials? Check and Understand Them",
+    description: "Learn what C2PA Content Credentials record, how to read presence and integrity results, and what removing an embedded image credential changes.",
+    h1: "What are C2PA Content Credentials?",
+    answer: "C2PA is a standard for recording the origin and history of media. Content Credentials are signed provenance records that can describe how an image was captured or edited. They help you inspect the recorded history; their presence alone does not mean an image was made by AI.",
     sections: [
-      { heading: "Three questions to keep separate", paragraphs: ["First ask whether a C2PA manifest is present. Then ask whether its cryptographic integrity validates. Finally ask whether the issuer is trusted in your context. The checker reports these as separate states.", "Without configured trust anchors, AI Metadata Remover must not display a generic “trusted” label. An unknown issuer can still have a mathematically valid signature."] },
-      { heading: "What a failed validation tells you", paragraphs: ["A tampered asset or invalid claim should be treated as unresolved provenance evidence. It is not proof that the image is fake or AI-generated.", "If the browser verifier cannot safely parse a format, the interface falls back to the existing embedded/unverified finding instead of blocking ordinary metadata scanning."] },
+      { heading: "What Content Credentials can tell you", paragraphs: ["Depending on the file and signer, a record can describe capture, editing actions or AI-related provenance. It is a record of claims about an asset, not a pixel-based AI probability. A camera-origin photo can carry credentials too.", "Use the C2PA Content Credentials Checker to inspect supported embedded records in a JPEG, PNG or WebP. The page is read-only: selecting a file does not remove its history or generate a replacement copy."] },
+      { heading: "Separate presence, integrity and issuer trust", paragraphs: ["A found record tells you that supported provenance data is embedded. A valid integrity result tells you that the supported signed claims and asset binding passed verification. Trust asks whether the signer is one you recognize or accept.", "This checker has no configured issuer trust anchors. It shows presence and integrity states separately and does not label a valid signature as trusted, certify ownership or decide whether the scene is true."] },
+      { heading: "Read failed and unverified results carefully", paragraphs: ["A validation failure and a verifier error are different outcomes. A supported record that fails verification needs review. A browser error or unsupported structure can mean verification did not finish, rather than proving that the record was altered.", "No record found in supported fields means only that this local check did not find one. It is not proof of human authorship or the absence of an external provenance history. Keep the original when you need to investigate a result."] },
+      { heading: "What removing an embedded C2PA credential changes", paragraphs: ["The cleaner can remove embedded PNG caBX credentials from a separate copy. Default cleaning removes them; select Keep Content Credentials when the copy needs its provenance. JPEG and WebP credentials are inspection-only here.", "Removal changes the new file's embedded record. It does not erase external histories or platform records. The C2PA FAQ also describes durable credentials using watermarking or fingerprinting to help rediscover associated records; these mechanisms are outside this metadata cleaner.", "Before a client handoff, decide whether provenance should travel with the image. Review the cleaning report, retain the original and check the downloaded copy. File-level cleaning is not an authenticity certificate."] },
     ],
+    table: { headers: ["Question", "Local result", "What it does not establish"], rows: [
+      ["Is a record embedded?", "Found or not found in supported fields", "Whether an external history exists"],
+      ["Did integrity validate?", "Valid, failed or unverified", "Whether the signer is trusted or the scene is true"],
+      ["Who should I trust?", "Issuer trust is not assessed", "Ownership or an authenticity certificate"],
+    ] },
+    stepsHeading: "Check Content Credentials in an image",
+    steps: [{ title: "Choose the original file", body: "Select a JPEG, PNG or WebP in the read-only C2PA checker." }, { title: "Read each result separately", body: "Check record presence, integrity and the unassessed issuer-trust state." }, { title: "Choose a delivery workflow", body: "Keep provenance when needed, or review supported PNG credential removal on a separate copy." }],
     limits: ["Issuer trust is not inferred from a valid signature.", "External provenance histories are not fetched or guaranteed.", "The feature does not detect SynthID or pixel watermarks."],
-    tools: [{ label: "Check Content Credentials locally", href: "/c2pa-metadata-checker" }, { label: "Review provenance before cleaning", href: "/" }],
+    tools: [{ label: "Check Content Credentials locally", href: "/c2pa-metadata-checker" }, { label: "Review PNG credential removal", href: "/remove-metadata-from-png" }, { label: "Understand AI info labels on edited photos", href: "/blog/why-edited-photos-get-ai-info-labels" }],
     source: { label: "C2PA Explainer", href: "https://spec.c2pa.org/specifications/2.2/explainer/Explainer.html" },
+    additionalSources: [{ label: "C2PA FAQ: provenance and durable credentials", href: "https://c2pa.org/faqs/" }],
     faq: { question: "Does removing an embedded credential erase external provenance?", answer: "No. It only changes the new local copy; external records and platform-side histories are outside this tool." },
+    extraFaqs: [{ question: "Does C2PA mean the image was generated by AI?", answer: "No. Content Credentials can record capture or editing history as well as AI-related claims. Read the actual record rather than treating its presence as an AI verdict." }, { question: "Does valid integrity mean the signer is trusted?", answer: "No. This checker does not assess issuer trust. A valid integrity result is different from deciding whether to trust the signer or the image's claims." }],
   },
   {
     slug: "exif-gps-privacy-before-sharing", kicker: "Privacy checklist", updated: "September 28, 2026", updatedIso: "2026-09-28",
