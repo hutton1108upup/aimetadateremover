@@ -8,7 +8,7 @@ describe("homepage", () => {
     expect(screen.getByRole("heading", { level: 1, name: "AI Metadata Cleaner for Images" })).toBeVisible();
     expect(screen.getByText(/switch to PDF and Word files/i)).toBeVisible();
     expect(screen.getByRole("tab", { name: "Images" })).toBeVisible();
-    expect(screen.getByText("Free to use")).toBeVisible();
+    expect(screen.getByText("Free daily allowance")).toBeVisible();
     expect(screen.getByText("Original file preserved")).toBeVisible();
     expect(screen.getByRole("button", { name: /open navigation/i })).toBeVisible();
   });

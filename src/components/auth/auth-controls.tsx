@@ -2,6 +2,7 @@
 import { useCallback,useEffect,useRef,useState } from "react";
 import { LogIn,LogOut,UserRound } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
+import Link from "next/link";
 
 type Profile={id:string;name:string;email:string};
 export function AuthControls() {
@@ -48,6 +49,7 @@ export function AuthControls() {
     finally{if(alive.current)setLoading(false);}
   }
   return <div className="auth-controls">
+    {profile && <Link prefetch={false} className="auth-button" href="/account/billing">Billing</Link>}
     {profile?<><span className="auth-profile" title={profile.email}><UserRound aria-hidden="true"/><span>{profile.name}</span></span><button className="auth-button" onClick={()=>void signOut()} disabled={loading} aria-label="Sign out"><LogOut aria-hidden="true"/><span>Sign out</span></button></>:<button className="auth-button" onClick={signIn} disabled={loading || waiting} aria-label={waiting?"Signing in…":"Sign in"}><LogIn aria-hidden="true"/><span>{waiting?"Signing in…":"Sign in"}</span></button>}
     {message && <div className="auth-feedback" role="status"><p>{message}</p><button onClick={()=>setMessage("")} aria-label="Dismiss sign-in message">Dismiss</button></div>}
   </div>;

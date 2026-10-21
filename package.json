@@ -29,12 +29,13 @@
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.3",
     "@contentauth/c2pa-web": "0.15.1",
-    "@opennextjs/cloudflare": "1.20.6",
+    "@opennextjs/cloudflare": "1.20.12",
+    "@waffo/pancake-ts": "0.25.0",
     "better-auth": "1.7.3",
     "drizzle-orm": "0.45.2",
     "jszip": "^3.10.1",
     "lucide-react": "^1.40.0",
-    "next": "16.3.4",
+    "next": "16.4.2",
     "pdf-lib": "^1.17.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -51,12 +52,12 @@
     "@vitest/coverage-v8": "^5.0.0",
     "esbuild": "0.28.2",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.4.2",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.0",
-    "wrangler": "4.129.0"
+    "wrangler": "4.151.3"
   },
   "overrides": {
     "better-auth": {
