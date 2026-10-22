@@ -8,9 +8,150 @@ export interface GuideRecord {
   table?: { headers: string[]; rows: string[][] };
   steps?: Array<{ title: string; body: string }>;
   stepsHeading?: string;
+  evidenceIds?: string[];
+  relatedGuides?: Array<{ label: string; href: string }>;
 }
 
 export const guides: GuideRecord[] = [
+  {
+    "updated": "October 22, 2026",
+    "updatedIso": "2026-10-22",
+    "slug": "batch-remove-image-metadata-client-delivery",
+    "kicker": "Client delivery",
+    "title": "How to Batch Remove Image Metadata Before Client Delivery",
+    "description": "Prepare JPEG and PNG client copies locally, review every result, and check a ZIP summary. Understand Pro batch limits, partial copies and filename privacy.",
+    "h1": "How to batch remove image metadata before client delivery",
+    "answer": "Use the batch tool to process supported JPEG and PNG files locally, review each result and download completed copies in a ZIP. Pro is required for your own batches and ZIP exports. A ZIP can include partial results, so check the images and batch-results.json before handing the archive to a client. Originals remain unchanged.",
+    "table": {
+      "headers": [
+        "Plan or limit",
+        "Allowance",
+        "Delivery implication"
+      ],
+      "rows": [
+        [
+          "Guest",
+          "1 single-image clean per day.",
+          "No personal-file batch processing or ZIP export."
+        ],
+        [
+          "Free with Google sign-in",
+          "5 single-image cleans per day in total.",
+          "No personal-file batch processing or ZIP export."
+        ],
+        [
+          "Pro Monthly and Yearly",
+          "Unlimited daily image count; up to 10 images per batch.",
+          "ZIP export included."
+        ],
+        [
+          "Pro Yearly session",
+          "Up to 30 images across three batches.",
+          "Available within device capacity; not a 30-image single batch."
+        ],
+        [
+          "Device queue",
+          "30 files / 200 MB at 768 px or wider; 10 files / 100 MB below 768 px. 25 MB per file.",
+          "The lower device or plan limit applies."
+        ]
+      ]
+    },
+    "stepsHeading": "Prepare a delivery ZIP",
+    "steps": [
+      {
+        "title": "Try the built-in batch first",
+        "body": "Open Batch Metadata Remover and choose Try a safe batch. These synthetic one-pixel files demonstrate cleaned, unchanged and partial results without using your own allowance."
+      },
+      {
+        "title": "Prepare the client copies",
+        "body": "Keep a master folder of originals. Use JPEG or PNG files within your plan and device limits. HEIC and TIFF are not accepted; WebP is inspection-only."
+      },
+      {
+        "title": "Set one cleaning policy",
+        "body": "Choose whether capture details or embedded PNG Content Credentials should be kept. The settings apply across the selected images; changing them rebuilds copies from originals."
+      },
+      {
+        "title": "Review every result",
+        "body": "Check which images are complete, unchanged, partial or failed. Remove partial files from the queue if they should not be delivered. A failed image is not included as an image in the ZIP."
+      },
+      {
+        "title": "Download and inspect the archive",
+        "body": "Choose Download completed images (ZIP). Open the archive locally, review batch-results.json, and spot-check the actual output files in Metadata Checker. Confirm which files are included before sharing."
+      }
+    ],
+    "sections": [
+      {
+        "heading": "The summary is a checklist, not a clean certificate",
+        "paragraphs": [
+          "The ZIP contains completed images and batch-results.json. Each summary entry includes the original filename, detected format, result, counts of removed/preserved/unresolved fields and whether the image is included.",
+          "The built-in batch has three files: one cleaned, one unchanged and one partially cleaned. All three can be included. Its needsReview count is 1; that is intentional. A failed or inspection-only file is listed but excluded from the image set."
+        ]
+      },
+      {
+        "heading": "Check filenames as well as image metadata",
+        "paragraphs": [
+          "The summary and ZIP entry names can reveal original filenames, including client or project names. Review them before sending the archive. If necessary, rename copies before selecting them or prepare a separate delivery folder from the processed images.",
+          "The summary is created locally and packaged into the ZIP. Sharing the archive shares that summary too; browser-local processing does not make the document invisible to its recipient."
+        ]
+      },
+      {
+        "heading": "Do not mistake device capacity for paid entitlement",
+        "paragraphs": [
+          "A wide-screen queue can hold 30 images, but Pro processing uses groups of at most 10. Yearly can process a session across three groups; Monthly is limited to 10 images per processing session. On a narrow screen, the queue capacity is 10 even for Yearly.",
+          "If you encounter a quota or size message, reduce the selection and check the current plan. Free allowances reset at 00:00 UTC. Unlimited daily Pro image count does not remove file-size, device-memory or per-batch limits."
+        ]
+      },
+      {
+        "heading": "Verify the actual output before delivery",
+        "paragraphs": [
+          "Supported encoded image data and dimensions are checked during processing. The downloadable experiment below deliberately leaves oversized compressed text unresolved while preserving image data. It explains why a successful download may still require review.",
+          "There is no real client material in these examples. They do not establish compatibility with every generator export, all image sizes or all mobile browsers."
+        ]
+      }
+    ],
+    "limits": [
+      "Partial copies can be included in a ZIP and may still contain private metadata.",
+      "Failed files are excluded; do not assume the selected count equals the delivered count.",
+      "The ZIP summary and entry names can disclose original filenames."
+    ],
+    "tools": [
+      {
+        "label": "Prepare a batch",
+        "href": "/batch-metadata-remover"
+      },
+      {
+        "label": "Recheck an output image",
+        "href": "/metadata-checker"
+      }
+    ],
+    "source": {
+      "label": "AI Metadata Remover: batch results and device limits",
+      "href": "https://aimetadataremover.pro/batch-metadata-remover"
+    },
+    "faq": {
+      "question": "Will one failed file prevent every download?",
+      "answer": "No. Completed copies remain available. Review the summary for excluded files and the partial results that still need attention."
+    },
+    "extraFaqs": [
+      {
+        "question": "Can I download the demo ZIP without Pro?",
+        "answer": "The tool’s built-in safe batch is free to try. Processing and exporting your own batches requires Pro."
+      }
+    ],
+    "evidenceIds": [
+      "review-needed-png"
+    ],
+    "relatedGuides": [
+      {
+        "label": "Clean images without re-encoding",
+        "href": "/blog/image-metadata-before-publishing"
+      },
+      {
+        "label": "Keep ComfyUI workflow details private",
+        "href": "/blog/stable-diffusion-comfyui-metadata"
+      }
+    ]
+  },
   {
     slug: "remove-author-metadata-from-pdf-before-sharing",
     kicker: "PDF privacy",
@@ -270,35 +411,261 @@ export const guides: GuideRecord[] = [
     ],
   },
   {
-    slug: "chatgpt-dalle-image-metadata", kicker: "AI image metadata", updated: "September 20, 2026", updatedIso: "2026-09-20",
-    title: "ChatGPT and DALL·E Image Metadata: What to Check Before Sharing",
-    description: "A practical guide to checking provenance, workflow fields and privacy metadata in images made with ChatGPT or DALL·E.",
-    h1: "What metadata can ChatGPT and DALL·E images carry?",
-    answer: "An image may carry provenance records, editing history, prompts, camera fields or other file metadata. Those fields describe what is embedded in the file; they do not by themselves prove who made an image or how a platform will classify it.",
-    sections: [
-      { heading: "Start with the file, not the filename", paragraphs: ["Use the Metadata Checker to read the actual JPEG, PNG or WebP structure. A file extension and a software name are clues, not an AI score.", "If you plan to send a delivery copy, keep the original and decide whether prompts, workflow details, location and device fields belong in the copy."] },
-      { heading: "Read provenance separately from workflow", paragraphs: ["C2PA Content Credentials are provenance records. They can describe signing or editing history, while prompt and node-graph fields are workflow metadata. One does not substitute for the other.", "This product reports embedded records and validation states when available. It does not certify ownership, authorship, or platform treatment."] },
+    "updated": "October 22, 2026",
+    "updatedIso": "2026-10-22",
+    "slug": "chatgpt-dalle-image-metadata",
+    "kicker": "ChatGPT image privacy",
+    "title": "How to Check and Remove Metadata From ChatGPT Images",
+    "description": "Check the actual format of a ChatGPT or DALL·E export, understand PNG and JPEG cleaning limits, and separate Content Credentials from invisible watermarks.",
+    "h1": "How to check and remove metadata from ChatGPT images",
+    "answer": "Start with the file you actually downloaded. This tool can inspect JPEG, PNG and WebP, but only supported JPEG and PNG metadata can be cleaned. Supported embedded PNG Content Credentials can be removed from a copy; JPEG credentials remain and WebP is inspection-only. Metadata cleaning does not remove SynthID or prove an image is human-made.",
+    "table": {
+      "headers": [
+        "Downloaded format",
+        "Available task here",
+        "Important boundary"
+      ],
+      "rows": [
+        [
+          "PNG",
+          "Inspect; clean recognized workflow and supported private fields; optionally remove supported embedded caBX records.",
+          "Unreadable or unsupported records can remain."
+        ],
+        [
+          "JPEG / JPG",
+          "Inspect; clean supported workflow XMP and private EXIF fields.",
+          "JPEG Content Credentials and mixed XMP may remain."
+        ],
+        [
+          "WebP",
+          "Inspect supported fields.",
+          "No cleaned WebP copy is produced."
+        ]
+      ]
+    },
+    "stepsHeading": "Check your own downloaded image",
+    "steps": [
+      {
+        "title": "Keep the original export",
+        "body": "Download the original file from the service when available. Keep its generation/export date in your own notes. A screenshot or a converted copy can have different metadata and image data."
+      },
+      {
+        "title": "Inspect the actual structure",
+        "body": "Choose the file in Metadata Checker. Read the detected format and the supported findings; the filename alone is not a format or origin test."
+      },
+      {
+        "title": "Choose what belongs in the delivery copy",
+        "body": "For JPEG or PNG, open the general cleaner. Use Keep capture details or Keep Content Credentials when appropriate. These keep options are off by default. Cleaning applies only to supported fields."
+      },
+      {
+        "title": "Review and recheck",
+        "body": "Read the verified or partial result before downloading. Open the downloaded copy in the checker to see what remains. If you need to preserve provenance, retain and deliver the original according to the recipient’s requirements."
+      }
     ],
-    limits: ["C2PA coverage varies by file and issuer.", "SynthID and pixel-level signals are outside metadata cleaning.", "WebP remains inspection-only."],
-    tools: [{ label: "Open Metadata Checker", href: "/metadata-checker" }, { label: "Prepare a clean copy", href: "/" }],
-    source: { label: "OpenAI: C2PA in DALL·E 3", href: "https://help.openai.com/en/articles/8912793-c2pa-in-dall-e-3" },
-    faq: { question: "Does a C2PA record prove an image is AI-generated?", answer: "No. It is provenance evidence, not an AI probability or ownership verdict." },
+    "sections": [
+      {
+        "heading": "Do not assume every ChatGPT image has the same fields",
+        "paragraphs": [
+          "A file’s contents depend on the generation product, model, export path, file type and when it was created. Do not assume it contains your chat prompt, a ComfyUI graph or camera metadata simply because it came from an AI tool.",
+          "This guide does not include an independently tested, original ChatGPT or DALL·E export. The linked general guide offers clearly labeled synthetic files for learning the cleaning and verification process; they do not establish coverage for a particular OpenAI export."
+        ]
+      },
+      {
+        "heading": "Content Credentials and SynthID are different signals",
+        "paragraphs": [
+          "OpenAI’s current help page describes Content Credentials and SynthID as distinct provenance signals, with coverage depending on the product and export. Content Credentials carry provenance information associated with the file; SynthID embeds a watermark in the content.",
+          "Removing a supported embedded PNG record does not remove a watermark, erase external provenance or change a platform’s stored decision. This metadata tool does not test for or remove SynthID. A missing credential is not proof of human authorship."
+        ]
+      },
+      {
+        "heading": "Choose inspection when removal is not supported",
+        "paragraphs": [
+          "If your JPEG contains Content Credentials, this tool can report supported embedded records but cannot remove those credentials. For WebP, use the report as inspection only. Do not rename the extension and expect a different cleaning capability.",
+          "Avoid converting an image merely to obtain a clean-looking report. Conversion can change the encoded image and metadata; inspect the actual resulting file and assess the quality separately."
+        ]
+      },
+      {
+        "heading": "Plan the number of files",
+        "paragraphs": [
+          "Guests have 1 single-image clean per day. Google sign-in gives Free users 5 per day in total. Batch processing and ZIP downloads require Pro. The checker does not turn an unsupported format into a supported cleaning format."
+        ]
+      }
+    ],
+    "limits": [
+      "No real ChatGPT export was tested for this article; inspect your actual file.",
+      "PNG credential removal is not a claim to remove every provenance signal.",
+      "This tool does not remove SynthID, certify origin or guarantee a platform outcome."
+    ],
+    "tools": [
+      {
+        "label": "Inspect a ChatGPT export",
+        "href": "/metadata-checker"
+      },
+      {
+        "label": "Clean a supported image copy",
+        "href": "/"
+      },
+      {
+        "label": "Review PNG cleaning",
+        "href": "/remove-metadata-from-png"
+      }
+    ],
+    "source": {
+      "label": "OpenAI: provenance signals in generated content",
+      "href": "https://help.openai.com/en/articles/8912793-provenance-signals-in-openai-generated-content"
+    },
+    "faq": {
+      "question": "Does ChatGPT always embed my prompt in the downloaded image?",
+      "answer": "Do not assume so. Inspect the actual file. Provenance records, chat text and generation workflow fields are different things."
+    },
+    "extraFaqs": [
+      {
+        "question": "Will removing Content Credentials also remove SynthID?",
+        "answer": "No. This cleaner changes supported file metadata; it does not remove or test invisible pixel watermarks."
+      }
+    ],
+    "relatedGuides": [
+      {
+        "label": "Clean images without re-encoding",
+        "href": "/blog/image-metadata-before-publishing"
+      },
+      {
+        "label": "Prepare a batch delivery",
+        "href": "/blog/batch-remove-image-metadata-client-delivery"
+      },
+      {
+        "label": "Understand Content Credentials",
+        "href": "/blog/c2pa-content-credentials-explained"
+      }
+    ]
   },
   {
-    slug: "stable-diffusion-comfyui-metadata", kicker: "Workflow metadata", updated: "September 28, 2026", updatedIso: "2026-09-28",
-    title: "Stable Diffusion and ComfyUI Metadata: Prompts, Seeds and Node Graphs",
-    description: "Learn where Stable Diffusion and ComfyUI prompts, seeds, samplers and node graphs can appear in image files.",
-    h1: "What metadata do Stable Diffusion and ComfyUI images contain?",
-    answer: "Prompts, seeds, samplers, model settings and node graphs can be stored in image metadata, especially PNG text fields. They may reveal a private workflow, but their absence does not make an image undetectable.",
-    sections: [
-      { heading: "Inspect before choosing a delivery copy", paragraphs: ["The checker classifies recognized generation fields as an action suggestion and keeps sensitive values hidden until you choose to reveal them.", "AI Workflow Clean removes supported fields from JPEG and PNG copies without decoding or re-encoding the image payload. Mixed XMP and unreadable compressed text may remain."] },
-      { heading: "Keep useful attribution when needed", paragraphs: ["Copyright, creator, orientation and color fields can serve a legitimate publishing purpose. Review the removal impact for each finding instead of deleting every field by default.", "After cleaning, read the verification card and re-check the downloaded copy if the image is important."] },
-      { heading: "Try the two workflow tasks separately", paragraphs: ["For a static ComfyUI PNG, the dedicated tool shows workflow and prompt/execute fields as separate results. In ComfyUI exports, a prompt field can contain a serialized execution graph, not just a text prompt.", "For Stable Diffusion PNGs, generation parameters such as a seed or sampler are presented as a separate task. Both pages verify the output copy. Compressed text is expanded only within a 1 MB limit; animated ComfyUI comf chunks remain for review."] },
+    "updated": "October 22, 2026",
+    "updatedIso": "2026-10-22",
+    "slug": "stable-diffusion-comfyui-metadata",
+    "kicker": "Workflow privacy",
+    "title": "How to Remove ComfyUI Workflow and Prompt Metadata From PNGs",
+    "description": "Inspect workflow and prompt fields, clean a static ComfyUI PNG copy without re-encoding, and check what remains. Includes downloadable synthetic test files.",
+    "h1": "How to remove ComfyUI workflow and prompt metadata from PNGs",
+    "answer": "For a supported static PNG, you can remove embedded workflow and prompt/execution fields locally without re-encoding the image. Keep your original, clean a delivery copy with the ComfyUI tool, then inspect the downloaded copy. Animated comf metadata and unreadable or oversized text can remain. Cleaning metadata does not remove invisible watermarks or guarantee a different platform label.",
+    "table": {
+      "headers": [
+        "Field",
+        "What it can contain",
+        "What to check"
+      ],
+      "rows": [
+        [
+          "workflow",
+          "The graph used to restore nodes and their layout.",
+          "Check this separately from prompt."
+        ],
+        [
+          "prompt",
+          "Execution nodes and their inputs; not necessarily a sentence.",
+          "Removing workflow alone may leave execution details."
+        ],
+        [
+          "parameters",
+          "Generation settings commonly associated with Stable Diffusion exports.",
+          "Use the Stable Diffusion tool for this separate task."
+        ]
+      ]
+    },
+    "stepsHeading": "Clean an existing static PNG",
+    "steps": [
+      {
+        "title": "Keep an original and inspect the export",
+        "body": "Save a separate master copy. Open Metadata Checker and choose the actual exported PNG. Review the workflow and prompt findings locally; do not assume that a renamed extension changes the format."
+      },
+      {
+        "title": "Use the ComfyUI workflow tool",
+        "body": "Open the dedicated tool and choose the PNG. It automatically creates a separate copy targeting recognized workflow fields. This focused task leaves unrelated privacy fields and Content Credentials for review."
+      },
+      {
+        "title": "Read both workflow results",
+        "body": "Check Workflow data and Prompt / execution data separately. A missing field is not evidence that every possible workflow field has been inspected. Review any unresolved findings."
+      },
+      {
+        "title": "Download and inspect the copy",
+        "body": "Download only after reviewing the result, then open that downloaded file in Metadata Checker. Keep the original or a separately saved workflow JSON for your own future editing."
+      }
     ],
-    limits: ["Only recognized fields are removed.", "Unsupported or mixed metadata is reported for review.", "No detector or platform result is guaranteed."],
-    tools: [{ label: "Remove a ComfyUI workflow", href: "/comfyui-workflow-remover" }, { label: "Remove Stable Diffusion parameters", href: "/stable-diffusion-metadata-remover" }, { label: "Read PNG limits", href: "/remove-metadata-from-png" }],
-    source: { label: "ComfyUI source: PNG prompt metadata", href: "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_api/latest/_ui.py" },
-    faq: { question: "Will removing a prompt remove the pixels it created?", answer: "No. Cleaning changes supported file metadata and leaves encoded image data untouched." },
+    "sections": [
+      {
+        "heading": "A removed recipe cannot restore your original project",
+        "paragraphs": [
+          "ComfyUI can load embedded workflow information from an output file. Once those supported records have been removed from a delivery copy, do not rely on that copy to recover your original graph. Your separately saved project and original image are unchanged.",
+          "The downloadable example below contains deliberately constructed workflow and prompt fields. It tests those structures only: it is not a real ComfyUI export or a runnable example workflow."
+        ]
+      },
+      {
+        "heading": "Control metadata in future ComfyUI exports",
+        "paragraphs": [
+          "ComfyUI documents a startup option for disabling metadata: in the terminal where you normally start ComfyUI, add --disable-metadata to the launch command, for example python main.py --disable-metadata. Save your workflow separately before using this option.",
+          "For ComfyUI Desktop, the documented path is Settings > Server-Config; enable Disable saving prompt metadata in files. Check a newly exported file afterward. This changes future saves, not files already exported, and custom save nodes may have their own behavior."
+        ]
+      },
+      {
+        "heading": "When a PNG still needs review",
+        "paragraphs": [
+          "The cleaner supports recognized plain PNG text and supported compressed text that expands within 1 MB per block. Invalid or larger compressed text is retained and reported. Animated ComfyUI comf chunks remain unresolved.",
+          "The focused tool preserves unrelated metadata. If the delivery also needs GPS or other supported private fields removed, review the general cleaner and its settings instead of assuming the workflow-only task removed them."
+        ]
+      },
+      {
+        "heading": "Free allowance and batch work",
+        "paragraphs": [
+          "Guests can clean 1 image per day. Google sign-in gives Free users 5 single-image cleans per day in total. Pro supports batches of up to 10 and ZIP downloads; Yearly can split up to 30 images across three batches within device limits. Built-in samples are free to try."
+        ]
+      }
+    ],
+    "limits": [
+      "Only supported fields in the tested file structures are covered.",
+      "Removing workflow records does not remove visible content, invisible watermarks or platform-side records.",
+      "Keep the original if you need to recover the workflow later."
+    ],
+    "tools": [
+      {
+        "label": "Clean a ComfyUI PNG",
+        "href": "/comfyui-workflow-remover"
+      },
+      {
+        "label": "Inspect the downloaded copy",
+        "href": "/metadata-checker"
+      },
+      {
+        "label": "Clean Stable Diffusion parameters",
+        "href": "/stable-diffusion-metadata-remover"
+      }
+    ],
+    "source": {
+      "label": "ComfyUI: workflow metadata and export settings",
+      "href": "https://docs.comfy.org/development/api-development/workflow-metadata"
+    },
+    "faq": {
+      "question": "Is removing workflow enough to remove prompt data?",
+      "answer": "Not necessarily. They are separate fields. Check both results and review other recognized or unresolved text."
+    },
+    "extraFaqs": [
+      {
+        "question": "Does this alter the nodes in my saved ComfyUI project?",
+        "answer": "No. The tool creates a separate image copy. It does not connect to or edit your ComfyUI project."
+      }
+    ],
+    "evidenceIds": [
+      "workflow-png"
+    ],
+    "relatedGuides": [
+      {
+        "label": "Clean images without re-encoding",
+        "href": "/blog/image-metadata-before-publishing"
+      },
+      {
+        "label": "Prepare a batch delivery",
+        "href": "/blog/batch-remove-image-metadata-client-delivery"
+      }
+    ]
   },
   {
     slug: "c2pa-content-credentials-explained", kicker: "Provenance", updated: "October 12, 2026", updatedIso: "2026-10-12",
@@ -358,23 +725,146 @@ export const guides: GuideRecord[] = [
     faq: { question: "Does PNG cleaning re-encode the image?", answer: "No. It rewrites supported metadata chunks and verifies that the encoded image payload remains unchanged." },
   },
   {
-    slug: "image-metadata-before-publishing", kicker: "Metadata basics", updated: "September 28, 2026", updatedIso: "2026-09-28",
-    title: "What Image Metadata Should You Review Before Publishing?",
-    description: "Learn which image metadata fields affect privacy, workflow confidentiality, attribution, color and provenance before you publish.",
-    h1: "Image Metadata Before Publishing: A Practical Review Checklist",
-    answer: "An image file can carry much more than the pixels you see. Prompts, node graphs, locations, creator details, color profiles and provenance records may all be tucked inside, and deleting everything by default is rarely the best move.",
-    sections: [
-      { heading: "Start with what this copy is for", paragraphs: ["A private client preview does not need the same metadata as a portfolio image or an archive. Keep the master file, decide what the copy needs, and remove only the details you do not want to send with it.", "Prompt and workflow fields may reveal how an image was made. GPS and device IDs can reveal a location or identify equipment. Creator and copyright details help with credit and licensing. An ICC profile keeps colors looking consistent. C2PA records provenance and edit history. Review each group before deciding."] },
-      { heading: "Use the automatic cleaner step by step", paragraphs: ["Open the image workspace. If you want to keep private capture details or embedded credentials, use Cleaning settings at the top of the tool. Select Keep capture details or Keep Content Credentials as needed; these options are off by default.", "Choose JPEG or PNG files. The cleaner checks, cleans and verifies a separate copy automatically; you do not need to move through tabs. Your original is never overwritten. If you only want to inspect a file, open the Metadata Checker instead.", "Read whether the result says Cleaning complete, Partially cleaned — review remaining data, or No supported data needed cleaning. A partial result may still contain private information. Expand the processing details and download a verification report only when you have reviewed it.", "For a batch, completed images include partial results while failed or inspection-only files are left out. Review each result instead of assuming every selected image is in the ZIP. Changing the keep options rebuilds existing copies from the original."] },
-      { heading: "Provenance is not a probability", paragraphs: ["C2PA can describe how a file was signed or edited. A software field might simply name an everyday editing app. Neither belongs in a percentage score or proves that an image was generated by AI.", "The official C2PA explainer describes Content Credentials as provenance records. This metadata checker identifies supported embedded records and validates supported signatures locally; it does not retrieve an external edit history or certify ownership."] },
-      { heading: "Check the new copy, not just the button", paragraphs: ["Automatic verification covers supported fields only. For an additional check, open the downloaded copy in the Metadata Checker and review what remains. Neither a successful download nor a clean result proves that every possible metadata field has been removed."] },
+    "updated": "October 22, 2026",
+    "updatedIso": "2026-10-22",
+    "slug": "image-metadata-before-publishing",
+    "kicker": "Private image delivery",
+    "title": "How to Remove Image Metadata Without Losing Quality",
+    "description": "Clean supported JPEG and PNG metadata locally without re-encoding. Follow the steps, compare downloadable test files, and review what remains before sharing.",
+    "h1": "How to remove image metadata without losing quality",
+    "answer": "For supported JPEG and PNG files, the cleaner changes selected metadata while keeping encoded image data intact. Your image is processed in your browser, your original is preserved, and the output is checked before download. This does not mean every metadata field can be removed. Read partial results and recheck the downloaded copy.",
+    "stepsHeading": "Inspect, clean, verify and download",
+    "steps": [
+      {
+        "title": "Decide what the recipient needs",
+        "body": "Keep your original. Use Metadata Checker if you only want to inspect. Before cleaning, decide whether private capture details or Content Credentials should stay in the delivery copy."
+      },
+      {
+        "title": "Choose the supported file",
+        "body": "Open the general cleaner and set Keep capture details or Keep Content Credentials if needed; both are off by default. Choose a JPEG or PNG. The tool automatically scans, cleans and verifies a separate copy."
+      },
+      {
+        "title": "Read the result before downloading",
+        "body": "Cleaning complete refers to supported checks. A partial result contains unresolved fields. No supported data needed cleaning means the tool found nothing it could remove under that setting, not that the file is metadata-free."
+      },
+      {
+        "title": "Save and inspect the new copy",
+        "body": "Download the reviewed copy, then reopen it in Metadata Checker if the handoff is important. Preserve the original as your master. A browser download action does not confirm the recipient received the file."
+      }
     ],
-    limits: ["Automatic verification covers supported fields only.", "XMP, IPTC and compressed text can still contain unresolved information.", "WebP is inspection-only."],
-    tools: [{ label: "Open the AI Metadata Cleaner", href: "/" }, { label: "Inspect an image locally", href: "/metadata-checker" }, { label: "Open the full workspace", href: "/workspace" }],
-    source: { label: "C2PA Explainer", href: "https://spec.c2pa.org/specifications/2.2/explainer/Explainer.html" },
-    faq: { question: "Does a successful download prove every field was removed?", answer: "No. Reopen the downloaded copy in the Metadata Checker and review any unresolved findings." },
-    table: { headers: ["Field group", "Why it matters", "Safe default"], rows: [["Prompt & workflow", "May reveal how the image was made", "Remove from delivery copies"], ["GPS & device IDs", "Can reveal a location or identify equipment", "Remove for privacy"], ["Creator & copyright", "Helps with credit and licensing", "Review and usually keep"], ["ICC profile", "Keeps colors looking consistent", "Keep"], ["C2PA", "Records where a file came from and how it changed", "Review before deciding"]] },
-    steps: [{ title: "Decide what to keep before choosing files", body: "Open the image workspace and choose Cleaning settings. Keep capture details or Content Credentials only when the delivery copy needs them." }, { title: "Choose images and wait for the result", body: "Select JPEG or PNG files. The cleaner checks, cleans and verifies a separate copy automatically; the original is never overwritten." }, { title: "Read the result before downloading", body: "Check whether the result is complete, partial or unchanged. Expand processing details and review unresolved findings." }, { title: "Save the copy you have reviewed", body: "Download a clean copy or a completed ZIP after reviewing each result. If settings change, copies are rebuilt from the original." }],
+    "table": {
+      "headers": [
+        "Result",
+        "What it means",
+        "Next action"
+      ],
+      "rows": [
+        [
+          "Cleaning complete",
+          "Selected supported fields were removed and supported output checks passed.",
+          "Review the report and download."
+        ],
+        [
+          "Partially cleaned — review remaining data",
+          "Some selected or unreadable information remains unresolved.",
+          "Inspect remaining findings before sharing."
+        ],
+        [
+          "No supported data needed cleaning",
+          "No supported fields needed removal for the selected settings.",
+          "Do not interpret this as an all-metadata or authorship certificate."
+        ]
+      ]
+    },
+    "sections": [
+      {
+        "heading": "What keeping image quality means here",
+        "paragraphs": [
+          "The cleaner does not decode and re-encode the image to remove metadata. It rewrites supported structures and checks the protected encoded image data and dimensions. Relevant orientation and color information are preserved; PNG transparency is checked.",
+          "The experiments below also compare pixels decoded in Chromium before and after. They cover the named small synthetic files only, not every application or image. A smaller file is not required: a JPEG can keep the same byte count after private fields are cleared."
+        ]
+      },
+      {
+        "heading": "Keep useful information deliberately",
+        "paragraphs": [
+          "Prompts and node graphs may reveal how an image was made. GPS and device details may reveal private information. Copyright and creator details can provide attribution; orientation and color profiles affect how an image displays.",
+          "The general cleaner removes supported private fields and supported embedded PNG credentials by default. The focused ComfyUI and GPS tools target narrower tasks. Review the selected tool and settings instead of assuming every task removes the same fields."
+        ]
+      },
+      {
+        "heading": "What does not change when metadata is removed",
+        "paragraphs": [
+          "The visible content, invisible watermarks, platform-side histories and published posts are outside this cleaning operation. A supported clean result does not prove human authorship or guarantee that an AI label will disappear.",
+          "WebP is available for inspection only. JPEG Content Credentials, mixed XMP, animated ComfyUI comf chunks and text that cannot be safely inspected can remain. Consult Supported Formats for these boundaries."
+        ]
+      },
+      {
+        "heading": "No image upload is not the same as no website requests",
+        "paragraphs": [
+          "Image bytes and raw metadata stay in the local tool. The website still makes requests to serve pages and handle account or usage operations. It also uses GA4 and Clarity for website analytics, as described in the privacy policy.",
+          "The approved analytics events distinguish samples, processing outcomes and download actions without including file names, prompts, GPS values or image bytes."
+        ]
+      },
+      {
+        "heading": "Single images and client batches",
+        "paragraphs": [
+          "Guests can clean 1 image per day; Google sign-in gives Free users 5 single-image cleans per day in total. Pro provides up to 10 images per batch and ZIP export. Yearly can process up to 30 images across three batches when device capacity permits. Daily allowances reset at 00:00 UTC.",
+          "For a batch delivery, check every image and the accompanying results summary. Partial copies may be included; failed files are excluded. Follow the batch guide before sending an archive to a client."
+        ]
+      }
+    ],
+    "limits": [
+      "Verification covers supported fields and file properties, not all possible metadata.",
+      "No detector, watermark or platform-label outcome is promised.",
+      "The downloadable examples are synthetic and do not replace testing your own exports."
+    ],
+    "tools": [
+      {
+        "label": "Clean an image locally",
+        "href": "/"
+      },
+      {
+        "label": "Inspect the downloaded copy",
+        "href": "/metadata-checker"
+      },
+      {
+        "label": "Open the batch tool",
+        "href": "/batch-metadata-remover"
+      }
+    ],
+    "source": {
+      "label": "AI Metadata Remover: supported formats and cleaning boundaries",
+      "href": "https://aimetadataremover.pro/supported-formats"
+    },
+    "faq": {
+      "question": "Why are the whole-file hashes different if quality is unchanged?",
+      "answer": "Metadata is part of the file. Removing or rewriting it changes the whole-file hash. Compare the encoded image payload and relevant display properties instead; the test report also includes decoded pixel hashes."
+    },
+    "extraFaqs": [
+      {
+        "question": "Does a successful download mean all metadata was removed?",
+        "answer": "No. Check the verification and unresolved findings. Downloading a copy is a separate step from verifying its supported fields."
+      }
+    ],
+    "evidenceIds": [
+      "transparent-png",
+      "gps-jpeg",
+      "review-needed-png"
+    ],
+    "relatedGuides": [
+      {
+        "label": "ComfyUI workflow privacy",
+        "href": "/blog/stable-diffusion-comfyui-metadata"
+      },
+      {
+        "label": "Check ChatGPT image exports",
+        "href": "/blog/chatgpt-dalle-image-metadata"
+      },
+      {
+        "label": "Prepare a batch delivery",
+        "href": "/blog/batch-remove-image-metadata-client-delivery"
+      }
+    ]
   },
 ];
 

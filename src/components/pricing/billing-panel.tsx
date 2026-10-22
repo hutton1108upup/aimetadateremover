@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { trackFunnel } from "@/lib/funnel";
+import { trackPaidCheckoutReturn } from "@/lib/checkout-analytics";
 import { useCallback,useEffect,useRef,useState } from "react";
 import { planDetails,type PlanId } from "@/lib/billing/plans";
 import { consentVersion } from "@/lib/billing/config";
@@ -13,13 +15,13 @@ export function BillingPanel({compact=false,plan="monthly"}:{compact?:boolean;pl
   const refreshVersion=useRef<symbol|null>(null);
   const refresh=useCallback(async()=>{
     const version=Symbol("billing-refresh");refreshVersion.current=version;
-    try {const response=await fetch("/api/billing/status",{cache:"no-store"});if(!response.ok)throw new Error("Billing is temporarily unavailable. Please retry.");const data=await response.json() as Status;if(version!==refreshVersion.current)return;setStatus(data);setError("");}
+    try {const response=await fetch("/api/billing/status",{cache:"no-store"});if(!response.ok)throw new Error("Billing is temporarily unavailable. Please retry.");const data=await response.json() as Status;if(version!==refreshVersion.current)return;setStatus(data);setError("");trackPaidCheckoutReturn(data);}
     catch(error){if(version===refreshVersion.current)setError(error instanceof Error?error.message:"Billing is unavailable.");}
   },[]);
   useEffect(()=>{queueMicrotask(()=>void refresh());const listener=()=>void refresh();window.addEventListener("focus",listener);window.addEventListener("imagefinisher:usage-changed",listener);const timer=setInterval(listener,30000);return()=>{refreshVersion.current=null;clearInterval(timer);window.removeEventListener("focus",listener);window.removeEventListener("imagefinisher:usage-changed",listener);};},[refresh]);
   async function checkout(){
     if(!consent || busy)return;setBusy(true);setError("");
-    try {const response=await fetch("/api/billing/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({consent:consentVersion,plan})});const result=await response.json() as {error?:string;url:string};if(!response.ok)throw new Error(result.error);window.location.assign(result.url);}
+    try {const response=await fetch("/api/billing/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({consent:consentVersion,plan})});const result=await response.json() as {error?:string;url:string};if(!response.ok)throw new Error(result.error);trackFunnel("checkout_started",{plan});window.location.assign(result.url);}
     catch(error){setError(error instanceof Error?error.message:"Checkout is unavailable.");setBusy(false);}
   }
   async function cancel(){

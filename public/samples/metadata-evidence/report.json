@@ -1,0 +1,192 @@
+{
+  "testedAt": "2026-10-22",
+  "sourceType": "Synthetic fixtures; not actual ComfyUI, ChatGPT or camera exports.",
+  "method": "Processed by this repository's scanImage, cleanImage and verifyClean. Encoded image payload SHA-256 and Chromium-decoded RGBA SHA-256 compared before and after. The whole-file hash is expected to change.",
+  "limitations": "Four small constructed files only. This is not generator coverage, a benchmark, a C2PA signature test or proof of all-file compatibility. The oversized-text sample deliberately retains unresolved data.",
+  "samples": [
+    {
+      "id": "workflow-png",
+      "title": "Static PNG with workflow and prompt fields",
+      "synthetic": true,
+      "format": "png",
+      "original": "/samples/metadata-evidence/workflow-png-original.png",
+      "cleaned": "/samples/metadata-evidence/workflow-png-cleaned.png",
+      "policy": {
+        "mode": "ai_workflow",
+        "removeC2pa": false,
+        "removeColorProfile": false
+      },
+      "width": 32,
+      "height": 24,
+      "inputBytes": 2137,
+      "outputBytes": 1997,
+      "needsReview": false,
+      "fields": [
+        {
+          "label": "AI generation parameters",
+          "before": "found",
+          "after": "removed",
+          "key": "workflow"
+        },
+        {
+          "label": "AI generation parameters",
+          "before": "found",
+          "after": "removed",
+          "key": "prompt"
+        },
+        {
+          "label": "Creator or copyright",
+          "before": "found",
+          "after": "preserved",
+          "key": "Copyright"
+        }
+      ],
+      "encodedPayloadPreserved": true,
+      "transparencyPreserved": true,
+      "orientationPreserved": null,
+      "payloadSha256": {
+        "before": "db88fd9c928e29c2f03cb07cb65314e8e16cf703844311b900b88c6ebdaa183f",
+        "after": "db88fd9c928e29c2f03cb07cb65314e8e16cf703844311b900b88c6ebdaa183f"
+      },
+      "decodedRgbaSha256": {
+        "before": "3a71fbe816ad6458575c382732e30287cf5a7083cee6ca07b801d4b395006fa0",
+        "after": "3a71fbe816ad6458575c382732e30287cf5a7083cee6ca07b801d4b395006fa0"
+      }
+    },
+    {
+      "id": "transparent-png",
+      "title": "Transparent PNG with compressed generation parameters",
+      "synthetic": true,
+      "format": "png",
+      "original": "/samples/metadata-evidence/transparent-png-original.png",
+      "cleaned": "/samples/metadata-evidence/transparent-png-cleaned.png",
+      "policy": {
+        "mode": "publish",
+        "removeC2pa": true,
+        "removeColorProfile": false
+      },
+      "width": 32,
+      "height": 24,
+      "inputBytes": 2065,
+      "outputBytes": 1997,
+      "needsReview": false,
+      "fields": [
+        {
+          "label": "AI generation parameters",
+          "before": "found",
+          "after": "removed",
+          "key": "parameters"
+        },
+        {
+          "label": "Creator or copyright",
+          "before": "found",
+          "after": "preserved",
+          "key": "Copyright"
+        }
+      ],
+      "encodedPayloadPreserved": true,
+      "transparencyPreserved": true,
+      "orientationPreserved": null,
+      "payloadSha256": {
+        "before": "db88fd9c928e29c2f03cb07cb65314e8e16cf703844311b900b88c6ebdaa183f",
+        "after": "db88fd9c928e29c2f03cb07cb65314e8e16cf703844311b900b88c6ebdaa183f"
+      },
+      "decodedRgbaSha256": {
+        "before": "3a71fbe816ad6458575c382732e30287cf5a7083cee6ca07b801d4b395006fa0",
+        "after": "3a71fbe816ad6458575c382732e30287cf5a7083cee6ca07b801d4b395006fa0"
+      }
+    },
+    {
+      "id": "gps-jpeg",
+      "title": "Browser-drawn JPEG with artificial GPS",
+      "synthetic": true,
+      "format": "jpeg",
+      "original": "/samples/metadata-evidence/gps-jpeg-original.jpg",
+      "cleaned": "/samples/metadata-evidence/gps-jpeg-cleaned.jpg",
+      "policy": {
+        "mode": "privacy",
+        "removeC2pa": false,
+        "removeColorProfile": false
+      },
+      "width": 32,
+      "height": 24,
+      "inputBytes": 1226,
+      "outputBytes": 1226,
+      "needsReview": false,
+      "fields": [
+        {
+          "label": "GPS location",
+          "before": "found",
+          "after": "removed",
+          "key": "EXIF GPS IFD"
+        },
+        {
+          "label": "Color profile",
+          "before": "found",
+          "after": "preserved",
+          "key": "APP2 ICC"
+        }
+      ],
+      "encodedPayloadPreserved": true,
+      "transparencyPreserved": null,
+      "orientationPreserved": true,
+      "payloadSha256": {
+        "before": "8d4d296b9a9d44cd2bd26a09f5aab65f27dcb2632735e141eae072a21619a833",
+        "after": "8d4d296b9a9d44cd2bd26a09f5aab65f27dcb2632735e141eae072a21619a833"
+      },
+      "decodedRgbaSha256": {
+        "before": "876de8e95e07813325c4efcff2a2b49e4aec986760ab5c6c243f3d06d3864886",
+        "after": "876de8e95e07813325c4efcff2a2b49e4aec986760ab5c6c243f3d06d3864886"
+      }
+    },
+    {
+      "id": "review-needed-png",
+      "title": "PNG with text beyond the inspection limit",
+      "synthetic": true,
+      "format": "png",
+      "original": "/samples/metadata-evidence/review-needed-png-original.png",
+      "cleaned": "/samples/metadata-evidence/review-needed-png-cleaned.png",
+      "policy": {
+        "mode": "publish",
+        "removeC2pa": true,
+        "removeColorProfile": false
+      },
+      "width": 32,
+      "height": 24,
+      "inputBytes": 3107,
+      "outputBytes": 3061,
+      "needsReview": true,
+      "fields": [
+        {
+          "label": "AI generation parameters",
+          "before": "found",
+          "after": "removed",
+          "key": "parameters"
+        },
+        {
+          "label": "Unreadable text metadata",
+          "before": "found",
+          "after": "unsupported",
+          "key": "zTXt"
+        },
+        {
+          "label": "Creator or copyright",
+          "before": "found",
+          "after": "preserved",
+          "key": "Copyright"
+        }
+      ],
+      "encodedPayloadPreserved": true,
+      "transparencyPreserved": true,
+      "orientationPreserved": null,
+      "payloadSha256": {
+        "before": "db88fd9c928e29c2f03cb07cb65314e8e16cf703844311b900b88c6ebdaa183f",
+        "after": "db88fd9c928e29c2f03cb07cb65314e8e16cf703844311b900b88c6ebdaa183f"
+      },
+      "decodedRgbaSha256": {
+        "before": "3a71fbe816ad6458575c382732e30287cf5a7083cee6ca07b801d4b395006fa0",
+        "after": "3a71fbe816ad6458575c382732e30287cf5a7083cee6ca07b801d4b395006fa0"
+      }
+    }
+  ]
+}
