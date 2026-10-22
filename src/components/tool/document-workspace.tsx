@@ -230,8 +230,9 @@ export function DocumentWorkspace({ kind }: { kind: DocumentKind }) {
             : "application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
         }
         onChange={(event) => {
-          void choose(event.target.files?.[0]);
+          const next = event.target.files?.[0];
           event.target.value = "";
+          if (next) void choose(next);
         }}
       />
     </section>
