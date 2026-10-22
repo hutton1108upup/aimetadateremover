@@ -37,7 +37,15 @@ const toolLinks = [
 ];
 
 async function open(page, path) {
-  await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded", timeout: 30000 });
+  await page.waitForTimeout(350);
+}
+
+async function clickRoute(page, locator, target) {
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === target, { timeout: 30000 }),
+    locator.click(),
+  ]);
   await page.waitForTimeout(350);
 }
 
@@ -58,11 +66,11 @@ try {
       await page.evaluate(() => scrollTo({ top: Math.min(2200, document.body.scrollHeight), behavior: "instant" }));
       if (width > 1024) {
         await page.getByRole("button", { name: "Tools", exact: true }).click();
-        await page.locator(`#tools-panel a[href="${target}"]`).click();
+        await clickRoute(page, page.locator(`#tools-panel a[href="${target}"]`), target);
       } else {
         await page.locator(".mobile-menu > summary").click();
         await page.locator(".mobile-tools-group > summary").click();
-        await page.locator(`.mobile-tools-group a[href="${target}"]`).click();
+        await clickRoute(page, page.locator(`.mobile-tools-group a[href="${target}"]`), target);
       }
       await page.waitForTimeout(900);
       const result = await page.evaluate(() => ({ path: location.pathname, y: scrollY, h1Top: document.querySelector("h1")?.getBoundingClientRect().top ?? null }));
@@ -71,13 +79,11 @@ try {
 
     await open(page, "/");
     await page.evaluate(() => scrollTo({ top: Math.min(2200, document.body.scrollHeight), behavior: "instant" }));
-    await page.locator('a[href="/blog/remove-author-metadata-from-pdf-before-sharing"]').click();
-    await page.waitForTimeout(900);
+    await clickRoute(page, page.locator('a[href="/blog/remove-author-metadata-from-pdf-before-sharing"]'), "/blog/remove-author-metadata-from-pdf-before-sharing");
     if ((await page.evaluate(() => ({ path: location.pathname, y: scrollY }))).y > 2) throw new Error(`${width}px home blog card did not reset scroll`);
 
     await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: "instant" }));
-    await page.locator('main a[href="/pdf-metadata-remover"]').last().click();
-    await page.waitForTimeout(900);
+    await clickRoute(page, page.locator('main a[href="/pdf-metadata-remover"]').last(), "/pdf-metadata-remover");
     const related = await page.evaluate(() => ({ path: location.pathname, y: scrollY }));
     if (related.path !== "/pdf-metadata-remover" || related.y > 2) throw new Error(`${width}px blog related tool ${JSON.stringify(related)}`);
 
@@ -85,15 +91,14 @@ try {
       await open(page, "/");
       await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: "instant" }));
       const footerStart = await page.evaluate(() => scrollY);
-      await page.locator(`footer a[href="${target}"]`).first().click();
-      await page.waitForTimeout(900);
+      await clickRoute(page, page.locator(`footer a[href="${target}"]`).first(), target);
       const footerLink = await page.evaluate(() => ({ path: location.pathname, y: scrollY }));
       if (footerLink.path !== target || footerLink.y > 2) throw new Error(`${width}px footer ${target} ${JSON.stringify(footerLink)}`);
-      await page.goBack({ waitUntil: "domcontentloaded" });
+      await page.goBack({ waitUntil: "domcontentloaded", timeout: 30000 });
       await page.waitForTimeout(500);
       const backY = await page.evaluate(() => scrollY);
       if (await page.evaluate(() => location.pathname) !== "/" || backY < 2) throw new Error(`${width}px back restore ${target} start=${footerStart} y=${backY}`);
-      await page.goForward({ waitUntil: "domcontentloaded" });
+      await page.goForward({ waitUntil: "domcontentloaded", timeout: 30000 });
       await page.waitForTimeout(500);
       if (await page.evaluate(() => ({ path: location.pathname, y: scrollY })).then((state) => state.path !== target || state.y < 0)) throw new Error(`${width}px forward ${target}`);
     }

@@ -35,7 +35,7 @@ try {
   const page = await browser.newPage({
     viewport: { width: 1440, height: 1000 },
   });
-  const base = "http://127.0.0.1:3001";
+  const base = process.env.BASE_URL ?? "http://127.0.0.1:3001";
   for (const [path, title] of [
     [
       "/pdf-metadata-remover",
