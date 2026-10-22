@@ -20,6 +20,7 @@ describe("Phase 1 publishing manifest", () => {
       "/pdf-metadata-remover",
       "/docx-metadata-remover",
       "/blog",
+      "/blog/batch-remove-image-metadata-client-delivery",
       "/blog/remove-author-metadata-from-pdf-before-sharing",
       "/blog/remove-author-last-modified-by-word-document",
       "/blog/why-edited-photos-get-ai-info-labels",
@@ -51,25 +52,16 @@ describe("Phase 1 publishing manifest", () => {
 
   it("uses the last substantive route update for sitemap lastModified", () => {
     const entries = new Map(sitemap().map((entry) => [new URL(entry.url).pathname, entry]));
-    for (const path of ["/metadata-checker", "/remove-metadata-from-png", "/about"]) {
-      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-24T00:00:00.000Z");
-    }
-    for (const path of ["/blog/chatgpt-dalle-image-metadata"]) {
-      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-20T00:00:00.000Z");
-    }
-    for (const path of ["/privacy", "/terms", "/pricing"]) {
-      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-18T00:00:00.000Z");
-    }
-    for (const path of ["/blog/stable-diffusion-comfyui-metadata", "/blog/exif-gps-privacy-before-sharing", "/blog/jpeg-png-webp-metadata-support", "/blog/image-metadata-before-publishing"]) {
-      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-28T00:00:00.000Z");
-    }
-    for (const path of ["/comfyui-workflow-remover", "/stable-diffusion-metadata-remover", "/remove-metadata-from-jpeg"]) {
-      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-09-28T00:00:00.000Z");
-    }
-    for (const path of ["/pdf-metadata-remover", "/docx-metadata-remover"]) expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-10-21T00:00:00.000Z");
-    for (const path of ["/", "/supported-formats", "/blog"]) expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-10-21T00:00:00.000Z");
-    for (const path of ["/remove-ai-detection-from-image", "/batch-metadata-remover", "/remove-gps-from-photo", "/c2pa-metadata-checker", "/blog/c2pa-content-credentials-explained", "/blog/why-edited-photos-get-ai-info-labels"]) {
-      expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe("2026-10-12T00:00:00.000Z");
+    const dates: Record<string, string[]> = {
+      "2026-09-24": ["/about"],
+      "2026-09-18": ["/terms", "/pricing"],
+      "2026-09-28": ["/blog/exif-gps-privacy-before-sharing", "/blog/jpeg-png-webp-metadata-support"],
+      "2026-10-12": ["/blog/c2pa-content-credentials-explained", "/blog/why-edited-photos-get-ai-info-labels"],
+      "2026-10-21": ["/pdf-metadata-remover", "/docx-metadata-remover", "/supported-formats", "/blog/remove-author-metadata-from-pdf-before-sharing", "/blog/remove-author-last-modified-by-word-document"],
+      "2026-10-22": ["/", "/metadata-checker", "/remove-metadata-from-png", "/privacy", "/blog", "/comfyui-workflow-remover", "/stable-diffusion-metadata-remover", "/remove-metadata-from-jpeg", "/remove-ai-detection-from-image", "/batch-metadata-remover", "/remove-gps-from-photo", "/c2pa-metadata-checker", "/blog/chatgpt-dalle-image-metadata", "/blog/stable-diffusion-comfyui-metadata", "/blog/image-metadata-before-publishing", "/blog/batch-remove-image-metadata-client-delivery"],
+    };
+    for (const [date, paths] of Object.entries(dates)) {
+      for (const path of paths) expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe(`${date}T00:00:00.000Z`);
     }
     expect(entries.has("/workspace")).toBe(false);
   });

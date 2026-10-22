@@ -5,6 +5,7 @@ import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { metadataFor, siteUrl } from "@/lib/site";
 import { guideBySlug, guides } from "@/lib/guides";
+import { MetadataEvidence } from "@/components/marketing/metadata-evidence";
 
 export function generateStaticParams() { return guides.map(({ slug }) => ({ slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -24,12 +25,15 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   return <><PublicHeader /><main className="guide-page"><div className="page-container">
     <Link className="back-link" href="/blog"><ArrowLeft /> All articles</Link>
     <article className="editorial-island island"><p className="island-kicker">{guide.kicker}</p><h1>{guide.h1}</h1><p className="island-meta">Updated <time dateTime={guide.updatedIso}>{guide.updated}</time></p><p className="island-intro">{guide.answer}</p><div className="island-divider" />
+      {(guide.evidenceIds || guide.relatedGuides) && <div className="guide-tools"><strong>Start this task</strong>{guide.tools.slice(0, 2).map(tool => <Link data-article-tool href={tool.href} key={tool.href}>{tool.label} <ArrowRight /></Link>)}</div>}
       {guide.table && <table><thead><tr>{guide.table.headers.map(header => <th scope="col" key={header}>{header}</th>)}</tr></thead><tbody>{guide.table.rows.map(row => <tr key={row[0]}>{row.map((cell, index) => <td data-label={guide.table?.headers[index]} key={`${row[0]}-${index}`}>{cell}</td>)}</tr>)}</tbody></table>}
       {guide.steps && <><h2>{guide.stepsHeading ?? "Use the automatic cleaner step by step"}</h2>{guide.steps.map((step, index) => <section key={step.title}><h3>{index + 1}. {step.title}</h3><p>{step.body}</p></section>)}</>}
       {guide.sections.map(section => <section key={section.heading}><h2>{section.heading}</h2>{section.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</section>)}
+      {guide.evidenceIds && <MetadataEvidence ids={guide.evidenceIds} />}
       <h2>What this tool cannot promise</h2><ul>{guide.limits.map(limit => <li key={limit}>{limit}</li>)}</ul>
       <h2>Common questions</h2>{questions.map(question => <section key={question.question}><h3>{question.question}</h3><p>{question.answer}</p></section>)}
-      <div className="guide-tools"><strong>Related tools</strong>{guide.tools.map(tool => <Link href={tool.href} key={tool.href}>{tool.label} <ArrowRight /></Link>)}</div>
+      <div className="guide-tools"><strong>Related tools</strong>{guide.tools.map(tool => <Link data-article-tool href={tool.href} key={tool.href}>{tool.label} <ArrowRight /></Link>)}</div>
+      {guide.relatedGuides && <nav className="guide-tools" aria-label="Related guides"><strong>Continue reading</strong>{guide.relatedGuides.map(item => <Link href={item.href} key={item.href}>{item.label} <ArrowRight /></Link>)}</nav>}
       <p className="guide-source">Primary sources: {sources.map((source, index) => <span key={source.href}>{index > 0 && " · "}<a href={source.href} rel="noopener noreferrer">{source.label}</a></span>)}</p>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
     </article>

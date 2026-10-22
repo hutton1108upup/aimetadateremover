@@ -12,6 +12,7 @@ import {
 import { DocumentWorkspace } from "@/components/tool/document-workspace";
 import { appSchema, faqSchema } from "@/lib/structured-data";
 import { siteUrl } from "@/lib/site";
+import { MetadataEvidence } from "./metadata-evidence";
 export interface ToolPageProps {
   path: string;
   h1: string;
@@ -53,7 +54,7 @@ export function ToolPage(props: ToolPageProps) {
           <div className="page-container">
             <Breadcrumbs current={props.label} />
             <div className="tool-hero-copy">
-              <p className="eyebrow">Free · runs locally · no account</p>
+              <p className="eyebrow">{props.documentKind || props.defaultMode === "inspect" ? "Free · runs locally · no account" : "Free daily allowance · runs locally"}</p>
               <h1>{props.h1}</h1>
               <p>{props.intro}</p>
             </div>
@@ -127,6 +128,7 @@ export function ToolPage(props: ToolPageProps) {
           </div>
         </section>
         {!props.documentKind && props.children}
+        {(props.path === "/comfyui-workflow-remover" || props.path === "/remove-metadata-from-png") && <section className="section"><div className="page-container"><MetadataEvidence ids={props.path === "/comfyui-workflow-remover" ? ["workflow-png"] : ["transparent-png"]} /><Link className="text-link" href={props.path === "/comfyui-workflow-remover" ? "/blog/stable-diffusion-comfyui-metadata" : "/blog/image-metadata-before-publishing"}>Read the full cleaning and verification guide <ArrowRight /></Link></div></section>}
         <FAQSection
           title={`Questions about ${props.label.toLowerCase()}`}
           items={props.faqs}

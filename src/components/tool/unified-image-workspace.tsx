@@ -1,4 +1,5 @@
 "use client";
+import { ImagePlanNote } from "@/components/pricing/image-plan-note";
 import { UsageAllowance } from "@/components/pricing/usage-allowance";
 /* eslint-disable @next/next/no-img-element -- local blob previews cannot use the Next image optimizer */
 
@@ -105,7 +106,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
   }
 
   return (
-    <section className={`workspace-shell ${variant === "full" ? "workspace-full" : "workspace-embedded"}`} aria-label="Local image metadata workspace">
+    <section className={`workspace-shell ${variant === "full" ? "workspace-full" : "workspace-embedded"}`} aria-label="Local image metadata workspace" data-clarity-mask="true">
       <div className="local-notice"><span><ShieldCheck aria-hidden="true" /> Your files stay in this browser</span><span>Nothing gets uploaded</span></div>
       {!focus && <fieldset className="clean-settings" disabled={busy}>
         <legend>Cleaning settings</legend>
@@ -124,6 +125,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
         <p className="settings-status" role="status">{settingsMessage}</p>
       </fieldset>}
       {notice && <p className="batch-notice" role="status">{notice}</p>}
+      {defaultMode === "clean" && <ImagePlanNote batch={sampleMode === "batch"} />}
       <UsageAllowance />
       {confirmationPending && <button className="button secondary" disabled={busy} onClick={()=>void retryConfirmation()}>Retry usage confirmation</button>}
       {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {completed.length} ready to download · {partial.length} partial · {failed.length} failed{scanOnly.length > 0 ? ` · ${scanOnly.length} inspection only` : ""}</span><div className="batch-toolbar-actions">{active && <button className="button secondary result-jump" onClick={() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{activeProcessing ? "View progress" : active.verification ? "View result & download" : active.error ? "View error" : "View result"}</button>}{retryable.length > 0 && <button className="button secondary" disabled={busy} onClick={() => void cleanFiles(retryable.map(file=>file.id),policy)}>Retry failed cleans ({retryable.length})</button>}<button className="button secondary" disabled={busy} onClick={clearFiles}>Clear queue</button></div></div>}
@@ -141,7 +143,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
             <div id="choose-images" className="dropzone" role="button" aria-label="Open file picker" onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inputRef.current?.click(); } }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void addFiles(Array.from(event.dataTransfer.files)); }} onPaste={(event) => void addFiles(Array.from(event.clipboardData.files))} tabIndex={0}>
               <span className="upload-icon"><UploadCloud aria-hidden="true" /></span>
               <h2>Drop, paste, or choose your images</h2>
-              <p>{acceptedFormats ? `${acceptedLabel} images` : "JPG and PNG · WebP inspection only"} · No account needed</p>
+              <p>{acceptedFormats ? `${acceptedLabel} images` : "JPG and PNG · WebP inspection only"} · {defaultMode === "inspect" ? "No account needed to inspect" : sampleMode === "batch" ? "Pro for your own batches" : "1 free clean/day without an account"}</p>
               <p className="drop-policy">{defaultMode === "inspect" ? "Read-only check. Your file stays unchanged." : focus === "gps" ? "Creates a copy with supported location and private EXIF fields removed." : focus ? "Creates a copy with supported workflow fields removed." : "Automatically cleans images using the settings above."}</p>
               <div className="drop-actions"><button className="button primary" onClick={() => inputRef.current?.click()} disabled={busy}><FolderOpen aria-hidden="true" /> Choose images</button>{(!focus || focus === "comfyui" || focus === "stable-diffusion") && <button className="button secondary" onClick={() => void addFiles(sampleMode === "batch" ? createBatchSampleFiles() : [createSafeSampleFile(focus)], "sample")} disabled={busy}><ScanSearch aria-hidden="true" />{sampleMode === "batch" ? "Try a safe batch" : "Try a safe sample"}</button>}</div>
               {sampleMode === "batch" && <p className="drop-policy">Three synthetic PNGs: cleaned, unchanged and review needed. Try the ZIP download without using your own files.</p>}
