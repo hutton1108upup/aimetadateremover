@@ -12,4 +12,4 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "sw
 const notoSerif = Noto_Serif_Display({ variable: "--font-editorial", subsets: ["latin"], display: "swap", preload: false });
 const googleVerification = process.env.NEXT_PUBLIC_GSC_VERIFICATION?.trim();
 export const metadata: Metadata = { metadataBase: new URL(siteUrl), applicationName: brandName, appleWebApp: { title: brandName }, title: { default: routeData("/").title, template: `%s | ${brandName}` }, description: routeData("/").description, ...(googleVerification ? { verification: { google: googleVerification } } : {}) };
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en" className={`${inter.variable} ${notoSerif.variable}`}><body>{children}<FeedbackWidget /><AnalyticsScripts /></body></html>; }
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${notoSerif.variable}`}><body>{children}<FeedbackWidget /><AnalyticsScripts /></body></html>; }
