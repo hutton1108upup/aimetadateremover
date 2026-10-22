@@ -88,6 +88,3 @@ for (const [name, type] of [["chromium", chromium], ["webkit", webkit]]) {
   try { await checkDocument(browser, name); console.log(`${name} 390px mobile flow passed`); } finally { await browser.close(); }
 }
 await fs.writeFile(`${out}/review.md`, `# Mobile flow audit\n\n- Chromium and WebKit 390px menu, Tools expansion, route closing and bbox checks passed.\n- Chromium: a damaged same-name PDF was rejected, a same-name valid PDF recovered, the cleaned output was verified, and cancelling file selection preserved the PDF result.\n- Chromium and WebKit: valid PDF and DOCX clean downloads passed; DOCX body text was preserved and core properties were removed.\n- Switching to Word did not retain the PDF result.\n- Chromium rejected files over 50 MB before processing.\n- WebP was reported as inspection-only; no cleaning/download action was offered.\n- Screenshots and downloaded samples are in this directory.\n`);
-
-
-\n
