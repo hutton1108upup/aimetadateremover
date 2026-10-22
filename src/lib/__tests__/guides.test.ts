@@ -7,12 +7,14 @@ import type { Finding } from "@/lib/image-metadata-core/types";
 describe("technical guides and next actions", () => {
   it("contains distinct technical guides and the edited-photo label guide", () => {
     expect(guides.map((guide) => guide.slug)).toEqual([
+      "remove-author-metadata-from-pdf-before-sharing",
+      "remove-author-last-modified-by-word-document",
       "why-edited-photos-get-ai-info-labels",
       "chatgpt-dalle-image-metadata", "stable-diffusion-comfyui-metadata", "c2pa-content-credentials-explained", "exif-gps-privacy-before-sharing", "jpeg-png-webp-metadata-support",
       "image-metadata-before-publishing",
     ]);
     expect(guideBySlug("missing-guide")).toBeUndefined();
-    expect(new Set(guides.map((guide) => guide.title)).size).toBe(7);
+    expect(new Set(guides.map((guide) => guide.title)).size).toBe(9);
   });
   it.each([
     ["ai_workflow", "action", "clean"], ["location", "review", "clean"], ["provenance", "review", "review"], ["color", "informational", "keep"], ["structure", "review", "review"],
