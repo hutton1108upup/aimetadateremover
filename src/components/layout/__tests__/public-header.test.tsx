@@ -9,13 +9,15 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("PublicHeader", () => {
-  it("keeps the PNG remover in primary navigation and marks the current route", () => {
+  it("keeps the tool groups discoverable and marks the current route", async () => {
     route.pathname = "/metadata-checker";
     render(<PublicHeader />);
 
     const navigation = screen.getByRole("navigation", { name: /primary navigation/i });
-    expect(within(navigation).getByRole("link", { name: "PNG Remover" })).toHaveAttribute("href", "/remove-metadata-from-png");
-    expect(within(navigation).getByRole("link", { name: "Metadata Checker" })).toHaveAttribute("aria-current", "page");
+    expect(within(navigation).getByRole("link", { name: "Cleaner" })).toHaveAttribute("href", "/");
+    expect(within(navigation).getByRole("button", { name: /tools/i })).toHaveClass("active");
+    await within(navigation).getByRole("button", { name: /tools/i }).click();
+    expect(within(navigation).getByRole("link", { name: "PDF Remover" })).toHaveAttribute("href", "/pdf-metadata-remover");
     expect(within(navigation).queryByRole("link", { name: "Detection limits" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "AI Metadata Remover" })).toHaveAttribute("href", "/");
   });

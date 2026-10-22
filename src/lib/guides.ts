@@ -12,6 +12,231 @@ export interface GuideRecord {
 
 export const guides: GuideRecord[] = [
   {
+    slug: "remove-author-metadata-from-pdf-before-sharing",
+    kicker: "PDF privacy",
+    updated: "October 21, 2026",
+    updatedIso: "2026-10-21",
+    title: "How Do I Remove Author and Metadata from a PDF Before Sharing?",
+    description:
+      "A practical guide to checking PDF author, creator, producer, Info and XMP metadata before sharing a separate cleaned copy.",
+    h1: "How Do I Remove Author and Metadata from a PDF Before Sharing?",
+    answer:
+      "Check the PDF first, remove only the supported document properties, then open the cleaned copy and review the verification result. This browser tool processes one supported PDF locally and does not upload it.",
+    sections: [
+      {
+        heading: "What PDF author metadata can reveal",
+        paragraphs: [
+          "PDF viewers often expose title, author, subject, keywords, creator, producer and creation or modification dates in Document Properties. A document-level XMP record can repeat or extend some of that information. These fields may identify a person, an export application or an internal workflow even when the visible pages look harmless.",
+          "The visible page is a separate concern. Removing supported properties does not rewrite ordinary text, erase annotations, remove attachments, clean a scanned page image or delete every possible object in a PDF. Adobe describes sanitizing as a broader review process for hidden content; use that distinction when the document is sensitive.",
+        ],
+      },
+      {
+        heading: "Inspect the PDF before cleaning it",
+        paragraphs: [
+          "Use the local PDF Metadata Remover and choose one PDF. The result lists supported properties found in the file, including author, creator, producer and document-level XMP when present. Encrypted, signed, damaged or unsupported PDFs are rejected because producing a seemingly clean copy would be misleading.",
+          "A scanned PDF may contain a picture of a page rather than editable text. Removing document properties does not remove names, addresses or signatures visible inside that picture. Review the page content separately, especially when the PDF came from a scanner or includes attachments.",
+        ],
+      },
+      {
+        heading: "Create and review a separate copy",
+        paragraphs: [
+          "Select the cleaning action only after you have decided what the recipient needs. The tool rewrites a separate copy in the browser, checks the output again, and enables download only when the supported fields it targets are no longer reported. Your original file remains unchanged.",
+          "Open the downloaded copy in a PDF viewer and inspect its Document Properties. Keep the original in a controlled location if it may be needed for records. Re-saving a PDF in another application can add new producer or modification information, so check the final file after any later edit.",
+        ],
+      },
+      {
+        heading: "What this does not promise",
+        paragraphs: [
+          "This workflow does not guarantee that a PDF is anonymous, that hidden content is gone, or that an AI detector or platform will make a different decision. It does not remove invisible watermarks, page-level metadata outside the supported fields, attachments, scripts or external records. Signed and encrypted files remain outside the local cleaner.",
+          "For a broader redaction or sanitization workflow, use the document application's own review tools and keep a copy of the original. The local metadata tool is a focused check-and-clean step for supported properties, not a replacement for reviewing the document itself.",
+        ],
+      },
+    ],
+    table: {
+      headers: ["Area", "Local tool", "Still requires review"],
+      rows: [
+        [
+          "Author and creator fields",
+          "Inspect and remove supported values",
+          "Properties added after download",
+        ],
+        [
+          "Document-level XMP",
+          "Remove when supported",
+          "Page, annotation or attachment data",
+        ],
+        [
+          "Scanned pages",
+          "Not changed",
+          "Names and other visible content in the scan",
+        ],
+      ],
+    },
+    stepsHeading: "Remove PDF metadata before sharing",
+    steps: [
+      {
+        title: "Choose the PDF",
+        body: "Select the exact copy you plan to send; signed, encrypted and unsupported PDFs are rejected.",
+      },
+      {
+        title: "Read the findings",
+        body: "Check author, creator, producer, Info and XMP results before choosing the clean action.",
+      },
+      {
+        title: "Download and recheck",
+        body: "Download the separate copy and inspect its properties again after any later edit.",
+      },
+    ],
+    limits: [
+      "Scanned page content, annotations, attachments and scripts are not cleaned.",
+      "Signed or encrypted PDFs are rejected.",
+      "Metadata cleaning does not guarantee an AI detector or platform result.",
+    ],
+    tools: [
+      { label: "Remove PDF metadata locally", href: "/pdf-metadata-remover" },
+      { label: "Compare supported formats", href: "/supported-formats" },
+    ],
+    source: {
+      label: "Adobe Acrobat: sanitize PDFs",
+      href: "https://helpx.adobe.com/acrobat/desktop/protect-documents/redact-pdfs/sanitize.html",
+    },
+    faq: {
+      question: "Can I remove metadata from a scanned PDF?",
+      answer:
+        "Yes, supported document-level properties can be cleaned. Text or names visible inside the scanned page image are not removed.",
+    },
+    extraFaqs: [
+      {
+        question: "Can I clean a signed or encrypted PDF?",
+        answer:
+          "No. The local tool rejects signed and encrypted PDFs rather than creating an output that could misrepresent their state.",
+      },
+      {
+        question: "Will cleaning PDF metadata change an AI detection result?",
+        answer:
+          "There is no guarantee. Metadata is only one possible signal and this tool does not control a detector or platform.",
+      },
+    ],
+  },
+  {
+    slug: "remove-author-last-modified-by-word-document",
+    kicker: "Word privacy",
+    updated: "October 21, 2026",
+    updatedIso: "2026-10-21",
+    title: "How Do I Remove Author and Last Modified By from a Word Document?",
+    description:
+      "Learn how to inspect and clean supported author, last modified by, company and custom properties in a DOCX before sharing.",
+    h1: "How Do I Remove Author and Last Modified By from a Word Document?",
+    answer:
+      "Use a copy of the DOCX, inspect its supported properties, remove the values you do not want to share, and review the output before sending it. The browser tool handles modern DOCX files locally; it does not upload the document.",
+    sections: [
+      {
+        heading: "Which Word properties matter",
+        paragraphs: [
+          "A Word file can carry creator, last modified by, company, manager, title, subject, revision and custom property values. Those fields can reveal an account name, an organization or an internal project label. They are separate from the document's visible paragraphs and from comments or tracked changes.",
+          "Last modified by is the name recorded for the account that last saved the document; it is not the same as the file system's modified timestamp. Check both: the local tool handles the supported document property, while the file system date can change whenever a copy is saved.",
+          "A cleaned copy can still contain personal information in the body, comments, revision history, headers, footers, embedded media or other document content. Treat property cleanup as one review step rather than a promise that the file is anonymous.",
+        ],
+      },
+      {
+        heading: "Use the browser tool with a copy",
+        paragraphs: [
+          "Open Word Metadata Remover and choose a modern DOCX copy. The tool checks the document structure before reading the property parts and rejects old DOC files, macro-enabled, signed, encrypted, malformed or unsafe packages. It shows the supported properties it found and the limits that remain.",
+          "The tool keeps the body, media and layout files while cleaning supported properties. It does not remove comments, tracked changes or document text. Keep your original file and work on a copy because a later Word save can add a new author or modified-by value.",
+        ],
+      },
+      {
+        heading: "Windows Document Inspector and Mac review",
+        paragraphs: [
+          "On Windows desktop Word, open a copy, select File > Info > Check for Issues > Inspect Document, and review the categories before removing anything. Document Inspector can identify hidden personal information, comments, revisions and other content that a focused property cleaner does not cover. The exact categories depend on the document and Word version.",
+          "Word for Mac does not provide the Windows Document Inspector. Use the document properties and privacy controls available in your Mac version, then reopen the saved copy and check its properties. Do not assume that a Windows menu path exists on Mac, and do not send the file until you have reviewed the final save.",
+        ],
+      },
+      {
+        heading: "What remains after property cleanup",
+        paragraphs: [
+          "The local tool reports supported property values before cleaning and verifies the output after rewriting. It leaves comments, tracked changes, body text, embedded media and layout in place. If the document contains a comment or revision that names a person, remove or accept it in Word and save a new copy, then inspect that copy again.",
+          "The result does not guarantee an anonymous file or a different AI detector decision. It also does not support the legacy DOC format. Use a standard DOCX workflow, retain the original, and check the final copy after any application re-save.",
+        ],
+      },
+    ],
+    table: {
+      headers: [
+        "Property or content",
+        "Local DOCX tool",
+        "Needs separate review",
+      ],
+      rows: [
+        [
+          "Author and last modified by",
+          "Inspect and remove supported values",
+          "Values added by a later save",
+        ],
+        [
+          "Company and custom properties",
+          "Inspect and clean supported fields",
+          "Unknown or application-specific data",
+        ],
+        [
+          "Comments and revisions",
+          "Preserved",
+          "Review or remove in Word before sharing",
+        ],
+      ],
+    },
+    stepsHeading: "Remove Word document properties before sharing",
+    steps: [
+      {
+        title: "Make a copy",
+        body: "Keep the original and choose a modern DOCX copy, not a legacy .doc file.",
+      },
+      {
+        title: "Inspect and clean",
+        body: "Review creator, last modified by, company and custom properties, then clean supported values locally.",
+      },
+      {
+        title: "Review the final save",
+        body: "Open the downloaded copy, check comments and revisions in Word, and recheck properties after any later save.",
+      },
+    ],
+    limits: [
+      "Legacy .doc, macro-enabled, signed and encrypted packages are rejected.",
+      "Comments, tracked changes, body text, media and layout are not cleaned.",
+      "Cleaning does not guarantee an anonymous file or an AI detector result.",
+    ],
+    tools: [
+      { label: "Remove Word DOCX properties", href: "/docx-metadata-remover" },
+      { label: "Compare supported formats", href: "/supported-formats" },
+    ],
+    source: {
+      label: "Microsoft: inspect documents",
+      href: "https://support.microsoft.com/en-us/office/inspect-document-b0088a7a-d482-4b87-b762-7c94c7c71e23",
+    },
+    additionalSources: [
+      {
+        label: "Microsoft: remove hidden data",
+        href: "https://support.microsoft.com/en-us/office/collab-files/remove-hidden-data-and-personal-information-by-inspecting-documents-presentations-or-workbooks",
+      },
+    ],
+    faq: {
+      question: "Can this clean an old .doc file?",
+      answer:
+        "No. The browser tool accepts modern DOCX files only. Convert a copy first and review the converted document.",
+    },
+    extraFaqs: [
+      {
+        question: "Are comments and tracked changes removed?",
+        answer:
+          "No. They remain for review and should be handled in Word before sharing.",
+      },
+      {
+        question: "Does removing author data make a Word file anonymous?",
+        answer:
+          "No. Body text, comments, revisions, media and later application saves can still contain identifying information.",
+      },
+    ],
+  },
+  {
     slug: "why-edited-photos-get-ai-info-labels", kicker: "Photo editing and AI labels", updated: "October 12, 2026", updatedIso: "2026-10-12",
     title: "Why Edited Photos Get AI Info Labels — What You Can Check",
     description: "Learn why edited camera photos can get AI info labels, inspect embedded signals and check what metadata cleaning can change before sharing.",
