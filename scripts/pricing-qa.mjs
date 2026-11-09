@@ -16,7 +16,7 @@ try {
   assert(await page.getByRole('button',{name:'Get Pro Monthly'}).isDisabled(),'monthly purchase entry without navigation');
   assert(await page.getByRole('button',{name:'Get Pro Yearly'}).isDisabled(),'yearly purchase entry without navigation');
   const cards=await page.locator('.plan-card').allInnerTexts();
-  assert(cards[0].includes('5 photos / day'),'free plan allowance');
+  assert(cards[0].includes('10 photos / day'),'free plan allowance');
   assert(cards[1].includes('$9.90') && cards[1].includes('$4.90'),'monthly prices');
   assert(cards[2].includes('$89.90') && cards[2].includes('$49.90'),'yearly prices');
   const monthly=page.locator('.plan-card').nth(1),yearly=page.locator('.plan-card').nth(2);

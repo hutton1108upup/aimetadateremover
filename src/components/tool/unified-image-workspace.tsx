@@ -1,4 +1,5 @@
 "use client";
+import { pricing } from "@/lib/pricing";
 import { ImagePlanNote } from "@/components/pricing/image-plan-note";
 import { UsageAllowance } from "@/components/pricing/usage-allowance";
 /* eslint-disable @next/next/no-img-element -- local blob previews cannot use the Next image optimizer */
@@ -141,7 +142,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
             <div id="choose-images" className="dropzone" role="button" aria-label="Open file picker" onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inputRef.current?.click(); } }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void addFiles(Array.from(event.dataTransfer.files)); }} onPaste={(event) => void addFiles(Array.from(event.clipboardData.files))} tabIndex={0}>
               <span className="upload-icon"><UploadCloud aria-hidden="true" /></span>
               <h2>Drop, paste, or choose your images</h2>
-              <p>{acceptedFormats ? `${acceptedLabel} images` : "JPG and PNG · WebP inspection only"} · {defaultMode === "inspect" ? "No account needed to inspect" : sampleMode === "batch" ? "Pro for your own batches" : "1 free clean/day without an account"}</p>
+              <p>{acceptedFormats ? `${acceptedLabel} images` : "JPG and PNG · WebP inspection only"} · {defaultMode === "inspect" ? "No account needed to inspect" : sampleMode === "batch" ? "Pro for your own batches" : `${pricing.guestImagesPerDay} free cleans/day without an account`}</p>
               <p className="drop-policy">{defaultMode === "inspect" ? "Read-only check. Your file stays unchanged." : focus === "gps" ? "Creates a copy with supported location and private EXIF fields removed." : focus ? "Creates a copy with supported workflow fields removed." : "Automatically cleans images using the settings above."}</p>
               <div className="drop-actions"><button className="button primary" onClick={() => inputRef.current?.click()} disabled={busy}><FolderOpen aria-hidden="true" /> Choose images</button>{(!focus || focus === "comfyui" || focus === "stable-diffusion") && <button className="button secondary" onClick={() => void addFiles(sampleMode === "batch" ? createBatchSampleFiles() : [createSafeSampleFile(focus)], "sample")} disabled={busy}><ScanSearch aria-hidden="true" />{sampleMode === "batch" ? "Try a safe batch" : "Try a safe sample"}</button>}</div>
               {sampleMode === "batch" && <p className="drop-policy">Three synthetic PNGs: cleaned, unchanged and review needed. Try the ZIP download without using your own files.</p>}

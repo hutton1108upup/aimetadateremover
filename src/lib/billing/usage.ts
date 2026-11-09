@@ -1,3 +1,4 @@
+import { pricing } from "@/lib/pricing";
 import type { BillingConfig } from "./config";
 import { BillingError } from "./http";
 import { activeSubscription, type BillingDB } from "./store";
@@ -30,7 +31,7 @@ export async function usageSummary(db:BillingDB,config:BillingConfig,identity:Us
   const pro=identity.userId ? await activeSubscription(db,config,identity.userId,now) : null;
   const rows=await db.prepare(`SELECT kind,COUNT(*) AS used FROM billing_usage WHERE environment=? AND day=? AND ${usageScope} AND (state='consumed' OR (state='reserved' AND expires_at>?)) GROUP BY kind`).bind(config.environment,day,owner,identity.guestId,Number(!identity.userId),`guest:${identity.guestId}`,now).all<{kind:string;used:number}>();
   const unlimited=!!pro && pro.plan_id!=="legacy";
-  const singleLimit=unlimited?null:identity.userId?5:1,batchLimit=unlimited?null:pro?20:0;
+  const singleLimit=unlimited?null:identity.userId?pricing.accountImagesPerDay:pricing.guestImagesPerDay,batchLimit=unlimited?null:pro?20:0;
   const used=(kind:string)=>rows.results.find(r=>r.kind===kind)?.used || 0;
   return {singleLimit,singleRemaining:singleLimit===null?null:Math.max(0,singleLimit-used("single")),batchLimit,batchRemaining:batchLimit===null?null:Math.max(0,batchLimit-used("batch")),unlimited,batchMaxPhotos:pro?10:1,sessionMaxImages:pro?.plan_id==="yearly"?30:pro?10:1,resetsAt:Date.parse(`${day}T00:00:00Z`)+86400000,pro};
 }

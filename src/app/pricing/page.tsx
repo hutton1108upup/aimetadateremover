@@ -13,7 +13,7 @@ import { pricing } from "@/lib/pricing";
 export const metadata = metadataFor("/pricing");
 
 const faqs = [
-  { question: "What does Free include?", answer: "Guests receive 1 single-image clean per day. After Google sign-in, Free includes 5 single-image cleans per day in total, with no batch processing. Google sign-in is required for the 5-image allowance, and no credit card is needed." },
+  { question: "What does Free include?", answer: `Guests receive ${pricing.guestImagesPerDay} single-image cleans per day. After Google sign-in, Free includes ${pricing.accountImagesPerDay} single-image cleans per day in total, with no batch processing. Google sign-in is required for the ${pricing.accountImagesPerDay}-image allowance, and no credit card is needed.` },
   { question: "How much does Pro cost?", answer: "Pro Monthly is $4.90 for the first 30 days, then $9.90 per month. Pro Yearly is $49.90 for the first 365 days, then $89.90 per year. Your checkout shows the total due and next renewal date before you pay." },
   { question: "What does Pro include?", answer: "Both Pro plans include unlimited daily image count and batches of up to 10 photos. Yearly also includes up to 30 images per processing session across three batches. Cleaning and verification stay in your browser on every plan." },
   { question: "What image formats are supported?", answer: "JPEG and PNG cleaning are supported. WebP inspection is available, but WebP cleaning is not. Processing stays in your browser and the original file remains unchanged." },
@@ -22,7 +22,7 @@ const faqs = [
 ];
 
 const rows = [
-  ["Daily image count", "5 photos/day", "Unlimited", "Unlimited"],
+  ["Daily image count", `${pricing.accountImagesPerDay} photos/day with sign-in; ${pricing.guestImagesPerDay}/day as guest`, "Unlimited", "Unlimited"],
   ["Batch processing", "Not included", "Up to 10 photos/batch", "Up to 10 photos/batch"],
   ["Processing session", "Not specified", "Not specified", "Up to 30 images across 3 batches"],
   ["Batch ZIP download", "Not included", "Included", "Included"],
@@ -39,7 +39,7 @@ export default function PricingPage() {
       <Breadcrumbs current="Pricing" />
       <div className="pricing-intro"><p className="eyebrow">Simple plans. Private by design.</p><h1>A little cleanup.<br />Or a whole batch.</h1><p>Clean a few images free, or choose Pro for recurring batch work. Your images stay in your browser.</p></div>
       <div className="pricing-plans">
-        <PlanCard label="FREE FOREVER" name="Free" audience="For everyday image cleanup." price="$0" priceNote="forever free" allowance={`${pricing.free.dailyImageLimit} photos / day`} allowanceNote="No batch processing" features={["5/day with Google; guests 1/day", "No credit card", "JPEG & PNG cleaning", "WebP inspection"]} action={<Link className="button primary" href="/workspace">Use the workspace <ArrowRight size={16} aria-hidden="true" /></Link>} />
+        <PlanCard label="FREE FOREVER" name="Free" audience="For everyday image cleanup." price="$0" priceNote="forever free" allowance={`${pricing.free.dailyImageLimit} photos / day`} allowanceNote="No batch processing" features={[`${pricing.accountImagesPerDay}/day with Google; guests ${pricing.guestImagesPerDay}/day`, "No credit card", "JPEG & PNG cleaning", "WebP inspection"]} action={<Link className="button primary" href="/workspace">Use the workspace <ArrowRight size={16} aria-hidden="true" /></Link>} />
         <PlanCard featured label="MONTHLY PLAN" name="Pro Monthly" audience="For recurring batch workflows." price={`$${pricing.pro.monthly.firstPurchaseAmountUsd}`} regularPrice={`$${pricing.pro.monthly.standardAmountUsd}`} priceNote={`First 30 days · then $${pricing.pro.monthly.standardAmountUsd}/month`} allowance="Unlimited daily image count" allowanceNote="Up to 10 photos per batch" features={["Batch ZIP downloads", "Cancel future renewals", "JPEG & PNG cleaning; WebP inspection only"]} action={<BillingPanel compact plan="monthly" />} />
         <PlanCard label="BEST VALUE" name="Pro Yearly" audience="For teams that prefer annual billing." price={`$${pricing.pro.yearly.firstYearAmountUsd}`} regularPrice={`$${pricing.pro.yearly.standardAmountUsd}`} priceNote={`First 365 days · then $${pricing.pro.yearly.standardAmountUsd}/year`} allowance="Unlimited daily image count" allowanceNote="Up to 10 photos per batch" features={["Up to 30 images per session across three batches", "Batch ZIP downloads", "Cancel future renewals", "JPEG & PNG cleaning; WebP inspection only"]} action={<BillingPanel compact plan="yearly" />} />
       </div>
