@@ -125,8 +125,6 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
         <p className="settings-status" role="status">{settingsMessage}</p>
       </fieldset>}
       {notice && <p className="batch-notice" role="status">{notice}</p>}
-      {defaultMode === "clean" && <ImagePlanNote batch={sampleMode === "batch"} />}
-      <UsageAllowance />
       {confirmationPending && <button className="button secondary" disabled={busy} onClick={()=>void retryConfirmation()}>Retry usage confirmation</button>}
       {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {completed.length} ready to download · {partial.length} partial · {failed.length} failed{scanOnly.length > 0 ? ` · ${scanOnly.length} inspection only` : ""}</span><div className="batch-toolbar-actions">{active && <button className="button secondary result-jump" onClick={() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{activeProcessing ? "View progress" : active.verification ? "View result & download" : active.error ? "View error" : "View result"}</button>}{retryable.length > 0 && <button className="button secondary" disabled={busy} onClick={() => void cleanFiles(retryable.map(file=>file.id),policy)}>Retry failed cleans ({retryable.length})</button>}<button className="button secondary" disabled={busy} onClick={clearFiles}>Clear queue</button></div></div>}
       {files.length > 1 && completed.length > 0 && <div className="batch-download"><button className="button primary" disabled={busy} onClick={() => void downloadZip()}><Download aria-hidden="true" />Download completed images (ZIP)</button><p>{completed.length} of {files.length} files included · {partial.length} need review. ZIP includes a local batch results file; files without a completed copy are excluded.</p></div>}
@@ -200,6 +198,9 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
           )}
         </div>
       </div>
+
+      {defaultMode === "clean" && <ImagePlanNote batch={sampleMode === "batch"} />}
+      <UsageAllowance />
 
       <p className="workspace-legal">Before choosing files, read our <Link prefetch={false} href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and <Link prefetch={false} href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service<span className="sr-only"> (opens in a new tab)</span></Link>. <Link prefetch={false} href="/pricing" target="_blank" rel="noopener noreferrer">View plans<span className="sr-only"> (opens in a new tab)</span></Link>.</p>
       <div className="automatic-policy">
