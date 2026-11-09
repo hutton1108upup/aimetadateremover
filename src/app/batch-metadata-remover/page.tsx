@@ -1,3 +1,4 @@
+import { pricing } from "@/lib/pricing";
 import Link from "next/link";
 import { ArrowRight, Download, Files, ShieldCheck } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
@@ -13,7 +14,7 @@ import { appSchema, faqSchema } from "@/lib/structured-data";
 export const metadata = metadataFor("/batch-metadata-remover");
 
 const faqs = [
-  { question: "How many images can I clean in one batch?", answer: "Pro Monthly and Pro Yearly process up to 10 images per batch. Yearly can process up to 30 images per session across three batches on wider screens. Guests have 1 single-image clean/day; Google sign-in gives Free users 5/day in total. Free does not include batches or ZIP export. Device queue limits also apply: 30 files/200 MB at 768 px or wider, or 10 files/100 MB below 768 px; each file is limited to 25 MB. Built-in samples are free to try." },
+  { question: "How many images can I clean in one batch?", answer: `Pro Monthly and Pro Yearly process up to 10 images per batch. Yearly can process up to 30 images per session across three batches on wider screens. Guests have ${pricing.guestImagesPerDay} single-image cleans/day; Google sign-in gives Free users ${pricing.accountImagesPerDay}/day in total. Free does not include batches or ZIP export. Device queue limits also apply: 30 files/200 MB at 768 px or wider, or 10 files/100 MB below 768 px; each file is limited to 25 MB. Built-in samples are free to try.` },
   { question: "Does one failed image stop the batch?", answer: "No. Completed copies remain downloadable. The failed file is listed separately in the batch results file and is not included as an image in the ZIP." },
   { question: "Does the ZIP include files that still need review?", answer: "Yes. A processed copy with unresolved metadata can be included, but its result is marked review needed. Check each result before you deliver the ZIP." },
   { question: "Are images uploaded for batch processing?", answer: "No. The images are scanned, cleaned, verified and packaged in your browser. Your originals stay on your device." },

@@ -33,12 +33,27 @@ describe("atomic daily usage with real SQLite",()=>{
   beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(now);fixture=new TestDatabase();});
   afterEach(()=>{fixture.sql.close();vi.useRealTimers();});
   const config=billingConfig({...settings,AUTH_DB:{} as D1Database});
-  it("admits only one of two simultaneous guest reservations",async()=>{const results=await Promise.allSettled([reserveUsage(fixture.db,config,guest,"one","single"),reserveUsage(fixture.db,config,guest,"two","single")]);expect(results.filter(r=>r.status==="fulfilled")).toHaveLength(1);expect((await usageSummary(fixture.db,config,guest)).singleRemaining).toBe(0);});
-  it("sign-in increases the daily total to five rather than adding five",async()=>{await reserveUsage(fixture.db,config,guest,"guest","single");await finishUsage(fixture.db,config,guest,"guest","complete");expect((await usageSummary(fixture.db,config,account)).singleRemaining).toBe(4);await reserveUsage(fixture.db,config,account,"a","single");await reserveUsage(fixture.db,config,account,"b","single");await reserveUsage(fixture.db,config,account,"c","single");await reserveUsage(fixture.db,config,account,"d","single");await expect(reserveUsage(fixture.db,config,account,"e","single")).rejects.toMatchObject({status:429});});
-  it("restores failed tasks and makes completion idempotent",async()=>{await reserveUsage(fixture.db,config,guest,"fail","single");await finishUsage(fixture.db,config,guest,"fail","release");await reserveUsage(fixture.db,config,guest,"ok","single");await finishUsage(fixture.db,config,guest,"ok","complete");await finishUsage(fixture.db,config,guest,"ok","complete");await finishUsage(fixture.db,config,guest,"ok","release");expect((await usageSummary(fixture.db,config,guest)).singleRemaining).toBe(0);});
-  it("expires abandoned reservations, but refuses late confirmation",async()=>{await reserveUsage(fixture.db,config,guest,"stale","single");vi.setSystemTime(now+16*60000);expect((await usageSummary(fixture.db,config,guest)).singleRemaining).toBe(1);await expect(finishUsage(fixture.db,config,guest,"stale","complete")).rejects.toMatchObject({status:409});});
-  it("resets at UTC midnight and forbids another user's confirmation",async()=>{await reserveUsage(fixture.db,config,guest,"old","single");await expect(finishUsage(fixture.db,config,account,"old","complete")).rejects.toMatchObject({status:404});await finishUsage(fixture.db,config,guest,"old","complete");vi.setSystemTime(Date.parse("2026-09-24T00:00:00Z"));expect((await usageSummary(fixture.db,config,guest)).singleRemaining).toBe(1);});
-  it("grants exactly 20 paid tasks separately from the free allowance",async()=>{fixture.sql.exec(`INSERT INTO billing_checkout(id,user_id,environment,product_id,buyer_email,created_at,expires_at,consent_version) VALUES('checkout','alice','test','product','alice@example.test',0,0,'monthly');INSERT INTO billing_subscription(order_id,environment,user_id,checkout_id,status,period_start,period_end,will_renew,paid,checked_at) VALUES('order','test','alice','checkout','active',${now-1000},${now+86400000},1,1,${now});`);for(let i=0;i<20;i++)await reserveUsage(fixture.db,config,account,`batch-${i}`,"batch");await expect(reserveUsage(fixture.db,config,account,"extra","batch")).rejects.toMatchObject({status:429});expect((await usageSummary(fixture.db,config,account)).singleRemaining).toBe(5);});
+  it("admits exactly five of six simultaneous guest reservations",async()=>{
+    const results=await Promise.allSettled(Array.from({length:6},(_,i)=>reserveUsage(fixture.db,config,guest,`guest-${i}`,"single")));
+    expect(results.filter(r=>r.status==="fulfilled")).toHaveLength(5);
+    expect(results.filter(r=>r.status==="rejected")).toHaveLength(1);
+    expect((await usageSummary(fixture.db,config,guest)).singleRemaining).toBe(0);
+  });
+  it("sign-in raises the total to ten including three anonymous cleans",async()=>{
+    for(let i=0;i<3;i++){await reserveUsage(fixture.db,config,guest,`guest-${i}`,"single");await finishUsage(fixture.db,config,guest,`guest-${i}`,"complete");}
+    expect((await usageSummary(fixture.db,config,account)).singleRemaining).toBe(7);
+    for(let i=0;i<7;i++)await reserveUsage(fixture.db,config,account,`account-${i}`,"single");
+    await expect(reserveUsage(fixture.db,config,account,"over-limit","single")).rejects.toMatchObject({status:429});
+  });
+  it("gives a signed-in account exactly ten daily singles",async()=>{
+    const results=await Promise.allSettled(Array.from({length:11},(_,i)=>reserveUsage(fixture.db,config,account,`account-${i}`,"single")));
+    expect(results.filter(r=>r.status==="fulfilled")).toHaveLength(10);
+    expect((await usageSummary(fixture.db,config,account)).singleRemaining).toBe(0);
+  });
+  it("restores failed tasks and makes completion idempotent",async()=>{await reserveUsage(fixture.db,config,guest,"fail","single");await finishUsage(fixture.db,config,guest,"fail","release");await reserveUsage(fixture.db,config,guest,"ok","single");await finishUsage(fixture.db,config,guest,"ok","complete");await finishUsage(fixture.db,config,guest,"ok","complete");await finishUsage(fixture.db,config,guest,"ok","release");expect((await usageSummary(fixture.db,config,guest)).singleRemaining).toBe(4);});
+  it("expires abandoned reservations, but refuses late confirmation",async()=>{await reserveUsage(fixture.db,config,guest,"stale","single");vi.setSystemTime(now+16*60000);expect((await usageSummary(fixture.db,config,guest)).singleRemaining).toBe(5);await expect(finishUsage(fixture.db,config,guest,"stale","complete")).rejects.toMatchObject({status:409});});
+  it("resets at UTC midnight and forbids another user's confirmation",async()=>{await reserveUsage(fixture.db,config,guest,"old","single");await expect(finishUsage(fixture.db,config,account,"old","complete")).rejects.toMatchObject({status:404});await finishUsage(fixture.db,config,guest,"old","complete");vi.setSystemTime(Date.parse("2026-09-24T00:00:00Z"));expect((await usageSummary(fixture.db,config,guest)).singleRemaining).toBe(5);});
+  it("grants exactly 20 paid tasks separately from the free allowance",async()=>{fixture.sql.exec(`INSERT INTO billing_checkout(id,user_id,environment,product_id,buyer_email,created_at,expires_at,consent_version) VALUES('checkout','alice','test','product','alice@example.test',0,0,'monthly');INSERT INTO billing_subscription(order_id,environment,user_id,checkout_id,status,period_start,period_end,will_renew,paid,checked_at) VALUES('order','test','alice','checkout','active',${now-1000},${now+86400000},1,1,${now});`);for(let i=0;i<20;i++)await reserveUsage(fixture.db,config,account,`batch-${i}`,"batch");await expect(reserveUsage(fixture.db,config,account,"extra","batch")).rejects.toMatchObject({status:429});expect((await usageSummary(fixture.db,config,account)).singleRemaining).toBe(10);});
   it("denies batch cleaning without a verified subscription",async()=>{await expect(reserveUsage(fixture.db,config,account,"no-paid","batch")).rejects.toMatchObject({status:403});});
   it("keeps two paid accounts independent when their guest identity matches",async()=>{
     fixture.sql.exec("INSERT INTO auth_user VALUES('bob','Bob','bob@example.test',1,NULL,0,0)");
@@ -56,15 +71,13 @@ describe("atomic daily usage with real SQLite",()=>{
     await finishUsage(fixture.db,config,guest,"anonymous","complete");
     await reserveUsage(fixture.db,config,account,"alice-single","single");
     const bob={userId:"bob",guestId:account.guestId};
-    expect((await usageSummary(fixture.db,config,bob)).singleRemaining).toBe(4);
-    await reserveUsage(fixture.db,config,bob,"bob-one","single");
-    await reserveUsage(fixture.db,config,bob,"bob-two","single");
-    await reserveUsage(fixture.db,config,bob,"bob-three","single");await reserveUsage(fixture.db,config,bob,"bob-four","single");await expect(reserveUsage(fixture.db,config,bob,"bob-five","single")).rejects.toMatchObject({status:429});
-    expect((await usageSummary(fixture.db,config,account)).singleRemaining).toBe(3);
+    expect((await usageSummary(fixture.db,config,bob)).singleRemaining).toBe(9);
+    for(let i=0;i<9;i++)await reserveUsage(fixture.db,config,bob,`bob-${i}`,"single");
+    await expect(reserveUsage(fixture.db,config,bob,"bob-extra","single")).rejects.toMatchObject({status:429});
+    expect((await usageSummary(fixture.db,config,account)).singleRemaining).toBe(8);
   });
   it("does not replenish the guest allowance after signing out",async()=>{
-    await reserveUsage(fixture.db,config,account,"signed-in-single","single");
-    await finishUsage(fixture.db,config,account,"signed-in-single","complete");
+    for(let i=0;i<5;i++){await reserveUsage(fixture.db,config,account,`signed-in-${i}`,"single");await finishUsage(fixture.db,config,account,`signed-in-${i}`,"complete");}
     await expect(reserveUsage(fixture.db,config,guest,"signed-out-single","single")).rejects.toMatchObject({status:429});
   });
 });
@@ -106,7 +119,7 @@ describe("October Pro plans",()=>{
       for(let i=0;i<25;i++)await reserveUsage(fixture.db,config,identity,`pro-${i}`,"batch",10);
       const summary=await usageSummary(fixture.db,config,identity);expect(summary.unlimited).toBe(true);expect(summary.batchRemaining).toBeNull();expect(summary.sessionMaxImages).toBe(30);
       await expect(reserveUsage(fixture.db,config,identity,"too-many","batch",11)).rejects.toMatchObject({status:400});
-      vi.setSystemTime(now+86400001);await expect(reserveUsage(fixture.db,config,identity,"expired","batch",2)).rejects.toMatchObject({status:403});expect((await usageSummary(fixture.db,config,identity)).singleLimit).toBe(5);
+      vi.setSystemTime(now+86400001);await expect(reserveUsage(fixture.db,config,identity,"expired","batch",2)).rejects.toMatchObject({status:403});expect((await usageSummary(fixture.db,config,identity)).singleLimit).toBe(10);
     }finally{fixture.sql.close();vi.useRealTimers();}
   });
   it("allows replacing a fully refunded canceled order without allowing duplicate active billing",()=>{const source=pro("monthly",true);expect(canReplaceSubscription(source)).toBe(false);source.payments[0].isFullyRefunded=true;expect(canReplaceSubscription(source)).toBe(false);source.willRenew=false;source.status="canceling";expect(canReplaceSubscription(source)).toBe(true);});
