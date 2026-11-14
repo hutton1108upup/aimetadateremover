@@ -1,3 +1,5 @@
+import { pricing } from "@/lib/pricing";
+
 export interface GuideSection { heading: string; paragraphs: string[] }
 export interface GuideRecord {
   slug: string; title: string; description: string; h1: string; kicker: string; updated: string; updatedIso: string;
@@ -21,7 +23,7 @@ export const guides: GuideRecord[] = [
     "title": "How to Batch Remove Image Metadata Before Client Delivery",
     "description": "Prepare JPEG and PNG client copies locally, review every result, and check a ZIP summary. Understand Pro batch limits, partial copies and filename privacy.",
     "h1": "How to batch remove image metadata before client delivery",
-    "answer": "Use the batch tool to process supported JPEG and PNG files locally, review each result and download completed copies in a ZIP. Pro is required for your own batches and ZIP exports. A ZIP can include partial results, so check the images and batch-results.json before handing the archive to a client. Originals remain unchanged.",
+    "answer": "Use the batch tool to process supported JPEG and PNG files locally and review each result. The default ZIP includes only files passing the selected policy and supported-field checks. Pro is required for your own batches and ZIP exports. Check the images and batch-results.json before delivery; passing does not mean metadata-free. Originals remain unchanged.",
     "table": {
       "headers": [
         "Plan or limit",
@@ -31,22 +33,22 @@ export const guides: GuideRecord[] = [
       "rows": [
         [
           "Guest",
-          "1 single-image clean per day.",
+          `${pricing.guestImagesPerDay} single-image cleans per day.`,
           "No personal-file batch processing or ZIP export."
         ],
         [
           "Free with Google sign-in",
-          "5 single-image cleans per day in total.",
+          `${pricing.accountImagesPerDay} single-image cleans per day in total.`,
           "No personal-file batch processing or ZIP export."
         ],
         [
           "Pro Monthly and Yearly",
-          "Unlimited daily image count; up to 10 images per batch.",
+          `Unlimited daily image count; up to ${pricing.pro.monthly.batchMaxPhotos} images per batch.`,
           "ZIP export included."
         ],
         [
           "Pro Yearly session",
-          "Up to 30 images across three batches.",
+          `Up to ${pricing.pro.yearly.sessionMaxImages} images across three batches.`,
           "Available within device capacity; not a 30-image single batch."
         ],
         [
@@ -72,19 +74,19 @@ export const guides: GuideRecord[] = [
       },
       {
         "title": "Review every result",
-        "body": "Check which images are complete, unchanged, partial or failed. Remove partial files from the queue if they should not be delivered. A failed image is not included as an image in the ZIP."
+        "body": "Check which images passed the selected policy and supported-field checks, need review, or failed. Review-needed and failed files are excluded from the default ZIP."
       },
       {
         "title": "Download and inspect the archive",
-        "body": "Choose Download completed images (ZIP). Open the archive locally, review batch-results.json, and spot-check the actual output files in Metadata Checker. Confirm which files are included before sharing."
+        "body": "Choose Download files passing checks (ZIP). Open the archive locally, review batch-results.json, and spot-check the actual output files in Metadata Checker. Confirm which files are included before sharing."
       }
     ],
     "sections": [
       {
         "heading": "The summary is a checklist, not a clean certificate",
         "paragraphs": [
-          "The ZIP contains completed images and batch-results.json. Each summary entry includes the original filename, detected format, result, counts of removed/preserved/unresolved fields and whether the image is included.",
-          "The built-in batch has three files: one cleaned, one unchanged and one partially cleaned. All three can be included. Its needsReview count is 1; that is intentional. A failed or inspection-only file is listed but excluded from the image set."
+          "The ZIP contains images passing the selected policy and supported-field checks and batch-results.json. Each summary entry includes the original filename, detected format, result, counts of removed/preserved/unresolved fields and whether the image is included.",
+          "The built-in batch has three files: one cleaned, one unchanged and one partially cleaned. The first two pass the current checks; the partial copy is excluded and needs review. Failed and inspection-only files are also excluded."
         ]
       },
       {
@@ -110,7 +112,7 @@ export const guides: GuideRecord[] = [
       }
     ],
     "limits": [
-      "Partial copies can be included in a ZIP and may still contain private metadata.",
+      "Partial copies are excluded from the default ZIP and may still contain private metadata.",
       "Failed files are excluded; do not assume the selected count equals the delivered count.",
       "The ZIP summary and entry names can disclose original filenames."
     ],
@@ -487,7 +489,7 @@ export const guides: GuideRecord[] = [
       {
         "heading": "Plan the number of files",
         "paragraphs": [
-          "Guests have 1 single-image clean per day. Google sign-in gives Free users 5 per day in total. Batch processing and ZIP downloads require Pro. The checker does not turn an unsupported format into a supported cleaning format."
+          `Guests have ${pricing.guestImagesPerDay} single-image cleans per day. Google sign-in gives Free users ${pricing.accountImagesPerDay} per day in total. Batch processing and ZIP downloads require Pro. The checker does not turn an unsupported format into a supported cleaning format.`
         ]
       }
     ],
@@ -616,7 +618,7 @@ export const guides: GuideRecord[] = [
       {
         "heading": "Free allowance and batch work",
         "paragraphs": [
-          "Guests can clean 1 image per day. Google sign-in gives Free users 5 single-image cleans per day in total. Pro supports batches of up to 10 and ZIP downloads; Yearly can split up to 30 images across three batches within device limits. Built-in samples are free to try."
+          `Guests can clean ${pricing.guestImagesPerDay} images per day. Google sign-in gives Free users ${pricing.accountImagesPerDay} single-image cleans per day in total. Pro supports batches of up to ${pricing.pro.monthly.batchMaxPhotos} and ZIP downloads; Yearly can split up to ${pricing.pro.yearly.sessionMaxImages} images across three batches within device limits. Built-in samples are free to try.`
         ]
       }
     ],
@@ -808,8 +810,8 @@ export const guides: GuideRecord[] = [
       {
         "heading": "Single images and client batches",
         "paragraphs": [
-          "Guests can clean 1 image per day; Google sign-in gives Free users 5 single-image cleans per day in total. Pro provides up to 10 images per batch and ZIP export. Yearly can process up to 30 images across three batches when device capacity permits. Daily allowances reset at 00:00 UTC.",
-          "For a batch delivery, check every image and the accompanying results summary. Partial copies may be included; failed files are excluded. Follow the batch guide before sending an archive to a client."
+          `Guests can clean ${pricing.guestImagesPerDay} images per day; Google sign-in gives Free users ${pricing.accountImagesPerDay} single-image cleans per day in total. Pro provides up to ${pricing.pro.monthly.batchMaxPhotos} images per batch and ZIP export. Yearly can process up to ${pricing.pro.yearly.sessionMaxImages} images across three batches when device capacity permits. Daily allowances reset at 00:00 UTC.`,
+          "For a batch delivery, check every image and the accompanying results summary. Partial and failed files are excluded from the default ZIP. Follow the batch guide before sending an archive to a client."
         ]
       }
     ],

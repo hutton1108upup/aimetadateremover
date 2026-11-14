@@ -64,7 +64,7 @@ try {
     const originalDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Download original',exact:true}).click();expect((await readFile(await (await originalDownload).path())).equals(untouched)).toBe(true);check('No-op returns original bytes and never claims a removal');
     await page.getByRole('button',{name:'Clear queue'}).click();
     await pngInput.setInputFiles({name:'partial.png',mimeType:'image/png',buffer:png([workflow,chunk('zTXt',enc('parameters\0\0compressed'))])});
-    await expect(page.getByRole('heading',{name:'Partially cleaned — review remaining data'})).toBeVisible();await expect(page.getByRole('button',{name:'Download clean copy',exact:true})).toBeEnabled();check('Unsupported metadata produces partial result, not clean success');
+    await expect(page.getByRole('heading',{name:'Partially cleaned — review remaining data'})).toBeVisible();await expect(page.getByRole('button',{name:'Download partial copy',exact:true})).toBeEnabled();check('Unsupported metadata produces partial result, not clean success');
     await page.getByRole('button',{name:'Clear queue'}).click();
     const webp=Buffer.from(await page.evaluate(()=>{const c=document.createElement('canvas');c.width=32;c.height=32;return c.toDataURL('image/webp').split(',')[1];}),'base64');
     await pngInput.setInputFiles({name:'pretend.png',mimeType:'image/png',buffer:webp});await expect(page.locator('.error-banner')).toContainText('accepts PNG');await expect(page.getByRole('button',{name:'Download clean copy',exact:true})).toHaveCount(0);check('PNG page checks bytes, rejecting renamed other formats');
@@ -75,10 +75,10 @@ try {
       {name:'scan.webp',mimeType:'image/webp',buffer:webp},
       {name:'broken.png',mimeType:'image/png',buffer:enc('invalid')},
     ]);
-    await expect(page.locator('.batch-toolbar')).toContainText('2 ready to download');
+    await expect(page.locator('.batch-toolbar')).toContainText('2 passed current checks');
     await expect(page.locator('.batch-toolbar')).toContainText('1 failed');
     await expect(page.locator('.batch-toolbar')).toContainText('1 inspection only');
-    const zipDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Download completed images (ZIP)'}).click();
+    const zipDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Download files passing checks (ZIP)'}).click();
     const zip=await JSZip.loadAsync(await readFile(await (await zipDownload).path()));expect(Object.keys(zip.files)).toHaveLength(3);
     const manifest=JSON.parse(await zip.file('batch-results.json').async('string'));expect(manifest.summary.included).toBe(2);expect(manifest.summary.excluded).toBe(2);
     const originalEntry=Object.values(zip.files).find(file=>file.name.includes('original-plain.png'));expect(originalEntry).toBeTruthy();expect((await originalEntry.async('nodebuffer')).equals(untouched)).toBe(true);

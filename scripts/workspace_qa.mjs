@@ -58,10 +58,10 @@ try {
       await input.setInputFiles(Array.from({length:count},()=>({name:`${marker}.png`,mimeType:"image/png",buffer:sample})));
       await expect(page.locator('.batch-toolbar')).toContainText(`${count} files`);
       await expect.poll(()=>page.evaluate(()=>window.__qa.workers.size)).toBe(0);
-      await expect(page.locator('.batch-toolbar')).toContainText(`${count} ready to download`,{timeout:120_000});
+      await expect(page.locator('.batch-toolbar')).toContainText(`${count} passed current checks`,{timeout:120_000});
       await expect(page.getByRole("button",{name:"Download clean copy"})).toBeVisible();
       if(cycle===0) {
-        const downloading=page.waitForEvent("download");await page.getByRole("button",{name:"Download completed images (ZIP)"}).click();
+        const downloading=page.waitForEvent("download");await page.getByRole("button",{name:"Download files passing checks (ZIP)"}).click();
         const download=await downloading;const zip=await JSZip.loadAsync(await readFile(await download.path()));
         expect(Object.keys(zip.files)).toHaveLength(count+1);
         const manifest=JSON.parse(await zip.file("batch-results.json").async("string"));
@@ -122,7 +122,7 @@ try {
 
     const webp=Buffer.from(await page.evaluate(()=>{const c=document.createElement("canvas");c.width=32;c.height=32;return c.toDataURL("image/webp").split(",")[1];}),"base64");
     await input.setInputFiles([{name:"allowed.png",mimeType:"image/png",buffer:sample},{name:"scan.webp",mimeType:"image/webp",buffer:webp}]);
-    await expect(page.locator('.batch-toolbar')).toContainText("1 ready to download");
+    await expect(page.locator('.batch-toolbar')).toContainText("1 passed current checks");
     await expect(page.locator('.batch-toolbar')).toContainText("1 inspection only");
     await page.getByRole("button",{name:"Clear queue"}).click();
     check(`${mobile?"mobile":"desktop"} mixed WebP batch skips unsupported cleaning`);
@@ -139,7 +139,7 @@ try {
     const padding=chunk("vpAg",Buffer.alloc(Math.floor((mobile?9.5:6.5)*1024*1024),17));
     const large=png([workflow,padding]);const largePath=`${dir}/${mobile?"mobile":"desktop"}-large.png`;await writeFile(largePath,large);
     await input.setInputFiles(Array(count).fill(largePath));
-    await expect(page.locator('.batch-toolbar')).toContainText(`${count} ready to download`,{timeout:240_000});
+    await expect(page.locator('.batch-toolbar')).toContainText(`${count} passed current checks`,{timeout:240_000});
     await memory("large-batch-ready");
     await page.getByRole("button",{name:"Clear queue"}).click();
     await expect.poll(()=>page.evaluate(()=>window.__qa.urls.size+window.__qa.workers.size)).toBe(0);

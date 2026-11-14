@@ -80,16 +80,16 @@ with sync_playwright() as p:
 
         page.goto(BASE + "/batch-metadata-remover", wait_until="networkidle")
         page.get_by_role("button", name="Try a safe batch", exact=True).click()
-        zip_button = page.get_by_role("button", name="Download completed images (ZIP)", exact=True)
+        zip_button = page.get_by_role("button", name="Download files passing checks (ZIP)", exact=True)
         expect(zip_button).to_be_enabled(timeout=20000)
-        expect(page.get_by_text("3 of 3 files included", exact=False)).to_be_visible(timeout=20000)
+        expect(page.get_by_text("2 of 3 files included", exact=False)).to_be_visible(timeout=20000)
         with page.expect_download() as zip_info:
             zip_button.click()
         archive = OUT / "safe-batch.zip"
         zip_info.value.save_as(str(archive))
         with zipfile.ZipFile(archive) as zipped:
             summary = json.loads(zipped.read("batch-results.json"))
-            assert summary["summary"] == {"selected": 3, "included": 3, "needsReview": 1, "excluded": 0}, summary
+            assert summary["summary"] == {"selected": 3, "included": 2, "needsReview": 1, "excluded": 1}, summary
         assert any(event.get("source") == "sample" and event["event"] == "verify_review" for event in page.evaluate("window.__contentEvents"))
         checks.append({"flow": "safe-batch-zip", "summary": summary["summary"]})
 
