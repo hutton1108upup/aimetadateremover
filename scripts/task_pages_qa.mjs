@@ -100,10 +100,10 @@ try {
         { name: "second.png", mimeType: "image/png", buffer: sample },
         { name: "broken.png", mimeType: "image/png", buffer: Buffer.from("broken") },
       ]);
-      await expect(page.locator(".batch-toolbar")).toContainText("2 ready to download");
+      await expect(page.locator(".batch-toolbar")).toContainText("2 passed current checks");
       await expect(page.locator(".batch-toolbar")).toContainText("1 failed");
       const pending = page.waitForEvent("download");
-      await page.getByRole("button", { name: "Download completed images (ZIP)" }).click();
+      await page.getByRole("button", { name: "Download files passing checks (ZIP)" }).click();
       const zip = await JSZip.loadAsync(await readFile(await (await pending).path()));
       const manifest = JSON.parse(await zip.file("batch-results.json").async("string"));
       expect(manifest.summary).toMatchObject({ selected: 3, included: 2, excluded: 1 });

@@ -112,14 +112,17 @@ for (const [device, engine, viewport] of [
     // Validate the ZIP and every advertised sample outcome using actual browser output.
     await visit("/batch-metadata-remover");
     await page.getByRole("button", { name: "Try a safe batch", exact: true }).click();
-    await expect(page.locator(".batch-toolbar")).toContainText("3 ready to download");
-    await expect(page.locator(".batch-toolbar")).toContainText("1 partial");
-    await expect(page.getByRole("button", { name: "Download completed images (ZIP)", exact: true })).toBeEnabled();
-    const zipped = await download(page, "Download completed images (ZIP)");
+    await expect(page.locator(".batch-toolbar")).toContainText("2 passed current checks");
+    await expect(page.locator(".batch-toolbar")).toContainText("1 need review");
+    await expect(page.getByRole("button", { name: "Download files passing checks (ZIP)", exact: true })).toBeEnabled();
+    const zipped = await download(page, "Download files passing checks (ZIP)");
     const zip = await JSZip.loadAsync(zipped.bytes);
     const manifest = JSON.parse(await zip.file("batch-results.json").async("string"));
-    expect(manifest.summary).toEqual({ selected: 3, included: 3, needsReview: 1, excluded: 0 });
+    expect(manifest.summary).toEqual({ selected: 3, included: 2, needsReview: 1, excluded: 1 });
     expect(manifest.files.map(file => file.result)).toEqual(["cleaned", "unchanged", "review_needed"]);
+    expect(manifest.files.map(file => file.includedInZip)).toEqual([true, true, false]);
+    expect(Object.keys(zip.files).filter(name => name.endsWith(".png"))).toHaveLength(2);
+    expect(Object.keys(zip.files).some(name => name.includes("sample-review-needed.png"))).toBe(false);
     expect(await zip.file("02-original-sample-unchanged.png").async("nodebuffer")).toEqual(unchanged);
     expect((await zip.file("01-clean-sample-cleaned.png").async("nodebuffer")).includes(Buffer.from("steps=30"))).toBe(false);
     if (device === "desktop") await page.locator(".file-rail .file-row").nth(2).click();

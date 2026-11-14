@@ -21,6 +21,7 @@ const revoke = (url?: string) => { if(url) URL.revokeObjectURL?.(url); };
 const release = (file: LocalImage) => { revoke(file.preview);revoke(file.cleanPreview);releaseBuffer(file.cleaned); };
 export const unchangedResult = (file: LocalImage) => Boolean(file.verification && !file.verification.items.some(item => item.after === "removed") && !unresolvedCount(file.verification));
 export const unresolvedCount = (v: VerificationResult) => v.items.filter(i=>!["removed","preserved"].includes(i.after)).length;
+export const passesPolicyChecks = (file: LocalImage) => Boolean(file.status === "ready" && file.cleaned && file.verification && unresolvedCount(file.verification) === 0);
 export function downloadLocal(buffer: BlobPart, name: string, type: string) {
   const url=URL.createObjectURL(new Blob([buffer],{type}));
   const anchor=document.createElement("a");anchor.href=url;anchor.download=name;
@@ -198,7 +199,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
   function downloadOne(item:LocalImage) {if(!item.cleaned || item.status!=="ready" || busy)return false;const unchanged=unchangedResult(item);downloadLocal(unchanged?item.file:item.cleaned,unchanged?item.file.name:`clean-${item.file.name}`,mime(item.scan));recordDownload(item,"single");return true;}
   async function downloadZip() {
     if(!begin())return;
-    const selected=filesRef.current.filter(f=>f.cleaned && f.verification && f.status==="ready");
+    const selected=filesRef.current.filter(passesPolicyChecks);
     try {
       if(!selected.length)return;
       if(selected.some(item=>!item.zipAllowed)) {
@@ -216,7 +217,7 @@ export function useLocalWorkspace(acceptedFormats?: Array<"jpeg"|"png"|"webp">) 
         removed:f.verification?.items.filter(item=>item.after==="removed").length ?? 0,
         preserved:f.verification?.items.filter(item=>item.after==="preserved").length ?? 0,
         unresolved:f.verification ? unresolvedCount(f.verification) : 0,
-        includedInZip:Boolean(f.cleaned && f.verification),
+        includedInZip:selected.some(item=>item.id===f.id),
       }));
       zip.file("batch-results.json",JSON.stringify({version:1,generatedAt:new Date().toISOString(),summary:{selected:entries.length,included:selected.length,needsReview:entries.filter(entry=>entry.result==="review_needed").length,excluded:entries.length-selected.length},files:entries},null,2));
       const blob=await zip.generateAsync({type:"blob",compression:"STORE",streamFiles:true});

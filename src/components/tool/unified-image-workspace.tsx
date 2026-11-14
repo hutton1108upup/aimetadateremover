@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Download, FileImage, FolderOpen, LockKeyhole, Plus, ScanSearch, ShieldCheck, Trash2, UploadCloud, ZoomIn, ZoomOut } from "lucide-react";
 import type { CleanPolicy, Finding } from "@/lib/image-metadata-core/types";
-import { downloadLocal as download, useLocalWorkspace, type LocalImage, unresolvedCount } from "./use-local-workspace";
+import { downloadLocal as download, useLocalWorkspace, type LocalImage, unresolvedCount, passesPolicyChecks } from "./use-local-workspace";
 import { FindingNextActions, FindingRow } from "./finding-row";
 import { VerificationCard } from "./verification-card";
 import { FunnelReview } from "./funnel-review";
@@ -69,6 +69,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
   const acceptedMime = acceptedFormats?.map(format=>format === "jpeg" ? "image/jpeg" : `image/${format}`).join(",") ?? "image/jpeg,image/png,image/webp";
   const acceptedLabel = acceptedFormats?.map(format=>format.toUpperCase()).join(", ") ?? "JPG, PNG, or WebP";
   const completed = files.filter(file => file.status === "ready");
+  const passed = files.filter(passesPolicyChecks);
   const partial = completed.filter(file => file.verification && unresolvedCount(file.verification));
   const failed = files.filter(file => file.error);
   const retryable = failed.filter(file => file.scan && file.scan.cleanSupport !== "scan_only");
@@ -127,8 +128,8 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
       </fieldset>}
       {notice && <p className="batch-notice" role="status">{notice}</p>}
       {confirmationPending && <button className="button secondary" disabled={busy} onClick={()=>void retryConfirmation()}>Retry usage confirmation</button>}
-      {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {completed.length} ready to download · {partial.length} partial · {failed.length} failed{scanOnly.length > 0 ? ` · ${scanOnly.length} inspection only` : ""}</span><div className="batch-toolbar-actions">{active && <button className="button secondary result-jump" onClick={() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{activeProcessing ? "View progress" : active.verification ? "View result & download" : active.error ? "View error" : "View result"}</button>}{retryable.length > 0 && <button className="button secondary" disabled={busy} onClick={() => void cleanFiles(retryable.map(file=>file.id),policy)}>Retry failed cleans ({retryable.length})</button>}<button className="button secondary" disabled={busy} onClick={clearFiles}>Clear queue</button></div></div>}
-      {files.length > 1 && completed.length > 0 && <div className="batch-download"><button className="button primary" disabled={busy} onClick={() => void downloadZip()}><Download aria-hidden="true" />Download completed images (ZIP)</button><p>{completed.length} of {files.length} files included · {partial.length} need review. ZIP includes a local batch results file; files without a completed copy are excluded.</p></div>}
+      {files.length > 0 && <div className="batch-toolbar"><span>{files.length} files · {passed.length} passed current checks · {partial.length} need review · {failed.length} failed{scanOnly.length > 0 ? ` · ${scanOnly.length} inspection only` : ""}</span><div className="batch-toolbar-actions">{active && <button className="button secondary result-jump" onClick={() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{activeProcessing ? "View progress" : active.verification ? "View result & download" : active.error ? "View error" : "View result"}</button>}{retryable.length > 0 && <button className="button secondary" disabled={busy} onClick={() => void cleanFiles(retryable.map(file=>file.id),policy)}>Retry failed cleans ({retryable.length})</button>}<button className="button secondary" disabled={busy} onClick={clearFiles}>Clear queue</button></div></div>}
+      {files.length > 1 && <div className="batch-download"><button className="button primary" disabled={busy || passed.length === 0} onClick={() => void downloadZip()}><Download aria-hidden="true" />Download files passing checks (ZIP)</button><p>{passed.length} of {files.length} files included · {partial.length} need review. Only files passing the selected policy and supported-field checks are included. Review-needed, failed, and unfinished files are excluded. This does not guarantee a file is metadata-free. ZIP includes a local batch results file with original filenames.</p></div>}
       <div className="workspace-grid">
         {variant === "full" && (
           <aside className="file-rail" aria-label="File queue">
@@ -172,7 +173,7 @@ export function UnifiedImageWorkspace({ variant = "embedded", defaultMode = "cle
                   {active.verification ? <>
                     <div className="result-heading"><ShieldCheck aria-hidden="true" /><h3>{unresolvedCount(active.verification) ? "Partially cleaned — review remaining data" : unchanged ? "No supported data needed cleaning" : "Cleaning complete"}</h3></div>
                     {unchanged && <p className="panel-intro">No supported fields were removed. Download your unchanged original, or inspect another image.</p>}
-                    <button className="button primary wide download-result" disabled={busy} onClick={() => startDownload(active)}><Download aria-hidden="true" />{unchanged ? "Download original" : "Download clean copy"}</button>
+                    <button className="button primary wide download-result" disabled={busy} onClick={() => startDownload(active)}><Download aria-hidden="true" />{unresolvedCount(active.verification) ? "Download partial copy" : unchanged ? "Download original" : "Download clean copy"}</button>
                     <VerificationCard verification={active.verification} />
                   </> : <>
                     <div className="result-strip"><span>{active.scan.findings.length} metadata finding{active.scan.findings.length === 1 ? "" : "s"}</span><b>{active.scan.cleanSupport === "scan_only" ? "Inspection only" : "Scan complete"}</b></div>
