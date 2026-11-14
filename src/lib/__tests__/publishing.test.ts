@@ -54,13 +54,12 @@ describe("Phase 1 publishing manifest", () => {
   it("uses the last substantive route update for sitemap lastModified", () => {
     const entries = new Map(sitemap().map((entry) => [new URL(entry.url).pathname, entry]));
     const dates: Record<string, string[]> = {
-      "2026-11-14": ["/metadata-test-report"],
-      "2026-09-24": ["/about"],
+      "2026-11-14": ["/metadata-test-report", "/about", "/metadata-checker", "/comfyui-workflow-remover", "/batch-metadata-remover"],
       "2026-09-18": ["/terms", "/pricing"],
       "2026-09-28": ["/blog/exif-gps-privacy-before-sharing", "/blog/jpeg-png-webp-metadata-support"],
       "2026-10-12": ["/blog/c2pa-content-credentials-explained", "/blog/why-edited-photos-get-ai-info-labels"],
       "2026-10-21": ["/pdf-metadata-remover", "/docx-metadata-remover", "/supported-formats", "/blog/remove-author-metadata-from-pdf-before-sharing", "/blog/remove-author-last-modified-by-word-document"],
-      "2026-10-22": ["/", "/metadata-checker", "/remove-metadata-from-png", "/privacy", "/blog", "/comfyui-workflow-remover", "/stable-diffusion-metadata-remover", "/remove-metadata-from-jpeg", "/remove-ai-detection-from-image", "/batch-metadata-remover", "/remove-gps-from-photo", "/c2pa-metadata-checker", "/blog/chatgpt-dalle-image-metadata", "/blog/stable-diffusion-comfyui-metadata", "/blog/image-metadata-before-publishing", "/blog/batch-remove-image-metadata-client-delivery"],
+      "2026-10-22": ["/", "/remove-metadata-from-png", "/privacy", "/blog", "/stable-diffusion-metadata-remover", "/remove-metadata-from-jpeg", "/remove-ai-detection-from-image", "/remove-gps-from-photo", "/c2pa-metadata-checker", "/blog/chatgpt-dalle-image-metadata", "/blog/stable-diffusion-comfyui-metadata", "/blog/image-metadata-before-publishing", "/blog/batch-remove-image-metadata-client-delivery"],
     };
     for (const [date, paths] of Object.entries(dates)) {
       for (const path of paths) expect(new Date(entries.get(path)?.lastModified ?? "").toISOString()).toBe(`${date}T00:00:00.000Z`);

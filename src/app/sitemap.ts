@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return sitemapRoutes.map((path) => ({
     url: new URL(path, siteUrl).toString(),
     lastModified: new Date(
-      guideLastModified.get(path) ?? (path === "/metadata-test-report" ? "2026-11-14" : evidenceRefreshPaths.has(path) ? "2026-10-22" : contentRefreshPaths.has(path) ? "2026-10-21" : documentToolPaths.has(path) ? "2026-10-21" : blogRefreshPaths.has(path) ? "2026-10-21" : gscMvpPaths.has(path) ? "2026-10-12" : newToolPaths.has(path) ? "2026-09-28" :
+      guideLastModified.get(path) ?? (["/metadata-test-report", "/about", "/metadata-checker", "/comfyui-workflow-remover", "/batch-metadata-remover"].includes(path) ? "2026-11-14" : evidenceRefreshPaths.has(path) ? "2026-10-22" : contentRefreshPaths.has(path) ? "2026-10-21" : documentToolPaths.has(path) ? "2026-10-21" : blogRefreshPaths.has(path) ? "2026-10-21" : gscMvpPaths.has(path) ? "2026-10-12" : newToolPaths.has(path) ? "2026-09-28" :
       existingEditorialPaths.has(path) ? "2026-09-18" :
       brandRefreshPaths.has(path) ? "2026-09-24" :
       ["/", "/metadata-checker", "/remove-metadata-from-png"].includes(path) ? "2026-09-08" :
