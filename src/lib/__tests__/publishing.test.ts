@@ -11,6 +11,7 @@ describe("Phase 1 publishing manifest", () => {
       "/remove-ai-detection-from-image",
       "/remove-metadata-from-png",
       "/batch-metadata-remover",
+      "/metadata-test-report",
       "/supported-formats",
       "/comfyui-workflow-remover",
       "/stable-diffusion-metadata-remover",
@@ -53,6 +54,7 @@ describe("Phase 1 publishing manifest", () => {
   it("uses the last substantive route update for sitemap lastModified", () => {
     const entries = new Map(sitemap().map((entry) => [new URL(entry.url).pathname, entry]));
     const dates: Record<string, string[]> = {
+      "2026-11-14": ["/metadata-test-report"],
       "2026-09-24": ["/about"],
       "2026-09-18": ["/terms", "/pricing"],
       "2026-09-28": ["/blog/exif-gps-privacy-before-sharing", "/blog/jpeg-png-webp-metadata-support"],
