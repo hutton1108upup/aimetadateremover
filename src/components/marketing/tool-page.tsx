@@ -70,7 +70,7 @@ export function ToolPage(props: ToolPageProps) {
             )}
           </div>
         </section>
-        {["/comfyui-workflow-remover", "/stable-diffusion-metadata-remover", "/remove-gps-from-photo"].includes(props.path) && <section className="section"><div className="page-container"><h2>See real-file test results</h2><p>Read our dated ComfyUI, Stable Diffusion and camera JPEG tests, including a file this tool could not safely clean.</p><Link className="text-link" href="/metadata-test-report">Open the real-file compatibility report</Link></div></section>}
+        {["/stable-diffusion-metadata-remover", "/remove-gps-from-photo"].includes(props.path) && <section className="section"><div className="page-container"><h2>See real-file test results</h2><p>Read our dated ComfyUI, Stable Diffusion and camera JPEG tests, including a file this tool could not safely clean.</p><Link className="text-link" href="/metadata-test-report">Open the real-file compatibility report</Link></div></section>}
         <section className="section section-alt">
           <div className="page-container">
             <div className="section-heading">
