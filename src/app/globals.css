@@ -342,3 +342,6 @@ html{scroll-padding-top:72px}
 .document-workspace .verification-card th{width:36%;color:var(--text-heading)}
 .document-workspace .verification-card td{color:var(--text-secondary)}
 @media(max-width:720px){.document-workspace .verification-card{max-height:240px;overflow:auto}}
+
+.compatibility-report code { overflow-wrap: anywhere; word-break: break-word; }
+.compatibility-report article + article { margin-top: 2.5rem; }

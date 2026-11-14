@@ -7,7 +7,7 @@ export function PublicFooter() {
     <div className="footer-main">
       <div><Link prefetch={false} href="/" className="footer-brand"><BrandLogo /></Link><p>Inspect it. Clean it. Check it. Download it.</p><div className="footer-support" id="contact"><strong>Customer support</strong><SupportContact /><small>Questions, data requests and account closure.</small></div></div>
       <div><span>Tools</span><Link prefetch={false} href="/batch-metadata-remover">Batch Remover</Link><Link prefetch={false} href="/metadata-checker">Metadata Checker</Link><Link prefetch={false} href="/supported-formats">Supported Formats</Link><Link prefetch={false} href="/workspace">Workspace</Link></div>
-      <div><span>Learn</span><Link prefetch={false} href="/pricing">Pricing</Link><Link prefetch={false} href="/blog">Blog</Link><Link prefetch={false} href="/about">About</Link><Link prefetch={false} href="/feedback">Share feedback</Link></div>
+      <div><span>Learn</span><Link prefetch={false} href="/pricing">Pricing</Link><Link prefetch={false} href="/blog">Blog</Link><Link prefetch={false} href="/about">About</Link><Link prefetch={false} href="/metadata-test-report">Real-file tests</Link><Link prefetch={false} href="/feedback">Share feedback</Link></div>
       <div><span>Legal</span><Link prefetch={false} href="/privacy">Privacy Policy</Link><Link prefetch={false} href="/terms">Terms of Service</Link></div>
     </div>
     <div className="footer-bottom"><span>Your images stay in your browser.</span><span>Keep your original and check every downloaded copy.</span></div>

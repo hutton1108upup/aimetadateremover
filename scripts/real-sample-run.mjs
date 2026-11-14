@@ -1,0 +1,19 @@
+import { build } from 'esbuild';
+import { readFile,writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { chromium } from '@playwright/test';
+const dir='artifacts/real-file-compatibility';
+await build({stdin:{contents:'export {scanImage} from "./src/lib/image-metadata-core/scan/index"; export {cleanImage} from "./src/lib/image-metadata-core/clean/index"; export {verifyClean} from "./src/lib/image-metadata-core/verify"; export {parsePngChunks} from "./src/lib/image-metadata-core/scan/png"; export {parseJpegSegments} from "./src/lib/image-metadata-core/scan/jpeg";',resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:`${dir}/core.mjs`});
+const {scanImage,cleanImage,verifyClean,parsePngChunks,parseJpegSegments}=await import(`../${dir}/core.mjs`);
+const expectedHashes={comfy:"072c9be89a14bcd14e18acaa01941f33677e5727e8afcefeab17f7689ec80a34",stable:"896822884a3d9743e1c95eaf9017b27205adc42995a9143c4638d37de9713d0f",camera:"17307b1207eb6487d7908e9d154890b46e3d2e0192369cfd3f4c33d5a5af4035"};
+const sha=(b)=>createHash('sha256').update(b).digest('hex');
+const payload=(b,f)=>f==='png'?Buffer.concat(parsePngChunks(b).filter(x=>x.type==='IDAT').map(x=>b.subarray(x.dataStart,x.dataStart+x.dataLength))):b.subarray(parseJpegSegments(b).imageDataStart);
+const browser=await chromium.launch({headless:true});
+try {const page=await browser.newPage();for(const [name,format,mode] of [['comfy','png','ai_workflow'],['stable','png','ai_workflow'],['camera','jpeg','privacy']]) {
+ const original=await readFile(`${dir}/${name}.${format==='png'?'png':'jpg'}`);if(sha(original)!==expectedHashes[name]) throw new Error(`${name}: input SHA-256 differs from documented source`);const input=Uint8Array.from(original).buffer;const policy={mode,removeC2pa:false,removeColorProfile:false};
+ const before=await scanImage(input); let result; try { result=await cleanImage(input,policy); } catch(error) { result={ok:false,errorCode:error.code ?? "unknown",safeMessage:error.message,mutations:[]}; }
+ const summary={sample:name,bytes:original.length,inputSha256:sha(original),scan:before,cleanResult:{ok:result.ok,errorCode:result.errorCode,safeMessage:result.safeMessage,mutations:result.mutations},policy};
+ if(result.output) {const output=Buffer.from(result.output);await writeFile(`${dir}/${name}-clean.${format==='png'?'png':'jpg'}`,output);summary.outputSha256=sha(output);summary.outputBytes=output.length;summary.verification=await verifyClean(before,result.output,policy,input);summary.payloadHash=[sha(payload(original,format)),sha(payload(output,format))];
+ const pixels=[];for(const b of [original,output]) {const base64=b.toString('base64');const data=await page.evaluate(async ({base64,type})=>{const b=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));const img=await createImageBitmap(new Blob([b],{type}));const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);img.close();const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;if (!window.__firstPixels) {window.__firstPixels=data;return true;} const first=window.__firstPixels;window.__firstPixels=null;return first.length===data.length && first.every((v,i)=>v===data[i])}, {base64,type:format==='png'?'image/png':'image/jpeg'});pixels.push(data);} summary.decodedPixelsIdentical=pixels[1];}
+ await writeFile(`${dir}/${name}-core.json`,JSON.stringify(summary,null,2)); console.log(JSON.stringify({sample:name,bytes:original.length,hash:summary.inputSha256,format,properties:before.properties,findings:before.findings.map(x=>({label:x.label,key:x.rawKey,category:x.category})),clean:summary.cleanResult,verification:summary.verification?.items,payload:summary.payloadHash,pixelsIdentical:summary.decodedPixelsIdentical}));
+ }}finally{await browser.close()}

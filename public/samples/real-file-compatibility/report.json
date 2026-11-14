@@ -1,0 +1,192 @@
+{
+  "testedAt": "2026-11-14",
+  "toolSourceCommit": "495b5480fe841dc94ea4f184c4cc141bd4bd9b9d",
+  "independentTool": "ExifTool 13.63, commit 1da714924f67763b6a8a7013dd2aa1983a16f87b",
+  "method": "Real published third-party files; local core and Chromium interface with local billing mocked; ExifTool inspection before and after; SHA-256 of PNG IDAT and decoded RGBA comparison.",
+  "samples": [
+    {
+      "id": "comfy",
+      "originalBytes": 309432,
+      "originalSha256": "072c9be89a14bcd14e18acaa01941f33677e5727e8afcefeab17f7689ec80a34",
+      "outputBytes": 304831,
+      "outputSha256": "29621a78d82e338cdfcc3ed69927648387b537e6076546bb3ece9ef51985ab90",
+      "policy": {
+        "mode": "ai_workflow",
+        "removeC2pa": false,
+        "removeColorProfile": false
+      },
+      "image": {
+        "width": 512,
+        "height": 512,
+        "hasTransparency": false,
+        "hasAnimation": false,
+        "hasIcc": false
+      },
+      "fields": [
+        {
+          "field": "prompt",
+          "category": "ai_workflow"
+        },
+        {
+          "field": "workflow",
+          "category": "ai_workflow"
+        }
+      ],
+      "result": {
+        "ok": true,
+        "mutations": [
+          {
+            "kind": "removed",
+            "category": "ai_workflow",
+            "label": "AI generation parameters"
+          },
+          {
+            "kind": "removed",
+            "category": "ai_workflow",
+            "label": "AI generation parameters"
+          }
+        ]
+      },
+      "verification": [
+        {
+          "label": "AI generation parameters",
+          "before": "found",
+          "after": "removed"
+        },
+        {
+          "label": "AI generation parameters",
+          "before": "found",
+          "after": "removed"
+        }
+      ],
+      "encodedPayloadSha256": [
+        "1e988464d0fac774d72f75c238bdec20d3daeae2fbf0e3a23208a53cae775d40",
+        "1e988464d0fac774d72f75c238bdec20d3daeae2fbf0e3a23208a53cae775d40"
+      ],
+      "decodedPixelsIdentical": true,
+      "source": "https://github.com/comfyanonymous/ComfyUI_examples/blob/f9431bb000ce792094ff345446e22cac1ea6cef3/hypernetworks/hypernetwork_example_output.png",
+      "original": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/f9431bb000ce792094ff345446e22cac1ea6cef3/hypernetworks/hypernetwork_example_output.png",
+      "exporterVersion": "unknown",
+      "exiftoolBefore": [
+        "Workflow",
+        "Prompt"
+      ],
+      "exiftoolAfter": []
+    },
+    {
+      "id": "stable",
+      "originalBytes": 977646,
+      "originalSha256": "896822884a3d9743e1c95eaf9017b27205adc42995a9143c4638d37de9713d0f",
+      "outputBytes": 977115,
+      "outputSha256": "2f2cff6d426fbfdd1aeaded5dabf48a338e271d9af4ef7e893089d1ccd3de2a2",
+      "policy": {
+        "mode": "ai_workflow",
+        "removeC2pa": false,
+        "removeColorProfile": false
+      },
+      "image": {
+        "width": 1024,
+        "height": 688,
+        "hasTransparency": false,
+        "hasAnimation": false,
+        "hasIcc": false
+      },
+      "fields": [
+        {
+          "field": "parameters",
+          "category": "ai_workflow"
+        }
+      ],
+      "result": {
+        "ok": true,
+        "mutations": [
+          {
+            "kind": "removed",
+            "category": "ai_workflow",
+            "label": "AI generation parameters"
+          }
+        ]
+      },
+      "verification": [
+        {
+          "label": "AI generation parameters",
+          "before": "found",
+          "after": "removed"
+        }
+      ],
+      "encodedPayloadSha256": [
+        "fe6a98f183618db3e194e3ba2dd1d7d456727af582dc92fe3e2c8a79eaeb44a2",
+        "fe6a98f183618db3e194e3ba2dd1d7d456727af582dc92fe3e2c8a79eaeb44a2"
+      ],
+      "decodedPixelsIdentical": true,
+      "source": "https://commons.wikimedia.org/wiki/File:ControlNet_Canny_Control_Weight_1.0.png",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/7/7c/ControlNet_Canny_Control_Weight_1.0.png",
+      "exporterVersion": "1.6.0 claimed in embedded parameters, not independently authenticated",
+      "exiftoolBefore": [
+        "Parameters"
+      ],
+      "exiftoolAfter": []
+    },
+    {
+      "id": "camera",
+      "originalBytes": 161713,
+      "originalSha256": "17307b1207eb6487d7908e9d154890b46e3d2e0192369cfd3f4c33d5a5af4035",
+      "outputBytes": null,
+      "outputSha256": null,
+      "policy": {
+        "mode": "privacy",
+        "removeC2pa": false,
+        "removeColorProfile": false
+      },
+      "image": {
+        "width": 640,
+        "height": 480,
+        "hasIcc": false,
+        "orientation": 1
+      },
+      "fields": [
+        {
+          "field": "EXIF GPS IFD",
+          "category": "location"
+        },
+        {
+          "field": "EXIF privacy fields",
+          "category": "location"
+        },
+        {
+          "field": "EXIF Software",
+          "category": "software"
+        },
+        {
+          "field": "EXIF camera fields",
+          "category": "camera"
+        },
+        {
+          "field": "APP1 XMP",
+          "category": "software"
+        }
+      ],
+      "result": {
+        "ok": false,
+        "errorCode": "unsupported_exif",
+        "safeMessage": "This EXIF uses nested directories that automatic cleaning cannot safely scrub yet.",
+        "mutations": []
+      },
+      "verification": null,
+      "encodedPayloadSha256": null,
+      "decodedPixelsIdentical": null,
+      "source": "https://www.gaia-gis.it/gaia-sins/spatialite-exif-2.3.1.html",
+      "original": "https://raw.githubusercontent.com/ianare/exif-samples/5332a9cf0220e9c6c93f88a187daa90808051e10/jpg/gps/DSCN0010.jpg",
+      "exporterVersion": "unknown; image editing history unverified",
+      "exiftoolBefore": [
+        "Make",
+        "Model",
+        "Orientation",
+        "GPSLatitude",
+        "GPSLongitude",
+        "XMPToolkit"
+      ],
+      "exiftoolAfter": null
+    }
+  ]
+}
